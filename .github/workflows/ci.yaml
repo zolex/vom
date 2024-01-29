@@ -65,7 +65,7 @@ jobs:
           XDEBUG_MODE=coverage \
           vendor/bin/simple-phpunit \
           --colors=always \
-          --coverage-text
+          --coverage-text \
           --coverage-clover=./clover.xml
 
       - name: Send code coverage report to codecov.io
