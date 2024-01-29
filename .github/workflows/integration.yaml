@@ -56,7 +56,7 @@ jobs:
           composer-options: '--prefer-dist'
 
       - name: Run tests
-        run: vendor/bin/phpunit --colors=always
+        run: vendor/bin/phpunit --colors=always --testdox
 
   cs:
     name: Code Style & Coverage
@@ -86,7 +86,8 @@ jobs:
           vendor/bin/phpunit \
           --colors=always \
           --coverage-text \
-          --coverage-clover=./clover.xml
+          --coverage-clover=./clover.xml \
+          --testdox
 
       - name: Send code coverage report to codecov.io
         uses: codecov/codecov-action@v3.1.5
