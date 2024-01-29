@@ -20,7 +20,7 @@ jobs:
           - php: 8.1
             deps: lowest
             symfony: '^6.1'
-C
+
           - php: 8.2
             deps: stable
             symfony: '^6.4'
