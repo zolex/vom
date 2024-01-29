@@ -1,6 +1,6 @@
 <?php
 
-namespace Zolex\VOM\Test\VOM;
+namespace Zolex\VOM\Test;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccess;

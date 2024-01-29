@@ -8,7 +8,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 
-#[Model(defaultTrueValue: 'y')]
+#[Model(
+    presets: [
+        'preset-name' => ['group-a', 'group-b']
+    ],
+    defaultTrueValue: 'y'
+)]
 
 class Person
 {
