@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zolex\VOM\DependencyInjection;
+namespace Zolex\VOM\Symfony\Bundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Zolex\VOM\Serializer\GroupsContextBuilder;
+use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 
 class ZolexVOMExtension extends Extension implements CompilerPassInterface
 {

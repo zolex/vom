@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zolex\VOM;
+namespace Zolex\VOM\Symfony\Bundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
