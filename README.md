@@ -147,4 +147,3 @@ An [complete documentation](./docs) of all features is available in the docs fol
 ## Examples
 
 The example from the above quickstart and some more working examples can be found in this repository. Head over to the [examples](./examples) folder.
-
