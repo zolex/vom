@@ -4,20 +4,10 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services
         https://symfony.com/schema/dic/services/services-1.0.xsd">
     <parameters>
+        <parameter key="zolex_vom.serializer.groups_query_param">groups</parameter>
         <parameter key="zolex_vom.metadata.cache">false</parameter>
     </parameters>
     <services>
-
-        <!--service id="zolex_vom.serializer.groups_context_builder"
-                 class="Zolex\VOM\Serializer\GroupsContextBuilder"
-                 decorates="api_platform.serializer.context_builder"
-                 decoration-priority="-10" public="false" decoration-on-invalid="ignore">
-            <argument type="service" id="zolex_vom.serializer.groups_context_builder.inner" />
-            <argument type="service" id="zolex_vom.metadata.model_metadata_factory" />
-            <argument>%zolex_vom.normalization.groups_query_param%</argument>
-        </service-->
-
-
         <service id="zolex_vom.metadata.model_metadata_factory" class="Zolex\VOM\Metadata\Factory\ModelMetadataFactory">
             <argument type="service" id="zolex_vom.metadata.property_metadata_factory" />
         </service>
