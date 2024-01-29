@@ -1,4 +1,4 @@
-name: CI
+name: Integration
 
 on:
   pull_request:
@@ -14,18 +14,16 @@ jobs:
     strategy:
       matrix:
         php: [8.1, 8.2, 8.3]
+        deps: stable
+        symfony: '^7.0'
         include:
           - php: 8.1
             deps: lowest
             symfony: '^6.1'
-
+C
           - php: 8.2
             deps: stable
             symfony: '^6.4'
-
-          - php: 8.2
-            deps: stable
-            symfony: '^7.0'
 
           - php: 8.3
             deps: latest
