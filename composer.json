@@ -33,6 +33,7 @@
         "phpspec/prophecy": "^1.17",
         "phpspec/prophecy-phpunit": "^2.0",
         "symfony/orm-pack": "^2.4",
+        "symfony/phpunit-bridge": "^6.1|^7.0",
         "api-platform/core": "^3.2"
     },
     "scripts": {
