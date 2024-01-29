@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Zolex\VOM\DependencyInjection;
+namespace Zolex\VOM\Symfony\Bundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class Configuration.
