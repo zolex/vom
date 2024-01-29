@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zolex\VOM\Serializer;
+namespace Zolex\VOM\ApiPlatform\Serializer;
 
 use ApiPlatform\Serializer\SerializerContextBuilderInterface;
 use Symfony\Component\HttpFoundation\Request;
