@@ -1,0 +1,9 @@
+/vendor/
+/var
+/.DS_Store
+/.idea/
+/.phpunit*
+/composer.lock
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+/test-results
