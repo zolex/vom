@@ -10,7 +10,7 @@ use Zolex\VOM\Mapping\Property;
 
 #[Model(
     presets: [
-        'preset-name' => ['group-a', 'group-b']
+        'preset-name' => ['group-a', 'group-b'],
     ],
     defaultTrueValue: 'y'
 )]

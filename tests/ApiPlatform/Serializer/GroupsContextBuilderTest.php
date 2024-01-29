@@ -143,7 +143,7 @@ class GroupsContextBuilderTest extends TestCase
         $serializerContextBuilder->createFromRequest(Argument::is($request), Argument::any(), Argument::any())
             ->willReturn([
                 'resource_class' => Person::class,
-                'static-groups' => 'static'
+                'static-groups' => 'static',
             ]);
 
         $contextBuilder = new GroupsContextBuilder(
