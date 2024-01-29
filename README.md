@@ -1,4 +1,4 @@
-# Versatile Object Mapper for PHP
+# Versatile Object Mapper
 
 [![Integration](https://github.com/zolex/vom/workflows/Integration/badge.svg)](https://github.com/zolex/vom/actions)
 [![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
@@ -8,10 +8,12 @@
 [![Latest Stable Version](http://poser.pugx.org/zolex/vom/v)](https://packagist.org/packages/zolex/vom)
 [![Latest Unstable Version](http://poser.pugx.org/zolex/vom/v/unstable)](https://packagist.org/packages/zolex/vom)
 
-[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)
+<!--[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)-->
 [![License](http://poser.pugx.org/zolex/vom/license)](https://packagist.org/packages/zolex/vom)
-[![Total Downloads](http://poser.pugx.org/zolex/vom/downloads?update=1)](https://packagist.org/packages/zolex/vom)
-[![Monthly Downloads](http://poser.pugx.org/zolex/vom/d/monthly?update=1)](https://packagist.org/packages/zolex/vom)
+[![Total Downloads](http://poser.pugx.org/zolex/vom/downloads?update=2)](https://packagist.org/packages/zolex/vom)
+[![Monthly Downloads](http://poser.pugx.org/zolex/vom/d/monthly?update=2)](https://packagist.org/packages/zolex/vom)
+
+![VOM](docs%2Flogo.png)
 
 The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to your existing classes.
 It implements the symfony normalizer and denormalizer interfaces for the best interoperability.
