@@ -61,7 +61,7 @@ jobs:
         run: vendor/bin/phpunit --colors=always
 
   cs:
-    name: 'Code Style'
+    name: Code Style & Coverage
     runs-on: ubuntu-latest
 
     steps:
