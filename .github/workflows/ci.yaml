@@ -38,7 +38,7 @@ jobs:
       - name: Install PHP with extensions
         uses: 'shivammathur/setup-php@v2'
         with:
-          coverage: none
+          coverage: xdebug
           php-version: '${{ matrix.php }}'
           tools: 'composer:v2, flex'
 
@@ -58,7 +58,32 @@ jobs:
         run: vendor/bin/simple-phpunit install
 
       - name: Run tests
-        run: vendor/bin/simple-phpunit
+        run: |
+          XDEBUG_MODE=coverage \
+          vendor/bin/simple-phpunit \
+          --colors=always \
+          --coverage-text \
+          --coverage-cobertura ./cobertura.xml \
+          --log-junit ./junit.xml
+
+      - name: Publish Test Report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          check_name: ${{ matrix.php }} (deps=${{ matrix.deps }}, symfony=${{ matrix.symfony }})
+          comment_title: ${{ matrix.php }} (deps=${{ matrix.deps }}, symfony=${{ matrix.symfony }})
+          report_individual_runs: true
+          compare_to_earlier_commit: true
+          files: ./junit.xml
+
+      - name: Publish Code Coverage
+        uses: 5monkeys/cobertura-action@master
+        if: always()
+        with:
+          path: ./cobertura.xml
+          minimum_coverage: 75
+          skip_covered: false
+          fail_below_threshold: 0
 
   cs:
     name: 'Code Style'
@@ -68,7 +93,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: PHP-CS-Fixer
-        uses: docker://oskarstark/php-cs-fixer-ga:3.0.0
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
         with:
-          args: --diff --dry-run
+          coverage: xdebug
+          php-version: ${{ matrix.php }}
+          tools: 'composer:v2, flex'
+
+      - name: Composer install
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: '--prefer-dist'
+
+      - name: PHP-CS-Fixer
+        run: vendor/bin/php-cs-fixer --diff --dry-run --format=junit
