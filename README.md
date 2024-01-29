@@ -1,6 +1,6 @@
-# Versatile Object Mapper
+# Versatile Object Mapper for PHP
 
-The Versatile Object Mapper, or in short VOM, is a library to transform any data structures into your desired models, solely by adding PHP attributes to your existing classes.
+The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to your existing classes.
 It implements the symfony normalizer and denormalizer interfaces for the best interoperability.
 This is mainly useful to convert legacy, arbitrary data into strictly typed and object-oriented models, which helps to create more reliable and easier to maintain projects while increasing your productivity at the same time.
 
@@ -17,7 +17,7 @@ To give you a basic idea of what VOM does, head to the [Quickstart](#quickstart)
 VOM is available as an alpha release on packagist. To install, simply require it via composer. **You might need to change minimum-stability in your composer.json to dev** 
 
 ```bash
-composer require zolex/vom
+composer require zolex/vom dev-master
 ```
 
 ### Symfony
@@ -30,8 +30,8 @@ Without autoconfiguration of if you choose to not run symfony/flex recipe genera
 <?php
 
 return [
-    Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
-    Zolex\VOM\ZolexVOMBundle::class => ['all' => true],
+    // ...
+    \Zolex\VOM\Symfony\Bundle\ZolexVOMBundle::class => ['all' => true],
 ];
 ```
 
@@ -80,12 +80,16 @@ class Person
 }
 ```
 
-Usually you would now write some code that creates the model instances, put the data from your initial array in it and nest them properly.
-In very simple scenarios, writing the transformation logic as code can be good choice, but it can be a pain when it comes to very huge models, the input data structures
-and/or application models change while still in development, or if you want to reuse the transformation logic in other projects too because it receives the same inputs and/or uses the same models.
-This is where the true power of the VOM lies.
+### What you would do without VOM
 
-**All you need to do feed any data into your models is adding the VOM attributes.**
+Usually you would write some code that creates the model instances, puts the data from your initial array in it and nests them properly.
+In very simple scenarios, writing the transformation logic as code can be a good choice, but it can be a pain when it comes to very huge models, the input data structures
+and/or application models change while still in development, or if you want to reuse the transformation logic in other projects too because it receives the same inputs and/or uses the same models.
+
+
+### How it works using VOM
+
+Instead of writing business logic that feeds your models, with VOM you simply configure the models using PHP attributes.
 
 ```php
 
@@ -123,7 +127,7 @@ class Person
     #[VOM\Property]
     public string $firstname;
     
-    #[VOM\Property]
+    #[VOM\Property('surname')]
     public string $lastname;
     
     #[VOM\Property(nested: false)]
@@ -134,7 +138,13 @@ class Person
 }
 ```
 
-You may have noticed, that some property attributes have arguments while others don't. We'll get into that in detail later in this documentation.
+To create instances of your models, you simply pass the data to the `denormalize()` method.
+
+```php
+$person = $objectMapper->denormalize($data, Person::class);
+``` 
+
+You may have noticed, that some property attributes have arguments while others don't. For details on that, see the [full documentation](./docs/README.md).
 
 ### Now, do I need this?
 
@@ -149,5 +159,5 @@ An [complete documentation](./docs) of all features is available in the docs fol
 
 ## Examples
 
-A few working examples are included in this repository. Head to the [examples](./examples) folder.
+The example from the above quickstart and some more working examples can be found in this repository. Head over to the [examples](./examples) folder.
 
