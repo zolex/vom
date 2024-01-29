@@ -70,8 +70,9 @@ A very common use-case is to deserialize json for example with `json_decode()` o
 $person = $objectMapper->denormalize($data, Person::class);
 ```
 
-It can make sense to have additional properties which are not fed by the VOM denormalization, for example if you use the injected data to do further computations
-and store it on a model before returning it to the client, sending it to another API or storing it in the database.
+> [!TIP]
+> It can make sense to have additional properties which are not fed by the VOM denormalization, for example if you use the injected data to do further computations and store it on a model before returning it to the client, sending it to another API or storing it in the database.
+
 
 
 ## Normalization
