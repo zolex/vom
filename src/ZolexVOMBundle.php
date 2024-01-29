@@ -6,6 +6,6 @@ namespace Zolex\VOM;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class ZolexVomBundle extends Bundle
+class ZolexVOMBundle extends Bundle
 {
 }
