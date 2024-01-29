@@ -2,5 +2,5 @@
 
 return [
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
-    Zolex\VOM\ZolexVOMBundle::class => ['all' => true],
+    Zolex\VOM\Symfony\Bundle\ZolexVOMBundle::class => ['all' => true],
 ];
