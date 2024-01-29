@@ -57,22 +57,8 @@ jobs:
           dependency-versions: '${{ matrix.deps }}'
           composer-options: '--prefer-dist'
 
-      - name: Install PHPUnit
-        run: vendor/bin/simple-phpunit install
-
       - name: Run tests
-        run: |
-          XDEBUG_MODE=coverage \
-          vendor/bin/simple-phpunit \
-          --colors=always \
-          --coverage-text \
-          --coverage-clover=./clover.xml
-
-      - name: Send code coverage report to codecov.io
-        uses: codecov/codecov-action@v3.1.5
-        with:
-          files: ./clover.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
+        run: vendor/bin/phpunit --colors=always
 
   cs:
     name: 'Code Style'
@@ -97,3 +83,16 @@ jobs:
 
       - name: PHP-CS-Fixer
         run: vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
+
+      - name: Create Coverage Report
+        run: |
+          vendor/bin/phpunit \
+          --colors=always \
+          --coverage-text \
+          --coverage-clover=./clover.xml
+
+      - name: Send code coverage report to codecov.io
+        uses: codecov/codecov-action@v3.1.5
+        with:
+          files: ./clover.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
