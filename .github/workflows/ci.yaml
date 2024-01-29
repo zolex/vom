@@ -9,27 +9,27 @@ jobs:
   tests:
     name: 'Tests on ${{ matrix.php }} (deps=${{ matrix.deps }}, symfony=${{ matrix.symfony }})'
     runs-on: ubuntu-latest
-
     env:
       SYMFONY_DEPRECATIONS_HELPER: 'max[self]=0'
-
     strategy:
       matrix:
+        php: [8.1, 8.2, 8.3]
         include:
-          # Test lowest dependencies
-          #- php: 8.1
-          #  deps: lowest
-          #  symfony: '^6.1'
-
-          # Test LTS php/Symfony
           - php: 8.1
-            deps: stable
+            deps: lowest
             symfony: '^6.1'
 
-          # Test latest php/Symfony
-          #- php: 8.3
-          #  deps: stable
-          #  symfony: '^7.0'
+          - php: 8.2
+            deps: stable
+            symfony: '^6.4'
+
+          - php: 8.2
+            deps: stable
+            symfony: '^7.0'
+
+          - php: 8.3
+            deps: latest
+            symfony: '^7.0'
 
     steps:
       - name: Checkout code
@@ -63,7 +63,6 @@ jobs:
   cs:
     name: Code Style & Coverage
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
