@@ -34,7 +34,6 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
                 $groups = [$groups];
             }
             $context['groups'] = $groups;
-            $context['groups'][] = 'id';
         }
 
         // add static groups
