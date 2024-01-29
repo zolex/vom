@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zolex\VomBundle\DependencyInjection;
+namespace Zolex\VOM\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
