@@ -33,7 +33,7 @@ class PropertyMetadata
 
     public function getField(): ?string
     {
-        return $this->attribute->getField();
+        return $this->attribute->getField() ?? $this->attribute->getAccessor();
     }
 
     public function getType(): string
