@@ -1,17 +1,6 @@
 # Versatile Object Mapper for PHP
 
-[![Integration](https://github.com/zolex/vom/workflows/Integration/badge.svg)](https://github.com/zolex/vom/actions)
-[![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
 
-[![Code Coverage](https://codecov.io/gh/zolex/vom/graph/badge.svg?token=RI2NX4S89I)](https://codecov.io/gh/zolex/vom)
-[![Type Coverage](https://shepherd.dev/github/zolex/vom/coverage.svg)](https://codecov.io/gh/zolex/vom)
-[![Latest Stable Version](http://poser.pugx.org/zolex/vom/v)](https://packagist.org/packages/zolex/vom)
-[![Latest Unstable Version](http://poser.pugx.org/zolex/vom/v/unstable)](https://packagist.org/packages/zolex/vom)
-
-[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)
-[![License](http://poser.pugx.org/zolex/vom/license)](https://packagist.org/packages/zolex/vom)
-[![Total Downloads](http://poser.pugx.org/zolex/vom/downloads)](https://packagist.org/packages/zolex/vom)
-[![Monthly Downloads](http://poser.pugx.org/zolex/vom/d/monthly)](https://packagist.org/packages/zolex/vom)
 
 The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to your existing classes.
 It implements the symfony normalizer and denormalizer interfaces for the best interoperability.
