@@ -15,9 +15,10 @@
 
 ![VOM](docs%2Flogo.png)
 
-The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to your existing classes.
-It implements the symfony normalizer and denormalizer interfaces for the best interoperability.
-This is mainly useful to convert legacy, arbitrary data into strictly typed and object-oriented models, which helps to create more reliable and easier to maintain projects while increasing your productivity at the same time.
+The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to existing classes.
+It maps arbitrary data into strictly typed, object-oriented models and vice versa, which helps to create more reliable and easier to maintain projects while increasing productivity at the same time.
+
+For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
