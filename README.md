@@ -4,7 +4,6 @@
 [![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
 
 [![Code Coverage](https://codecov.io/gh/zolex/vom/graph/badge.svg?token=RI2NX4S89I)](https://codecov.io/gh/zolex/vom)
-[![Type Coverage](https://shepherd.dev/github/zolex/vom/coverage.svg)](https://codecov.io/gh/zolex/vom)
 [![Latest Stable Version](http://poser.pugx.org/zolex/vom/v)](https://packagist.org/packages/zolex/vom)
 [![Latest Unstable Version](http://poser.pugx.org/zolex/vom/v/unstable)](https://packagist.org/packages/zolex/vom)
 
