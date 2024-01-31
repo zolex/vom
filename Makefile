@@ -9,8 +9,6 @@ deps:
 	composer install --prefer-dist --no-plugins --no-scripts
 
 test: deps	## Run the testsuite
-	rm -rf ${tests_output}/*
-	mkdir -p ${tests_output}
 	XDEBUG_MODE=coverage vendor/bin/phpunit \
 		--colors=always \
 		--coverage-text \
