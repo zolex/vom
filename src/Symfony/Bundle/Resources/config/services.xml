@@ -17,9 +17,8 @@
         </service>
         <service id="Zolex\VOM\Metadata\Factory\PropertyMetadataFactoryInterface" alias="zolex_vom.metadata.property_metadata_factory" />
 
-        <!--
         <service id="zolex_vom.metadata.model_metadata_factory.cached"
-                 class="Zolex\VomBundle\VOM\Metadata\Factory\CachedModelMetadataFactory"
+                 class="Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory"
                  decorates="zolex_vom.metadata.model_metadata_factory"
                  decoration-priority="-10" public="false" decoration-on-invalid="ignore">
             <argument type="service" id="zolex_vom.cache.metadata.model" />
@@ -30,20 +29,6 @@
         <service id="zolex_vom.cache.metadata.model" parent="cache.system" public="false">
             <tag name="cache.pool" />
         </service>
-
-        <service id="zolex_vom.metadata.property_metadata_factory.cached"
-                 class="Zolex\VomBundle\VOM\Metadata\Factory\CachedPropertyMetadataFactory"
-                 decorates="zolex_vom.metadata.property_metadata_factory"
-                 decoration-priority="-10" public="false" decoration-on-invalid="ignore">
-            <argument type="service" id="zolex_vom.cache.metadata.property" />
-            <argument type="service" id="zolex_vom.metadata.property_metadata_factory.cached.inner" />
-            <argument>%zolex_vom.metadata.cache%</argument>
-        </service>
-
-        <service id="zolex_vom.cache.metadata.property" parent="cache.system" public="false">
-            <tag name="cache.pool" />
-        </service>
-        -->
 
         <service id="zolex_vom.object_mapper" class="Zolex\VOM\VersatileObjectMapper">
             <argument type="service" id="zolex_vom.metadata.model_metadata_factory" />

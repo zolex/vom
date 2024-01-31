@@ -10,7 +10,10 @@ use Zolex\VOM\Metadata\PropertyMetadata;
 
 class ModelMetadataFactory implements ModelMetadataFactoryInterface
 {
-    private array $classes = [];
+    /**
+     * @var ModelMetadata[]
+     */
+    private array $localCache = [];
 
     public function __construct(
         private readonly PropertyMetadataFactoryInterface $propertyMetadataFactory
@@ -19,17 +22,17 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
     public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ?ModelMetadata
     {
-        if (isset($this->classes[$class])) {
-            return $this->classes[$class];
+        if (\array_key_exists($class, $this->localCache)) {
+            return $this->localCache[$class];
         }
 
         $modelMetadata = new ModelMetadata($class);
+        $this->localCache[$class] = &$modelMetadata;
 
         $reflectionClass = new \ReflectionClass(trim($class, '?'));
         $modelAttribute = $reflectionClass->getAttributes(Model::class);
         if (count($modelAttribute)) {
             $modelMetadata->setAttribute($modelAttribute[0]->newInstance());
-            $this->classes[$class] = &$modelMetadata;
         } else {
             return null;
         }
