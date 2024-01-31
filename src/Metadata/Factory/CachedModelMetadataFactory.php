@@ -31,18 +31,16 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
         if ($this->cachePoolEnabled) {
             try {
                 $cacheItem = $this->cacheItemPool->getItem($cacheKey);
+                if ($cacheItem->isHit()) {
+                    return $this->localCache[$cacheKey] = $cacheItem->get();
+                }
             } catch (CacheException) {
-                return $this->localCache[$cacheKey] = $this->decorated->create($class);
-            }
-
-            if ($cacheItem->isHit()) {
-                return $this->localCache[$cacheKey] = $cacheItem->get();
+                $x = 1;
             }
         }
 
         $this->localCache[$cacheKey] = $this->decorated->create($class);
-
-        if ($this->cachePoolEnabled) {
+        if ($this->cachePoolEnabled && isset($cacheItem)) {
             $cacheItem->set($this->localCache[$cacheKey]);
             $this->cacheItemPool->save($cacheItem);
         }

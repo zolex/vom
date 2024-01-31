@@ -3,7 +3,10 @@
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
+use Zolex\VOM\Metadata\Factory\CachedPropertyMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Test\Fixtures\Address;
@@ -20,13 +23,13 @@ use Zolex\VOM\VersatileObjectMapper;
 
 class VersatileObjectMapperTest extends TestCase
 {
-    private VersatileObjectMapper $objectMapper;
+    protected VersatileObjectMapper $objectMapper;
 
     public function setUp(): void
     {
-        $resourceMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $modelMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        $this->objectMapper = new VersatileObjectMapper($resourceMetadataFactory, $propertyAccessor);
+        $this->objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
     }
 
     public function testBooleans()
@@ -305,10 +308,6 @@ class VersatileObjectMapperTest extends TestCase
 
     public function testRecursiveStructures(): void
     {
-        $modelMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        $objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
-
         $data = [
             'dateTimeList' => [
                 ['dateTime' => '2024-01-01 00:00:00'],
@@ -374,8 +373,8 @@ class VersatileObjectMapperTest extends TestCase
             ],
         ];
 
-        $items = $objectMapper->denormalize($data, Arrays::class);
-        $data2 = $objectMapper->normalize($items);
+        $items = $this->objectMapper->denormalize($data, Arrays::class);
+        $data2 = $this->objectMapper->normalize($items);
 
         $this->assertEquals($data, $data2);
     }
