@@ -131,6 +131,11 @@ class PropertyMetadata
         return $this->attribute->getTrueValue();
     }
 
+    public function getFalseValue(): bool|string|int|null
+    {
+        return $this->attribute->getFalseValue();
+    }
+
     public function isTrue(mixed $value): bool
     {
         return $this->attribute->isTrue($value);
@@ -139,11 +144,6 @@ class PropertyMetadata
     public function isFalse(mixed $value): bool
     {
         return $this->attribute->isFalse($value);
-    }
-
-    public function getFalseValue(): bool|string|int|null
-    {
-        return $this->attribute->getFalseValue();
     }
 
     public function getDefaultOrder(): ?string
@@ -159,16 +159,6 @@ class PropertyMetadata
     public function getArrayType(): ?string
     {
         return $this->arrayType;
-    }
-
-    public function getParentPropertyMetadata(): ?PropertyMetadata
-    {
-        return $this->parentPropertyMetadata;
-    }
-
-    public function includeInList(): bool
-    {
-        return $this->attribute->isList();
     }
 
     public function getDateTimeFormat(): string

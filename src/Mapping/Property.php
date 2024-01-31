@@ -12,18 +12,14 @@ final class Property
         private ?string $field = null,
         private bool $nested = true,
         private bool $root = false,
-        private bool $isAlias = false,
         private array $aliases = [],
         private ?bool $flag = null,
         private ?string $flagOf = null,
-        private bool $bool = false,
         private bool|string|int|null $trueValue = true,
         private bool|string|int|null $falseValue = false,
         private ?string $defaultOrder = null,
-        private ?bool $list = null,
         private ?string $dateTimeFormat = null,
     ) {
-        $this->list ??= $this->nested;
         $this->field ??= $this->accessor;
     }
 
@@ -103,11 +99,6 @@ final class Property
     public function getDefaultOrder(): ?string
     {
         return $this->defaultOrder;
-    }
-
-    public function isList(): bool
-    {
-        return $this->list;
     }
 
     public function getDateTimeFormat(): ?string
