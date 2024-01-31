@@ -1,6 +1,6 @@
 <?php
 
-namespace Zolex\VOM\Metadata\Factory;
+namespace Zolex\VOM\Test\Fixtures;
 
 use Zolex\VOM\Metadata\PropertyMetadata;
 

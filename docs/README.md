@@ -155,7 +155,7 @@ Whenever a property accessor can not find anything in the source data this optio
 
 ```php
 $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['root_fallback' => true]);
-````
+```
 
 ### Object to Populate
 
@@ -164,7 +164,7 @@ If you already have an object that you want to populate, you can pass it to the 
 ```php
 $someModel = new SomeModel();
 $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['object_to_populate' => $someModel]);
-````
+```
 
 
 ## Attribute Configuration
@@ -465,36 +465,6 @@ class ModelFlagsContainer
 
     #[VOM\Property]
     public ModelFlag $flagC;
-}
-
-````
-
-
-
-Both types of flags will be expected to sit in their parent property (in the above example 'flags'), but it is also possible to apply flags from different properties
-using the `flagOf` argument which will implicitly also set the `flag` argument to true, so you only need to specify one of both arguments.
-
-```php
-$data = [
-    'flags' => ['is_great'];
-    'another_set_of_flags' => ['!is_weak'];
-];
-
-#[VOM\Model]
-class RootClass
-{
-    #[VOM\Property]
-    public Flags $flags;
-}
-
-#[VOM\Model]
-class Flags
-{
-    #[VOM\Property('is_great', flag: true)]
-    public bool $great;
-    
-    #[VOM\Property('is_weak', flagOf: 'another_set_of_flags')]
-    public bool $weak;
 }
 ```
 

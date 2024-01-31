@@ -13,8 +13,7 @@ final class Property
         private bool $nested = true,
         private bool $root = false,
         private array $aliases = [],
-        private ?bool $flag = null,
-        private ?string $flagOf = null,
+        private bool $flag = false,
         private bool|string|int|null $trueValue = true,
         private bool|string|int|null $falseValue = false,
         private ?string $defaultOrder = null,
@@ -35,15 +34,7 @@ final class Property
 
     public function isFlag(): bool
     {
-        return true === $this->flag || null !== $this->flagOf;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getFlagOf(): ?string
-    {
-        return $this->flagOf;
+        return $this->flag;
     }
 
     public function getAccessor(): ?string

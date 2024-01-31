@@ -89,11 +89,11 @@ class Person
     public bool $isHilarious;
 
     #[Groups('extended')]
-    #[Property('delicious', flagOf: 'flags')]
+    #[Property('delicious')]
     public bool $isDelicious;
 
     #[Groups(['extended', 'isHoly'])]
-    #[Property('holy', flagOf: 'flags', trueValue: 'yes', falseValue: 'no')]
+    #[Property('holy', trueValue: 'yes', falseValue: 'no')]
     public bool $isHoly;
 
     #[Groups(['extended', 'address'])]

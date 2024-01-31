@@ -55,11 +55,6 @@ class PropertyMetadata
         return $this->attribute->isFlag();
     }
 
-    public function getFlagOf(): ?string
-    {
-        return $this->attribute->getFlagOf();
-    }
-
     public function getAccessor(): ?string
     {
         return $this->attribute->getAccessor() ?? $this->name;

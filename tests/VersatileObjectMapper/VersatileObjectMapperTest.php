@@ -60,6 +60,9 @@ class VersatileObjectMapperTest extends TestCase
                 "flagA",
                 "!flagB",
             ],
+            "somethingElse" => [
+                "flagD",
+            ],
             "labeledFlagsArray" => [
                 "flagA" => (object) [
                     "text" => "Fahne A",
