@@ -68,14 +68,16 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
 
         foreach ($types as $type) {
             if (str_ends_with($type, '[]')) {
-                $type = substr($type, 0, -2);
-                if (!class_exists($type)) {
-                    $type = sprintf("%s%s", $namespace, $type);
-                    if (!class_exists($type)) {
+                $singleType = substr($type, 0, -2);
+                if (!class_exists($singleType)) {
+                    $type = $namespace.$type;
+                    $singleType = $namespace.$singleType;
+                    if (!class_exists($singleType)) {
                         continue;
                     }
                 }
 
+                // return the type including the brackets!
                 return $type;
             }
         }

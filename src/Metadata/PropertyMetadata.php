@@ -31,7 +31,7 @@ class PropertyMetadata
 
     public function getType(): string
     {
-        return trim('array' === $this->type ? $this->arrayType : $this->type, '?[]');
+        return trim('array' === $this->type ? $this->arrayType : $this->type);
     }
 
     public function getGroups(): array
@@ -81,7 +81,7 @@ class PropertyMetadata
 
     public function isArray(): bool
     {
-        return 'array' === $this->type;
+        return 'array' === $this->type || str_ends_with($this->arrayType, '[]');
     }
 
     public function isRoot(): bool
