@@ -9,6 +9,5 @@ interface PropertyMetadataFactoryInterface
     public function create(
         \ReflectionProperty $reflectionProperty,
         \ReflectionClass $reflectionClass,
-        ?PropertyMetadata $parentPropertyMetadata,
     ): ?PropertyMetadata;
 }

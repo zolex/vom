@@ -12,7 +12,6 @@ use Zolex\VOM\Mapping\Property;
     presets: [
         'preset-name' => ['group-a', 'group-b'],
     ],
-    defaultTrueValue: 'y'
 )]
 
 class Person

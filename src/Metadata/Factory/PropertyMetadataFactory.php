@@ -26,7 +26,6 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
     public function create(
         \ReflectionProperty $reflectionProperty,
         \ReflectionClass $reflectionClass,
-        ?PropertyMetadata $parentPropertyMetadata,
     ): ?PropertyMetadata {
         $name = $reflectionProperty->getName();
         $type = $originalType = (string) $reflectionProperty->getType();
@@ -55,7 +54,7 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
             $groups = null;
         }
 
-        return new PropertyMetadata($name, $originalType, $attribute, $groups, [], $type, $parentPropertyMetadata);
+        return new PropertyMetadata($name, $originalType, $attribute, $groups, [], $type);
     }
 
     private function getTypeFromDocBlock(\ReflectionProperty $reflectionProperty, string $namespace): ?string

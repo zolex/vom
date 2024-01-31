@@ -16,14 +16,8 @@ class PropertyMetadata
         private readonly ?Groups $groups = null,
         private readonly array $path = [],
         private readonly ?string $arrayType = null,
-        private readonly ?PropertyMetadata $parentPropertyMetadata = null,
         private ?ModelMetadata $modelMetadata = null,
     ) {
-    }
-
-    public function __get($name): mixed
-    {
-        return $this->modelMetadata?->{$name} ?? null;
     }
 
     public function getName(): string
@@ -71,16 +65,6 @@ class PropertyMetadata
         return $this->attribute->getAccessor() ?? $this->name;
     }
 
-    public function getFilterAccessor(): ?string
-    {
-        return $this->attribute->getFilterAccessor();
-    }
-
-    public function isAlias(): bool
-    {
-        return $this->attribute->isAlias();
-    }
-
     public function getAliases(): array
     {
         return $this->attribute->getAliases();
@@ -119,11 +103,6 @@ class PropertyMetadata
     public function setModelMetadata(?ModelMetadata $modelMetadata): void
     {
         $this->modelMetadata = $modelMetadata;
-    }
-
-    public function getFlag(): bool
-    {
-        return $this->attribute->getFlag();
     }
 
     public function getTrueValue(): bool|string|int|null
