@@ -65,7 +65,5 @@ class ZolexVOMExtensionTest extends TestCase
         $extension = new ZolexVOMExtension();
         $extension->load($configs, $container);
         $extension->process($container);
-
-
     }
 }
