@@ -56,16 +56,6 @@ final class Property
         return $this->field;
     }
 
-    public function getFilterAccessor(): ?string
-    {
-        return str_replace(['.value', '.text'], '', $this->accessor);
-    }
-
-    public function isAlias(): bool
-    {
-        return $this->isAlias;
-    }
-
     public function getAliases(): array
     {
         return $this->aliases;

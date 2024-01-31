@@ -12,8 +12,6 @@ final class Model
     public function __construct(
         private array $presets = [],
         array|string $searchable = [],
-        private ?string $defaultTrueValue = null,
-        private ?string $defaultFalseValue = null,
     ) {
         $this->searchable = is_string($searchable) ? [$searchable => 'GET'] : $searchable;
     }
@@ -26,15 +24,5 @@ final class Model
     public function getPreset(string $name): ?array
     {
         return $this->presets[$name] ?? null;
-    }
-
-    public function getDefaultTrueValue(): ?string
-    {
-        return $this->defaultTrueValue;
-    }
-
-    public function getDefaultFalseValue(): ?string
-    {
-        return $this->defaultFalseValue;
     }
 }
