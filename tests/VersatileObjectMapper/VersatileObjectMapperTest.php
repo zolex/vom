@@ -315,6 +315,22 @@ class VersatileObjectMapperTest extends TestCase
         ];
     }
 
+    public function testArrayOnRoot(): void
+    {
+        $data = [
+            ['dateTime' => '2024-01-01 00:00:00'],
+            ['dateTime' => '2024-01-02 00:00:00'],
+            ['dateTime' => '2024-01-03 00:00:00'],
+        ];
+
+        /** @var DateAndTime[] $arrayOfDateAndTime */
+        $arrayOfDateAndTime = $this->objectMapper->denormalize($data, DateAndTime::class.'[]');
+        $this->assertCount(3, $arrayOfDateAndTime);
+        $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
+    }
+
     public function testRecursiveStructures(): void
     {
         $data = [

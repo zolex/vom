@@ -18,7 +18,6 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
     public const ROOT_FALLBACK = 'root_fallback';
     private const ROOT_DATA = '__root_data';
     private const PATH = '__normalization_path';
-    private const AVOID_ARRAY_RECURSION = '__avoid_array_recursion';
 
     public function __construct(
         private readonly ModelMetadataFactoryInterface $modelMetadataFactory,
@@ -55,7 +54,9 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
         $context[self::PATH] ??= [];
         $data = $context[AbstractNormalizer::OBJECT_TO_POPULATE] ?? [];
-        $metadata = $this->modelMetadataFactory->create(get_class($object));
+        if (!$metadata = $this->modelMetadataFactory->create(get_class($object))) {
+            return (array) $object;
+        }
 
         foreach ($metadata->getProperties() as $property) {
             $propertyName = $property->getName();
@@ -130,17 +131,16 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
     public function denormalize(mixed $data, string $type, string $format = null, array $context = []): mixed
     {
-        $context[self::AVOID_ARRAY_RECURSION] ??= false;
-        if (!$context[self::AVOID_ARRAY_RECURSION] && is_array($data) && array_is_list($data) && count($data)) {
-            $array = [];
-            foreach ($data as $item) {
-                $array[] = $this->denormalize($item, $type, $format, $context);
+        if (is_array($data)) {
+            if (array_is_list($data) && str_ends_with($type, '[]')) {
+                $array = [];
+                foreach ($data as $item) {
+                    $array[] = $this->denormalize($item, substr($type, 0, -2), $format, $context);
+                }
+
+                return $array;
             }
 
-            return $array;
-        }
-
-        if (is_array($data)) {
             $data = $this->toObject($data);
         }
 
@@ -179,21 +179,8 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                 continue;
             }
 
-            if (null !== $value && $property->isArray()) {
-                $values = [];
-                foreach ($value as $item) {
-                    if (null === $item) {
-                        continue;
-                    }
-                    $values[] = $this->denormalize($item, $property->getArrayType(), $format, $context);
-                }
-                $value = $values;
-                $values = null;
-                unset($values);
-            } elseif (is_object($value) && $property->isModel()) {
+            if (null !== $value && ($property->isModel() || $property->isArray())) {
                 $value = $this->denormalize($value, $property->getType(), $format, $context);
-            } elseif (is_array($value) && $property->isModel()) {
-                $value = $this->denormalize($value, $property->getType(), $format, array_merge($context, [self::AVOID_ARRAY_RECURSION => true]));
             } elseif ($property->isBool()) {
                 if ($property->isFlag()) {
                     if (is_array($data)) {
