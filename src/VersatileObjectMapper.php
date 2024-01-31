@@ -80,6 +80,9 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                 $childChain = $property->isNested() ? array_merge($property->isRoot() ? [] : $context[self::PATH], $accessor) : [];
                 $data = $this->normalize($value, $format, array_merge($context, [AbstractNormalizer::OBJECT_TO_POPULATE => $data, self::PATH => $childChain]));
             } else {
+                if ($value instanceof \DateTimeInterface) {
+                    $value = $value->format($property->getDateTimeFormat());
+                }
                 $childAccessor = sprintf('[%s]', implode('][', array_merge($context[self::PATH], $accessor)));
                 $this->propertyAccessor->setValue($data, $childAccessor, $value);
             }
