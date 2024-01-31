@@ -21,6 +21,7 @@ final class Property
         private bool|string|int|null $falseValue = false,
         private ?string $defaultOrder = null,
         private ?bool $list = null,
+        private ?string $dateTimeFormat = null,
     ) {
         $this->list ??= $this->nested;
         $this->field ??= $this->accessor;
@@ -107,5 +108,10 @@ final class Property
     public function isList(): bool
     {
         return $this->list;
+    }
+
+    public function getDateTimeFormat(): ?string
+    {
+        return $this->dateTimeFormat;
     }
 }

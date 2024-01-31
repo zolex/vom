@@ -170,4 +170,9 @@ class PropertyMetadata
     {
         return $this->attribute->isList();
     }
+
+    public function getDateTimeFormat(): string
+    {
+        return $this->attribute->getDateTimeFormat() ?? \DateTime::RFC3339_EXTENDED;
+    }
 }
