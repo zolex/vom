@@ -47,4 +47,10 @@ final class ModelMetadata
     {
         $this->properties[$property->getName()] = $property;
     }
+
+    // to get nested metadata with property-accessor
+    public function __get($name): mixed
+    {
+        return $this->properties[$name] ?? null;
+    }
 }

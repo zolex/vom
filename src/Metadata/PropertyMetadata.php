@@ -133,4 +133,10 @@ class PropertyMetadata
     {
         return $this->attribute->getDateTimeFormat() ?? \DateTime::RFC3339_EXTENDED;
     }
+
+    // to get nested metadata with property-accessor
+    public function __get($name): mixed
+    {
+        return $this->modelMetadata?->{$name} ?? null;
+    }
 }
