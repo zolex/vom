@@ -1,12 +1,13 @@
 <?php
 
-namespace Zolex\VOM\Test;
+namespace Zolex\VOM\Test\VersatileObjectMapper;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Test\Fixtures\Address;
+use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
@@ -300,5 +301,82 @@ class VersatileObjectMapperTest extends TestCase
                 ),
             ],
         ];
+    }
+
+    public function testRecursiveStructures(): void
+    {
+        $modelMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        $objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
+
+        $data = [
+            'dateTimeList' => [
+                ['dateTime' => '2024-01-01 00:00:00'],
+            ],
+            'recursiveList' => [
+                [
+                    'dateTimeList' => [
+                        ['dateTime' => '2024-01-02 00:00:00'],
+                        ['dateTime' => '2024-01-03 00:00:00'],
+                    ],
+                    'recursiveList' => [
+                        [
+                            'dateTimeList' => [
+                                ['dateTime' => '2024-01-03 00:00:00'],
+                                ['dateTime' => '2024-01-04 00:00:00'],
+                                ['dateTime' => '2024-01-05 00:00:00'],
+                            ],
+                            'recursiveList' => [
+                                [
+                                    'dateTimeList' => [
+                                        ['dateTime' => '2024-06-01 00:00:00'],
+                                        ['dateTime' => '2024-07-01 00:00:00'],
+                                        ['dateTime' => '2024-08-01 00:00:00'],
+                                        ['dateTime' => '2024-09-01 00:00:00'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'dateTimeList' => [
+                        ['dateTime' => '2024-01-10 00:00:00'],
+                    ],
+                    'recursiveList' => [
+                        [
+                            'dateTimeList' => [
+                                ['dateTime' => '2024-01-11 00:00:00'],
+                                ['dateTime' => '2024-01-12 00:00:00'],
+                            ],
+                            'recursiveList' => [
+                                [
+                                    'dateTimeList' => [
+                                        ['dateTime' => '2024-01-13 00:00:00'],
+                                        ['dateTime' => '2024-01-14 00:00:00'],
+                                        ['dateTime' => '2024-01-15 00:00:00'],
+                                    ],
+                                    'recursiveList' => [
+                                        [
+                                            'dateTimeList' => [
+                                                ['dateTime' => '2024-06-16 00:00:00'],
+                                                ['dateTime' => '2024-07-17 00:00:00'],
+                                                ['dateTime' => '2024-08-18 00:00:00'],
+                                                ['dateTime' => '2024-09-19 00:00:00'],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $items = $objectMapper->denormalize($data, Arrays::class);
+        $data2 = $objectMapper->normalize($items);
+
+        $this->assertEquals($data, $data2);
     }
 }
