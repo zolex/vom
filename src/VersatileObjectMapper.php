@@ -226,7 +226,11 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         return $model;
     }
 
-    public function getNormalizedFields(string|ModelMetadata $metadata, array $context = []): array
+    /**
+     * @codeCoverageIgnore
+     * Unused, just here as a backup :P
+     */
+    private function getNormalizedFields(string|ModelMetadata $metadata, array $context = []): array
     {
         $fields = [];
         $context[self::PATH] ??= [];
