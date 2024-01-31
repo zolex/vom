@@ -9,6 +9,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Test\Fixtures\PropertyMetadataFactoryInterface;
 
 class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
 {

@@ -7,6 +7,7 @@ namespace Zolex\VOM\Metadata\Factory;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Test\Fixtures\PropertyMetadataFactoryInterface;
 
 class ModelMetadataFactory implements ModelMetadataFactoryInterface
 {
