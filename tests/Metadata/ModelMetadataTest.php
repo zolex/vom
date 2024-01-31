@@ -3,11 +3,15 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Test\Fixtures\SickRoot;
 
 class ModelMetadataTest extends TestCase
 {
@@ -29,5 +33,18 @@ class ModelMetadataTest extends TestCase
         $this->assertArrayHasKey('name', $properties);
         $this->assertSame($prop, $properties['name']);
         $this->assertSame($prop, $metadata->getProperty('name'));
+    }
+
+    public function testGetNestedMetadataWithPropertyAccessor(): void
+    {
+        $factory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $metadata = $factory->create(SickRoot::class);
+        $accessor = PropertyAccess::createPropertyAccessor();
+
+        $firstname = $accessor->getValue($metadata, 'singleChild.firstname');
+        $this->assertInstanceOf(PropertyMetadata::class, $firstname);
+
+        $sickedy = $accessor->getValue($metadata, 'sickSack.sickSuck.sickedy');
+        $this->assertInstanceOf(PropertyMetadata::class, $sickedy);
     }
 }
