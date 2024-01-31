@@ -3,14 +3,13 @@
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\PropertyAccess\PropertyAccess;
-use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
-use Zolex\VOM\Metadata\Factory\CachedPropertyMetadataFactory;
+use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
+use Zolex\VOM\Test\Fixtures\ArrayWithoutDocTag;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
@@ -45,6 +44,13 @@ class VersatileObjectMapperTest extends TestCase
         $model = $this->objectMapper->denormalize([], Booleans::class);
         $this->assertFalse($model->bool);
         $this->assertNull($model->nullableBool);
+    }
+
+    public function testArrayWithoutDocTag(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $data = ['list' => [[], [], []]];
+        $this->objectMapper->denormalize($data, ArrayWithoutDocTag::class);
     }
 
     public function testFlags()

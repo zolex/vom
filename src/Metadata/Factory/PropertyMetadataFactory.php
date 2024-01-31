@@ -7,14 +7,19 @@ namespace Zolex\VOM\Metadata\Factory;
 use phpDocumentor\Reflection\DocBlockFactory;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
 class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
 {
+    public const THROW_EXCEPTIONS = 'throw_exceptions';
+
     private DocBlockFactory $docBlockFactory;
 
-    public function __construct(
-    ) {
+    public function __construct(private readonly array $options = [
+        self::THROW_EXCEPTIONS => true,
+    ])
+    {
         $this->docBlockFactory = DocBlockFactory::createInstance();
     }
 
@@ -34,6 +39,10 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
         $attribute = $propertyAttribute[0]->newInstance();
         if ('array' === $type) {
             if (!$type = $this->getTypeFromDocBlock($reflectionProperty, $reflectionClass->getNamespaceName())) {
+                if ($this->options[self::THROW_EXCEPTIONS]) {
+                    throw new RuntimeException(sprintf('Array property "%s::$%s" must define a type in it\'s docblock.', $reflectionClass->getName(), $name));
+                }
+
                 return null;
             }
         }
@@ -59,7 +68,7 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
         $types = explode('|', (string) $docBlock->getTagsByName('var')[0]?->getType());
 
         foreach ($types as $type) {
-            if ('[]' === substr($type, -2)) {
+            if (str_ends_with($type, '[]')) {
                 $type = substr($type, 0, -2);
                 if (!class_exists($type)) {
                     $type = sprintf("%s%s", $namespace, $type);
