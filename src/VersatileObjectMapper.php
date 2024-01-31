@@ -59,7 +59,12 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
         foreach ($metadata->getProperties() as $property) {
             $propertyName = $property->getName();
-            $value = $this->propertyAccessor->getValue($object, $propertyName);
+            try {
+                $value = $this->propertyAccessor->getValue($object, $propertyName);
+            } catch (\Throwable) {
+                continue;
+            }
+
             $accessor = explode('.', $property->getAccessor());
 
             if (null === $value && (true === ($context[AbstractObjectNormalizer::SKIP_NULL_VALUES] ?? false))) {
