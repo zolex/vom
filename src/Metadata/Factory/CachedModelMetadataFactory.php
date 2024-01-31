@@ -21,7 +21,7 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ModelMetadata
+    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ?ModelMetadata
     {
         $cacheKey = self::CACHE_KEY_PREFIX.md5($class);
         if (\array_key_exists($cacheKey, $this->localCache)) {

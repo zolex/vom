@@ -17,13 +17,21 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ModelMetadata
+    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ?ModelMetadata
     {
+        if (isset($this->classes[$class])) {
+            return $this->classes[$class];
+        }
+
         $modelMetadata = new ModelMetadata($class);
+
         $reflectionClass = new \ReflectionClass(trim($class, '?'));
         $modelAttribute = $reflectionClass->getAttributes(Model::class);
         if (count($modelAttribute)) {
             $modelMetadata->setAttribute($modelAttribute[0]->newInstance());
+            $this->classes[$class] = &$modelMetadata;
+        } else {
+            return null;
         }
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
@@ -31,7 +39,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 continue;
             }
             $type = $propertyMetadata->getType();
-            if (class_exists($type)) {
+            if ('array' === $type) {
+                $propertyModelMetadata = $this->create($propertyMetadata->getArrayType());
+                $propertyMetadata->setModelMetadata($propertyModelMetadata);
+            } elseif (class_exists($type)) {
                 $propertyModelMetadata = $this->create($type, $propertyMetadata);
                 $propertyMetadata->setModelMetadata($propertyModelMetadata);
             }
