@@ -13,6 +13,9 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 
+/**
+ * @codeCoverageIgnore
+ */
 class ZolexVOMExtension extends Extension implements CompilerPassInterface
 {
     /**
