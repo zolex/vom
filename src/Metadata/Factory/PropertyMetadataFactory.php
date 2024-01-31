@@ -55,7 +55,7 @@ class PropertyMetadataFactory implements PropertyMetadataFactoryInterface
             $groups = null;
         }
 
-        return new PropertyMetadata($name, $originalType, $attribute, $groups, [], $type);
+        return new PropertyMetadata($name, $originalType, $attribute, $groups, $type);
     }
 
     private function getTypeFromDocBlock(\ReflectionProperty $reflectionProperty, string $namespace): ?string

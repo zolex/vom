@@ -14,7 +14,6 @@ class PropertyMetadata
         private readonly string $type,
         private readonly Property $attribute,
         private readonly ?Groups $groups = null,
-        private readonly array $path = [],
         private readonly ?string $arrayType = null,
         private ?ModelMetadata $modelMetadata = null,
     ) {
@@ -123,11 +122,6 @@ class PropertyMetadata
     public function getDefaultOrder(): ?string
     {
         return $this->attribute->getDefaultOrder();
-    }
-
-    public function getPath(): array
-    {
-        return $this->path;
     }
 
     public function getArrayType(): ?string
