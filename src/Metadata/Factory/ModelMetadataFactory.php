@@ -52,45 +52,66 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             */
         }
 
-        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            $propertyAttribute = null;
-            $groups = [];
-            foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
-                if ($attribute instanceof Property) {
-                    $propertyAttribute = $attribute;
-                    continue;
-                }
-                if ($attribute instanceof Groups) {
-                    $groups = $attribute->getGroups();
-                }
+        if ($constructor = $reflectionClass->getConstructor()) {
+            foreach ($constructor->getParameters() as $reflectionParameter) {
+                $this->addModelProperty($modelMetadata, $reflectionParameter, true);
             }
+        }
 
-            if (!$propertyAttribute) {
+        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+            if ($modelMetadata->hasProperty($reflectionProperty->getName())) {
+                // skip properties that already have been added via constructor
                 continue;
             }
 
-            $types = $this->getTypes($reflectionProperty->getDeclaringClass()->name, $reflectionProperty->name);
-            $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute, $groups);
-
-            $type = null;
-            if ($propertyMetadata->isCollection()) {
-                $type = $propertyMetadata->getCollectionType();
-            } elseif ($className = $propertyMetadata->getType()) {
-                $type = $className;
-            }
-
-            if (null !== $type) {
-                $propertyModelMetadata = $this->create($type);
-                $propertyMetadata->setModelMetadata($propertyModelMetadata);
-            }
-
-            $modelMetadata->addProperty($propertyMetadata);
+            $this->addModelProperty($modelMetadata, $reflectionProperty);
         }
 
         return $modelMetadata;
     }
 
-    private function loadAttributes(\ReflectionMethod|\ReflectionClass|\ReflectionProperty $reflector): iterable
+    private function addModelProperty(ModelMetadata $modelMetadata, \ReflectionParameter|\ReflectionProperty $reflectionProperty, bool $isConstructorArgument = false): void
+    {
+        $propertyAttribute = null;
+        $groups = [];
+        foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
+            if ($attribute instanceof Property) {
+                $propertyAttribute = $attribute;
+                continue;
+            }
+            if ($attribute instanceof Groups) {
+                $groups = $attribute->getGroups();
+            }
+        }
+
+        if (!$propertyAttribute) {
+            return;
+        }
+
+        $types = $this->getTypes($reflectionProperty->getDeclaringClass()->name, $reflectionProperty->name);
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute, $groups, $isConstructorArgument);
+        try {
+            $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
+        } catch (\Throwable $e) {
+            $x = 1;
+        }
+
+        $type = null;
+        if ($propertyMetadata->isCollection()) {
+            $type = $propertyMetadata->getCollectionType();
+        } elseif ($className = $propertyMetadata->getType()) {
+            $type = $className;
+        }
+
+        if (null !== $type) {
+            $propertyModelMetadata = $this->create($type);
+            $propertyMetadata->setModelMetadata($propertyModelMetadata);
+        }
+
+        $modelMetadata->addProperty($propertyMetadata);
+    }
+
+    private function loadAttributes(\ReflectionMethod|\ReflectionClass|\ReflectionProperty|\ReflectionParameter $reflector): iterable
     {
         foreach ($reflector->getAttributes() as $attribute) {
             yield $attribute->newInstance();

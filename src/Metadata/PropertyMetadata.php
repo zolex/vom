@@ -14,16 +14,16 @@ class PropertyMetadata
         \DateTimeImmutable::class,
     ];
 
+    private ?ModelMetadata $modelMetadata = null;
+    private readonly mixed $defaultValue;
+
     public function __construct(
         private readonly string $name,
-        /**
-         * @var array|Type[]
-         */
+        /** @var array|Type[] */
         private readonly iterable $types,
         private readonly Property $attribute,
         private readonly array $groups = ['default'],
-        private readonly ?string $arrayType = null,
-        private ?ModelMetadata $modelMetadata = null,
+        private readonly bool $isConstructorArgument = false,
     ) {
     }
 
@@ -189,6 +189,35 @@ class PropertyMetadata
     public function getDateTimeFormat(): string
     {
         return $this->attribute->getDateTimeFormat() ?? \DateTime::RFC3339_EXTENDED;
+    }
+
+    public function isConstructorArgument(): bool
+    {
+        return $this->isConstructorArgument;
+    }
+
+    public function isNullable(): bool
+    {
+        foreach ($this->types as $type) {
+            return $type->isNullable();
+        }
+
+        return false;
+    }
+
+    public function getDefaultValue(): mixed
+    {
+        return $this->defaultValue;
+    }
+
+    public function setDefaultValue(mixed $defaultValue): void
+    {
+        $this->defaultValue = $defaultValue;
+    }
+
+    public function hasDefaultValue(): bool
+    {
+        return isset($this->defaultValue);
     }
 
     // to get nested metadata with property-accessor
