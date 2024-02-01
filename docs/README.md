@@ -73,11 +73,14 @@ Without symfony framework, you have to construct the mapper yourself. Also see t
 ```php
 $objectMapper = new \Zolex\VOM\VersatileObjectMapper(
     new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(
-        new \Zolex\VOM\Metadata\Factory\PropertyMetadataFactory()
+        \Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory::create();
     ),
     \Symfony\Component\PropertyAccess\PropertyAccess::createPropertyAccessor(),
 );
 ```
+
+> [!TIP]
+> The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available such as PHPStan an Doctrine. You can write a custom extractor to give VOM additional information on your model's properties.
 
 ## Denormalization
 
