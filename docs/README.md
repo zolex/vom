@@ -15,21 +15,14 @@
 
 ![VOM](logo.png)
 
-The Versatile Object Mapper, or in short VOM, is a PHP library to transform any data structures into the desired models, solely by adding PHP attributes to existing classes.
-It maps arbitrary data into strictly typed, object-oriented models and vice versa, which helps to create more reliable and easier to maintain projects while increasing productivity at the same time.
-
-For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
+The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models, by simply adding PHP attributes to existing classes.
 
 <!-- toc -->
 
+- [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
 - [Denormalization](#denormalization)
 - [Normalization](#normalization)
-- [Context](#context)
-  * [Groups](#groups)
-  * [Skip Null Values](#skip-null-values)
-  * [Root Fallback](#root-fallback)
-  * [Object to Populate](#object-to-populate)
 - [Attribute Configuration](#attribute-configuration)
   * [The Accessor](#the-accessor)
   * [Nested properties](#nested-properties)
@@ -39,6 +32,11 @@ For the best interoperability, VOM implements the Symfony normalizer and denorma
     + [Flags](#flags)
     + [DateTime](#datetime)
   * [Nesting with Accessors](#nesting-with-accessors)
+- [Context](#context)
+  * [Groups](#groups)
+  * [Skip Null Values](#skip-null-values)
+  * [Root Fallback](#root-fallback)
+  * [Object to Populate](#object-to-populate)
 
 <!-- tocstop -->
 
@@ -86,14 +84,12 @@ To create a model instance from the input data, simply call the `denormalize()` 
 
 A very common use-case is to deserialize json for example with `json_decode()` or using symfony's serializer and pass the result to the `denormalize()` method.
 
+> ![NOTE]
+> Right now VOM implements only the symfony normalizer and denormalizer interfaces. Until release of version `0.1.0` it will also implement the serializer and normalizer-aware interfaces, so you won't even need to deserialize input before passing it to VOM!  
+
 ```php
 $person = $objectMapper->denormalize($data, Person::class);
 ```
-
-> [!TIP]
-> It can make sense to have additional properties which are not fed by the VOM denormalization, for example if you use the injected data to do further computations and store it on a model before returning it to the client, sending it to another API or storing it in the database.
-
-
 
 ## Normalization
 
@@ -108,63 +104,6 @@ $object = $objectMapper->toObject($array);
 ```
 
 Note that in the current version it can not convert back data structures to their original, that contain or solely exist of other classes like entities or models. It will instead output normal arrays or objects.
-
-## Context
-
-VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
-
-### Groups
-
-```php
-use Symfony\Component\Serializer\Annotation\Groups;
-
-#[VOM\Model]
-class SomeModel
-{
-    #[Groups('group_a')]
-    #[VOM\Property]
-    public string $rooted;
-    
-    #[Groups(['group_a', 'group_b'])]
-    #[VOM\Property]
-    public NestedClass $nested;
-}
-```
-
-To only process properties with specific groups you can pass the groups in the context.
-
-```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['groups' => ['group_a']]);
-
-$someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
-```
-
-### Skip Null Values
-
-To skip all null values, which means for denormalization not to initialize their corresponding properties in the model, and for normalization to simply not include them in the resulting data array.
-
-```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['skip_null_values' => true]);
-
-$someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
-```
-
-### Root Fallback
-
-Whenever a property accessor can not find anything in the source data this option allows to fall back to the root of the data structure and continue to search from there. This is only available for denormalization.
-
-```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['root_fallback' => true]);
-```
-
-### Object to Populate
-
-If you already have an object that you want to populate, you can pass it to the denormalize method. This can be useful when you are for example reading an entity from a database and want to update values on it.
-
-```php
-$someModel = new SomeModel();
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['object_to_populate' => $someModel]);
-```
 
 
 ## Attribute Configuration
@@ -197,8 +136,14 @@ class NestedClass
     public string $value;
 }
 ```
+
 As the data structures and names of all properties are identical, no additional configuration is required. _But as mentioned above, in this scenario you probably just want to use a symfony normalizer to save resources._
 
+> [!TIP]
+> Every model that should be processed by VOM needs the `#[VOM\Model]` attribute, so does every property need the `#[VOM\Property]`attribute.
+> This includes every nested model and property. On the one hand this increases performance by not trying to process each and everything.
+> It can make sense to have additional nested models and properties which are never touched the VOM, for example if you use some of the fed data,
+> to do further computations and add it to a model, before returning it to the client, sending it to an API or storing it in the database.
 
 ### The Accessor
 
@@ -537,3 +482,61 @@ class ThirdDimension
     public string $effectivelyOnThirdDimension;
 }
 ```
+
+## Context
+
+VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
+
+### Groups
+
+```php
+use Symfony\Component\Serializer\Annotation\Groups;
+
+#[VOM\Model]
+class SomeModel
+{
+    #[Groups('group_a')]
+    #[VOM\Property]
+    public string $rooted;
+    
+    #[Groups(['group_a', 'group_b'])]
+    #[VOM\Property]
+    public NestedClass $nested;
+}
+```
+
+To only process properties with specific groups you can pass the groups in the context.
+
+```php
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['groups' => ['group_a']]);
+
+$someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
+```
+
+### Skip Null Values
+
+To skip all null values, which means for denormalization not to initialize their corresponding properties in the model, and for normalization to simply not include them in the resulting data array.
+
+```php
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['skip_null_values' => true]);
+
+$someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
+```
+
+### Root Fallback
+
+Whenever a property accessor can not find anything in the source data this option allows to fall back to the root of the data structure and continue to search from there. This is only available for denormalization.
+
+```php
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['root_fallback' => true]);
+```
+
+### Object to Populate
+
+If you already have an object that you want to populate, you can pass it to the denormalize method. This can be useful when you are for example reading an entity from a database and want to update values on it.
+
+```php
+$someModel = new SomeModel();
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['object_to_populate' => $someModel]);
+```
+
