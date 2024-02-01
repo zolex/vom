@@ -46,9 +46,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 continue;
             }
 
+            /* TODO: use normalization and denormalization context of the model
             if ($attribute instanceof Context) {
-                //...
             }
+            */
         }
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
