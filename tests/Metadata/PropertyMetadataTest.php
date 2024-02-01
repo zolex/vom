@@ -3,6 +3,7 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
@@ -22,10 +23,11 @@ class PropertyMetadataTest extends TestCase
             'desc',
             \DateTime::W3C,
         );
-        $metadata = new PropertyMetadata('name', 'type', $attribute);
+        $types = [new Type('int')];
+        $metadata = new PropertyMetadata('name', $types, $attribute);
 
         $this->assertEquals('name', $metadata->getName());
-        $this->assertEquals('type', $metadata->getType());
+        $this->assertNull($metadata->getType());
         $this->assertEquals('accessor', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
         $this->assertFalse($metadata->isNested());

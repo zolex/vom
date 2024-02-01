@@ -62,7 +62,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             $propertyName = $property->getName();
             try {
                 $value = $this->propertyAccessor->getValue($object, $propertyName);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 continue;
             }
 
@@ -72,12 +72,12 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                 continue;
             }
 
-            if ($property->isArray()) {
+            if ($property->isCollection()) {
                 foreach ($value as $index => $item) {
                     $childChain = $property->isNested() ? array_merge($property->isRoot() ? [$index] : $context[self::PATH], $accessor, [$index]) : [$index];
                     $data = $this->normalize($item, $format, array_merge($context, [AbstractNormalizer::OBJECT_TO_POPULATE => $data, self::PATH => $childChain]));
                 }
-            } elseif ($property->isModel()) {
+            } elseif ($property->isModel() && !$property->isBuiltinClass()) {
                 $childChain = $property->isNested() ? array_merge($property->isRoot() ? [] : $context[self::PATH], $accessor) : [];
                 $data = $this->normalize($value, $format, array_merge($context, [AbstractNormalizer::OBJECT_TO_POPULATE => $data, self::PATH => $childChain]));
             } else {
@@ -131,6 +131,10 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
     public function denormalize(mixed $data, string $type, string $format = null, array $context = []): mixed
     {
+        if (null === $data) {
+            return null;
+        }
+
         if (is_array($data)) {
             if (array_is_list($data) && str_ends_with($type, '[]')) {
                 $array = [];
@@ -161,7 +165,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             $accessor = $property->getAccessor();
             try {
                 $value = $this->propertyAccessor->getValue($data, $accessor);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 if (!$property->isNested() || true === $context[self::ROOT_FALLBACK]) {
                     $value = $context[self::ROOT_DATA];
                 } elseif ($property->isNested() && $property->isRoot()) {
@@ -179,8 +183,11 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                 continue;
             }
 
-            if (null !== $value && ($property->isModel() || $property->isArray())) {
-                $value = $this->denormalize($value, $property->getType(), $format, $context);
+            if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
+                $value = $this->denormalize($value, $collectionType.'[]', $format, $context);
+            } elseif (is_string($value) && $property->isDateTime()) {
+                $class = $property->getType();
+                $value = new $class($value);
             } elseif ($property->isBool()) {
                 if ($property->isFlag()) {
                     if (is_array($data)) {
@@ -196,17 +203,17 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                         // custom flag nested value
                         $value = !$property->isFalse($value);
                     }
-                } else {
+                } elseif (null !== $value) {
                     $value = $property->isTrue($value);
                 }
-            } elseif ($property->isDateTime() && is_string($value)) {
-                $class = $property->getType();
-                $value = new $class($value);
+            } elseif (null !== $value && $property->isModel()) {
+                $value = $this->denormalize($value, $property->getType(), $format, $context);
             }
 
             try {
                 $this->propertyAccessor->setValue($model, $property->getName(), $value);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
+                $x = 1;
             }
         }
 
