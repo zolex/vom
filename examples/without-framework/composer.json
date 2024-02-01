@@ -5,7 +5,8 @@
     "prefer-stable": true,
     "require": {
         "php": ">=8.2",
-        "zolex/vom": "dev-master"
+        "phpdocumentor/reflection-docblock": "^5.3",
+        "zolex/vom": "^0.0.4"
     },
     "config": {
         "allow-plugins": {

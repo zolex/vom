@@ -14,6 +14,6 @@ composer install --no-dev
 symfony serve
 # or alternatively
 # php -S localhost:8000 ./public/index.php
-
-curl http://localhost:8000/api/people/123
 ```
+
+Open `http://localhost:8000/api` in your browser :)

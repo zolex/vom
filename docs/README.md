@@ -79,7 +79,7 @@ $objectMapper = new \Zolex\VOM\VersatileObjectMapper(
 ## Denormalization
 
 The object mapper can process any kind of PHP data structure as input. This includes arrays, plain old PHP objects, class instances and any combination and nesting of all these.
-So the input data might be an array, an stdClass, other models with private properties and their own getters and setters as well as arrays of any type.
+So the input data might be an indexed array, an associative array an stdClass, other class instances with private properties and their own getters and setters as well as several collections.
 To create a model instance from the input data, simply call the `denormalize()` method on the mapper.
 
 A very common use-case is to deserialize json for example with `json_decode()` or using symfony's serializer and pass the result to the `denormalize()` method.
@@ -89,6 +89,17 @@ A very common use-case is to deserialize json for example with `json_decode()` o
 
 ```php
 $person = $objectMapper->denormalize($data, Person::class);
+```
+
+### Collections
+
+VOM can process several types of collections, like arrays and DoctrineCollection, basically any iterable that can be detected as such by Symfony PropertyInfoExtractor.
+
+If you want to pass the `denormalize()` method such a collection, its required to pass an array notation of the model class (using the square brackets `[]`).
+
+```php
+$person = $objectMapper->denormalize($collectionOfPeople, Person::class.'[]');
+$person = $objectMapper->denormalize($collectionOfPeople, 'App\Entity\Person[]');
 ```
 
 ## Normalization

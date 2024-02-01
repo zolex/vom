@@ -17,7 +17,7 @@
 The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models, by simply adding PHP attributes to existing classes.
 
 > [!CAUTION]
-> This package is in an early stadium and I can not recommend to use it on production before version `0.1.0` is going to be released.
+> This package is in an early stadium and I can not recommend to use it on production before version `0.1.0` will be released.
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
@@ -29,7 +29,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 VOM is available on packagist. To install, simply require it via composer. 
 
 ```bash
-composer require zolex/vom ^0.0.3
+composer require zolex/vom ^0.0.4
 ```
 
 ### Symfony
@@ -66,7 +66,7 @@ $data = [
 ];
 ```
 
-Usually you would write some code that creates the model instances, puts the data from source array in it and nests them properly.
+Usually you would write some code that creates the model instances, sets their properties and nests them properly.
 In very simple scenarios, writing the transformation logic as code can be a good choice, but it can be a pain when it comes to very huge models, the input data structures
 and/or application models change while still in development, or if you want to reuse the transformation logic in other projects too because it receives the same inputs and/or uses the same models.
 
@@ -133,7 +133,7 @@ You may have noticed, that some property attributes have arguments while others 
 
 If there is any difference between the data structure of your input and your application's models, VOM may be a good choice to avoid writing and maintaining code, but instead just add some PHP attributes.**
 
-> [!CAUTION]
+> [!NOTE]
 > If you need to inject data into your entities that already is in a structure matching your models, this library can be used but may be an overhead. In this scenario you could simply utilize a standard [Symfony normalizer](https://symfony.com/doc/current/components/serializer.html#normalizers).
 
 
