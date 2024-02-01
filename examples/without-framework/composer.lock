@@ -1002,16 +1002,17 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zolex/vom.git",
-                "reference": "1494118dca4eb854c0daf75e2f8121b2ad0a7f15"
+                "reference": "39f5a738fc64d85c75a24b697a06d7d6d874e005"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zolex/vom/zipball/1494118dca4eb854c0daf75e2f8121b2ad0a7f15",
-                "reference": "1494118dca4eb854c0daf75e2f8121b2ad0a7f15",
+                "url": "https://api.github.com/repos/zolex/vom/zipball/39f5a738fc64d85c75a24b697a06d7d6d874e005",
+                "reference": "39f5a738fc64d85c75a24b697a06d7d6d874e005",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
+                "phpdocumentor/reflection-docblock": "^5.3",
                 "symfony/property-access": "^6.4|^7.0",
                 "symfony/serializer": "^6.4|^7.0"
             },
@@ -1045,7 +1046,7 @@
                 "issues": "https://github.com/zolex/vom/issues",
                 "source": "https://github.com/zolex/vom/tree/0.0.4"
             },
-            "time": "2024-02-01T20:07:10+00:00"
+            "time": "2024-02-01T22:12:10+00:00"
         }
     ],
     "packages-dev": [],
