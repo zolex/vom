@@ -7,9 +7,11 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PropertyInfo\PropertyInfoCacheExtractor;
 use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
+use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 
 class GroupsContextBuilderTest extends TestCase
@@ -27,7 +29,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -48,7 +50,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -73,7 +75,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -98,7 +100,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -123,7 +125,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -148,7 +150,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -173,7 +175,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 
@@ -197,7 +199,7 @@ class GroupsContextBuilderTest extends TestCase
 
         $contextBuilder = new GroupsContextBuilder(
             $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(new PropertyMetadataFactory()),
+            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
             'groups',
         );
 

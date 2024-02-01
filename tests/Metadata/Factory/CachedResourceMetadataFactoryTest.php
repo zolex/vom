@@ -7,6 +7,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
+use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 
 class CachedResourceMetadataFactoryTest extends TestCase
@@ -14,7 +15,7 @@ class CachedResourceMetadataFactoryTest extends TestCase
     public function testLocalCache()
     {
         $cachePool = new ArrayAdapter();
-        $resourceMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $resourceMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $resourceMetadataFactory, true);
 
         $metadata = $cachedResourceMetadataFactory->create(Person::class);
@@ -25,14 +26,14 @@ class CachedResourceMetadataFactoryTest extends TestCase
     public function testPSRCache()
     {
         $cachePool = new ArrayAdapter();
-        $modelMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $modelMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $modelMetadataFactory, true);
 
         $metadata = $cachedResourceMetadataFactory->create(Person::class);
         $cachedMetadata = $cachePool->getItem(CachedModelMetadataFactory::CACHE_KEY_PREFIX.md5(Person::class))->get();
         $this->assertEquals($metadata, $cachedMetadata);
 
-        $modelMetadataFactory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $modelMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $modelMetadataFactory, true);
 
         $metadata2 = $cachedResourceMetadataFactory->create(Person::class);

@@ -4,6 +4,7 @@ namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
@@ -11,6 +12,7 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\SickRoot;
 
 class ModelMetadataTest extends TestCase
@@ -24,7 +26,8 @@ class ModelMetadataTest extends TestCase
 
         $metadata = new ModelMetadata();
         $metadata->setAttribute($model);
-        $prop = new PropertyMetadata('name', 'type', new Property(), new Groups(['group']), null);
+        $types = [new Type('string')];
+        $prop = new PropertyMetadata('name', $types, new Property(), ['group'], null);
         $metadata->addProperty($prop);
         $properties = $metadata->getProperties();
 
@@ -37,7 +40,7 @@ class ModelMetadataTest extends TestCase
 
     public function testGetNestedMetadataWithPropertyAccessor(): void
     {
-        $factory = new ModelMetadataFactory(new PropertyMetadataFactory());
+        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
         $metadata = $factory->create(SickRoot::class);
         $accessor = PropertyAccess::createPropertyAccessor();
 

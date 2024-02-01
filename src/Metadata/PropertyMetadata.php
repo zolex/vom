@@ -4,16 +4,24 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\Property;
 
 class PropertyMetadata
 {
+    public const BUILTIN_CLASSES = [
+        \DateTime::class,
+        \DateTimeImmutable::class,
+    ];
+
     public function __construct(
         private readonly string $name,
-        private readonly string $type,
+        /**
+         * @var array|Type[]
+         */
+        private readonly iterable $types,
         private readonly Property $attribute,
-        private readonly ?Groups $groups = null,
+        private readonly array $groups = ['default'],
         private readonly ?string $arrayType = null,
         private ?ModelMetadata $modelMetadata = null,
     ) {
@@ -29,24 +37,56 @@ class PropertyMetadata
         return $this->attribute->getField() ?? $this->attribute->getAccessor();
     }
 
-    public function getType(): string
+    public function getType(): ?string
     {
-        return trim('array' === $this->type ? $this->arrayType : $this->type);
+        foreach ($this->types as $type) {
+            if ($class = $type->getClassName()) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
+    public function getCollectionType(): ?string
+    {
+        foreach ($this->types as $type) {
+            if ($type->isCollection()) {
+                foreach ($type->getCollectionValueTypes() as $collectionType) {
+                    return $collectionType->getClassName();
+                }
+            }
+        }
+
+        return null;
     }
 
     public function getGroups(): array
     {
-        return $this->groups?->getGroups() ?? ['default'];
+        return $this->groups;
     }
 
     public function isBool(): bool
     {
-        return 'bool' === $this->type;
+        foreach ($this->types as $type) {
+            if ('bool' === $type->getBuiltinType()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isDateTime(): bool
     {
-        return \DateTime::class === $this->type || \DateTimeImmutable::class === $this->type;
+        foreach ($this->types as $type) {
+            $class = $type->getClassName();
+            if (\DateTime::class === $class || \DateTimeImmutable::class === $class) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isFlag(): bool
@@ -79,9 +119,26 @@ class PropertyMetadata
         return null !== $this->modelMetadata;
     }
 
-    public function isArray(): bool
+    public function isBuiltinClass(): bool
     {
-        return 'array' === $this->type || str_ends_with($this->arrayType, '[]');
+        foreach ($this->types as $type) {
+            if (in_array($type->getClassName(), self::BUILTIN_CLASSES)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isCollection(): bool
+    {
+        foreach ($this->types as $type) {
+            if ($type->isCollection()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isRoot(): bool
