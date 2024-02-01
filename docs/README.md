@@ -22,8 +22,11 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 - [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
 - [Denormalization](#denormalization)
+  * [Collections](#collections)
 - [Normalization](#normalization)
 - [Attribute Configuration](#attribute-configuration)
+  * [Constructor Arguments](#constructor-arguments)
+  * [Constructor Property Promotion](#constructor-property-promotion)
   * [The Accessor](#the-accessor)
   * [Nested properties](#nested-properties)
   * [Arrays of objects](#arrays-of-objects)
@@ -155,6 +158,59 @@ As the data structures and names of all properties are identical, no additional 
 > This includes every nested model and property. On the one hand this increases performance by not trying to process each and everything.
 > It can make sense to have additional nested models and properties which are never touched the VOM, for example if you use some of the fed data,
 > to do further computations and add it to a model, before returning it to the client, sending it to an API or storing it in the database.
+
+### Constructor Arguments
+
+The `VOM\Property` attribute can be added on constructor arguments. VOM will pass the mapped values into the constructor. All required arguments must be property mapped and pre present in the source data. Otherwise VOM can not create an instance ob the model. Nullable arguments and those with a default value are optional in the source data.
+
+```php
+#[VOM\Model]
+class ConstructorArguments
+{
+    private int $id;
+    private string $name;
+    private ?bool $nullable;
+    private bool $default;
+
+    public function __construct(
+        #[VOM\Property]
+        int $id,
+        #[VOM\Property]
+        string $name,
+        #[VOM\Property]
+        ?bool $nullable,
+        #[VOM\Property]
+        bool $default = true
+    ) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->nullable = $nullable;
+        $this->default = $default;
+    }
+}
+```
+
+### Constructor Property Promotion
+
+Also constructor property promotion can be handled by VOM similar to normal constructor arguments.
+
+```php
+#[VOM\Model]
+class PropertyPromotion
+{
+    public function __construct(
+        #[VOM\Property]
+        private int $id,
+        #[VOM\Property]
+        private string $name,
+        #[VOM\Property]
+        private ?bool $nullable,
+        #[VOM\Property]
+        private bool $default = true,
+    ) {
+ }
+```
+
 
 ### The Accessor
 
