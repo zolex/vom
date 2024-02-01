@@ -12,6 +12,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
+use Zolex\VOM\Metadata\PropertyMetadata;
 
 final class VersatileObjectMapper implements NormalizerInterface, DenormalizerInterface
 {
@@ -155,69 +156,91 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             $context[AbstractNormalizer::GROUPS] = [$context[AbstractNormalizer::GROUPS]];
         }
 
-        $model = new $type();
+        $argumentNullable = [];
+        $constructorArguments = [];
         $metadata = $this->modelMetadataFactory->create($type);
+        foreach ($metadata->getConstructorArguments() as $argument) {
+            $value = $this->denormalizeProperty($data, $argument, $format, $context);
+            if (null === $value && $argument->hasDefaultValue()) {
+                $value = $argument->getDefaultValue();
+            }
+
+            $constructorArguments[$argument->getName()] = $value;
+            $argumentNullable[$argument->getName()] = $argument->isNullable();
+        }
+
+        $model = new $type(...$constructorArguments);
         foreach ($metadata->getProperties() as $property) {
-            if (count($context[AbstractNormalizer::GROUPS])
-                && !count(array_intersect($property->getGroups(), $context[AbstractNormalizer::GROUPS]))) {
-                continue;
-            }
-            $accessor = $property->getAccessor();
-            try {
-                $value = $this->propertyAccessor->getValue($data, $accessor);
-            } catch (\Throwable $e) {
-                if (!$property->isNested() || true === $context[self::ROOT_FALLBACK]) {
-                    $value = $context[self::ROOT_DATA];
-                } elseif ($property->isNested() && $property->isRoot()) {
-                    try {
-                        $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
-                    } catch (\Throwable) {
-                        $value = null;
-                    }
-                } else {
-                    $value = null;
-                }
-            }
-
-            if (null === $value && (true === ($context[AbstractObjectNormalizer::SKIP_NULL_VALUES] ?? false))) {
+            if ($property->isConstructorArgument()) {
                 continue;
             }
 
-            if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
-                $value = $this->denormalize($value, $collectionType.'[]', $format, $context);
-            } elseif (is_string($value) && $property->isDateTime()) {
-                $class = $property->getType();
-                $value = new $class($value);
-            } elseif ($property->isBool()) {
-                if ($property->isFlag()) {
-                    if (is_array($data)) {
-                        // common flag
-                        if (in_array($accessor, $data, true)) {
-                            $value = true;
-                        } elseif (in_array('!'.$accessor, $data, true)) {
-                            $value = false;
-                        } else {
-                            $value = null;
-                        }
-                    } elseif (is_object($data)) {
-                        // custom flag nested value
-                        $value = !$property->isFalse($value);
-                    }
-                } elseif (null !== $value) {
-                    $value = $property->isTrue($value);
-                }
-            } elseif (null !== $value && $property->isModel()) {
-                $value = $this->denormalize($value, $property->getType(), $format, $context);
-            }
-
+            $value = $this->denormalizeProperty($data, $property, $format, $context);
             try {
                 $this->propertyAccessor->setValue($model, $property->getName(), $value);
-            } catch (\Throwable $e) {
-                $x = 1;
+            } catch (\Throwable) {
             }
         }
 
         return $model;
+    }
+
+    private function denormalizeProperty(mixed $data, PropertyMetadata $property, string $format = null, array $context = []): mixed
+    {
+        if (count($context[AbstractNormalizer::GROUPS])
+            && !count(array_intersect($property->getGroups(), $context[AbstractNormalizer::GROUPS]))) {
+            return null;
+        }
+
+        $accessor = $property->getAccessor();
+        try {
+            $value = $this->propertyAccessor->getValue($data, $accessor);
+        } catch (\Throwable $e) {
+            if (!$property->isNested() || true === $context[self::ROOT_FALLBACK]) {
+                $value = $context[self::ROOT_DATA];
+            } elseif ($property->isNested() && $property->isRoot()) {
+                try {
+                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
+                } catch (\Throwable) {
+                    $value = null;
+                }
+            } else {
+                $value = null;
+            }
+        }
+
+        if (null === $value && (true === ($context[AbstractObjectNormalizer::SKIP_NULL_VALUES] ?? false))) {
+            return null;
+        }
+
+        if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
+            $value = $this->denormalize($value, $collectionType.'[]', $format, $context);
+        } elseif (is_string($value) && $property->isDateTime()) {
+            $class = $property->getType();
+            $value = new $class($value);
+        } elseif ($property->isBool()) {
+            if ($property->isFlag()) {
+                if (is_array($data)) {
+                    // common flag
+                    if (in_array($accessor, $data, true)) {
+                        $value = true;
+                    } elseif (in_array('!'.$accessor, $data, true)) {
+                        $value = false;
+                    } else {
+                        $value = null;
+                    }
+                } elseif (is_object($data)) {
+                    // custom flag nested value
+                    $value = !$property->isFalse($value);
+                }
+            } elseif (null !== $value) {
+                $value = $property->isTrue($value);
+            }
+        } elseif (null !== $value && $property->isModel()) {
+            $value = $this->denormalize($value, $property->getType(), $format, $context);
+        }
+
+        return $value;
     }
 
     /**

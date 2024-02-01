@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Zolex\VOM\Metadata;
 
 use Zolex\VOM\Mapping\Model;
-use Zolex\VOM\Mapping\Property;
 
 final class ModelMetadata
 {
     /**
-     * @var array|Property[]
+     * @var array|PropertyMetadata[]
      */
     private array $properties = [];
     private ?Model $attribute = null;
@@ -43,6 +42,11 @@ final class ModelMetadata
         return $this->properties[$name] ?? null;
     }
 
+    public function hasProperty(string $name): bool
+    {
+        return isset($this->properties[$name]);
+    }
+
     public function addProperty(PropertyMetadata $property): void
     {
         $this->properties[$property->getName()] = $property;
@@ -52,5 +56,14 @@ final class ModelMetadata
     public function __get($name): mixed
     {
         return $this->properties[$name] ?? null;
+    }
+
+    public function getConstructorArguments(): iterable
+    {
+        foreach ($this->properties as $property) {
+            if ($property->isConstructorArgument()) {
+                yield $property;
+            }
+        }
     }
 }

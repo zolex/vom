@@ -15,9 +15,11 @@ use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\ArrayWithoutDocTag;
 use Zolex\VOM\Test\Fixtures\Booleans;
+use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
 use Zolex\VOM\Test\Fixtures\Person;
+use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\SickChild;
 use Zolex\VOM\Test\Fixtures\SickRoot;
 use Zolex\VOM\Test\Fixtures\SickSack;
@@ -189,7 +191,6 @@ class VersatileObjectMapperTest extends TestCase
     public function createModelDataProvider(): array
     {
         return [
-            /*
             [
                 [
                     'id' => 42,
@@ -219,7 +220,6 @@ class VersatileObjectMapperTest extends TestCase
                 ['standard'],
                 new Person(id: 42, firstname: 'The', lastname: 'Dude', age: 38, email: 'some@mail.to'),
             ],
-            */
             [
                 [
                     'id' => 42,
@@ -411,5 +411,48 @@ class VersatileObjectMapperTest extends TestCase
         $data2 = $this->objectMapper->normalize($items);
 
         $this->assertEquals($data, $data2);
+    }
+
+    public function testConstruct(): void
+    {
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Pan',
+            'nullable' => false,
+            'default' => true,
+        ];
+
+        $constructed = $this->objectMapper->denormalize($data, ConstructorArguments::class);
+        $this->assertEquals(42, $constructed->getId());
+        $this->assertEquals('Peter Pan', $constructed->getName());
+        $this->assertFalse($constructed->getNullable());
+        $this->assertTrue($constructed->getDefault());
+    }
+
+    public function testPropertyPromotion(): void
+    {
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Pan',
+        ];
+
+        $constructed = $this->objectMapper->denormalize($data, PropertyPromotion::class);
+        $this->assertEquals(42, $constructed->getId());
+        $this->assertEquals('Peter Pan', $constructed->getName());
+        $this->assertNull($constructed->getNullable());
+        $this->assertTrue($constructed->getDefault());
+
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Pan',
+            'default' => false,
+            'nullable' => true,
+        ];
+
+        $constructed = $this->objectMapper->denormalize($data, PropertyPromotion::class);
+        $this->assertEquals(42, $constructed->getId());
+        $this->assertEquals('Peter Pan', $constructed->getName());
+        $this->assertTrue($constructed->getNullable());
+        $this->assertfalse($constructed->getDefault());
     }
 }
