@@ -8,7 +8,6 @@ use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Serializer\Exception\MappingException;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\ModelMetadata;
@@ -93,21 +92,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     private function loadAttributes(\ReflectionMethod|\ReflectionClass|\ReflectionProperty $reflector): iterable
     {
         foreach ($reflector->getAttributes() as $attribute) {
-            try {
-                yield $attribute->newInstance();
-            } catch (\Error $e) {
-                if (\Error::class !== $e::class) {
-                    throw $e;
-                }
-                $on = match (true) {
-                    $reflector instanceof \ReflectionClass => ' on class '.$reflector->name,
-                    $reflector instanceof \ReflectionMethod => sprintf(' on "%s::%s()"', $reflector->getDeclaringClass()->name, $reflector->name),
-                    $reflector instanceof \ReflectionProperty => sprintf(' on "%s::$%s"', $reflector->getDeclaringClass()->name, $reflector->name),
-                    default => '',
-                };
-
-                throw new MappingException(sprintf('Could not instantiate attribute "%s"%s.', $attribute->getName(), $on), 0, $e);
-            }
+            yield $attribute->newInstance();
         }
     }
 
