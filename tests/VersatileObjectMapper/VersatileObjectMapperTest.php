@@ -1,15 +1,20 @@
 <?php
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
@@ -30,7 +35,7 @@ class VersatileObjectMapperTest extends TestCase
 {
     protected VersatileObjectMapper $objectMapper;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $propertyInfo = PropertyInfoExtractorFactory::create();
 
@@ -68,31 +73,31 @@ class VersatileObjectMapperTest extends TestCase
     public function testFlags()
     {
         $data = [
-            "commonFlags" => [
-                "flagA",
-                "!flagB",
+            'commonFlags' => [
+                'flagA',
+                '!flagB',
             ],
-            "somethingElse" => [
-                "flagD",
+            'somethingElse' => [
+                'flagD',
             ],
-            "labeledFlagsArray" => [
-                "flagA" => (object) [
-                    "text" => "Fahne A",
-                    "value" => "flagA",
+            'labeledFlagsArray' => [
+                'flagA' => (object) [
+                    'text' => 'Fahne A',
+                    'value' => 'flagA',
                 ],
-                "flagB" => [
-                    "text" => "Fahne B",
-                    "value" => true,
+                'flagB' => [
+                    'text' => 'Fahne B',
+                    'value' => true,
                 ],
             ],
-            "labeledFlagsObject" => (object) [
-                "flagA" => [
-                    "text" => "Fahne A",
-                    "value" => false,
+            'labeledFlagsObject' => (object) [
+                'flagA' => [
+                    'text' => 'Fahne A',
+                    'value' => false,
                 ],
-                "flagB" => (object) [
-                    "text" => "Fahne B",
-                    "value" => 'OFF',
+                'flagB' => (object) [
+                    'text' => 'Fahne B',
+                    'value' => 'OFF',
                 ],
             ],
         ];

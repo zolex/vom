@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\ApiPlatform\Serializer;
 
 use ApiPlatform\Serializer\SerializerContextBuilderInterface;
@@ -33,7 +42,7 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
 
         // add request groups
         if ($groups = $request->get($this->groupsQueryParam)) {
-            if (!is_array($groups)) {
+            if (!\is_array($groups)) {
                 $groups = [$groups];
             }
             $context['groups'] = $groups;
@@ -41,7 +50,7 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
 
         // add static groups
         if (isset($context['static-groups'])) {
-            if (!is_array($context['static-groups'])) {
+            if (!\is_array($context['static-groups'])) {
                 $context['static-groups'] = [$context['static-groups']];
             }
 
@@ -52,7 +61,7 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
         $effectiveGroups = [];
         foreach ($context['groups'] as $group) {
             if ($preset = $metadata->getPreset($group)) {
-                if (!is_array($preset)) {
+                if (!\is_array($preset)) {
                     $preset = [$preset];
                 }
                 $effectiveGroups = array_merge($effectiveGroups, $preset);

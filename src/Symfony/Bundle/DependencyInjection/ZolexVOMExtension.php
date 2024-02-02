@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Symfony\Bundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
@@ -15,15 +24,9 @@ use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 
 class ZolexVOMExtension extends Extension implements CompilerPassInterface
 {
-    /**
-     * @var array
-     */
     private array $config;
 
     /**
-     * @param array $configs
-     * @param ContainerBuilder $container
-     *
      * @return void
      *
      * @throws \Exception

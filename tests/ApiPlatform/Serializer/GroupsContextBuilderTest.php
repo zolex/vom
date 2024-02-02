@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Test\ApiPlatform\Serializer;
 
 use ApiPlatform\Serializer\SerializerContextBuilderInterface;
@@ -7,10 +16,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\PropertyInfo\PropertyInfoCacheExtractor;
 use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 

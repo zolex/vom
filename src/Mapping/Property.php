@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Mapping;
 
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_PARAMETER)]
@@ -64,7 +73,7 @@ final class Property
 
     public function isTrue(mixed $value): bool
     {
-        return in_array($value, [true, 1, '1', 'on', 'ON', 'yes', 'YES', 'y', 'Y'], true);
+        return \in_array($value, [true, 1, '1', 'on', 'ON', 'yes', 'YES', 'y', 'Y'], true);
     }
 
     public function getFalseValue(): bool|string|int|null
@@ -74,7 +83,7 @@ final class Property
 
     public function isFalse(mixed $value): bool
     {
-        return in_array($value, [false, null, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'], true);
+        return \in_array($value, [false, null, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'], true);
     }
 
     public function getDefaultOrder(): ?string

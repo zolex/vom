@@ -2,12 +2,20 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Metadata\Factory;
 
 use Psr\Cache\CacheException;
 use Psr\Cache\CacheItemPoolInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
-use Zolex\VOM\Metadata\PropertyMetadata;
 
 class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
 {
@@ -21,7 +29,7 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ?ModelMetadata
+    public function create(string $class): ?ModelMetadata
     {
         $cacheKey = self::CACHE_KEY_PREFIX.md5($class);
         if (\array_key_exists($cacheKey, $this->localCache)) {
