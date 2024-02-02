@@ -192,28 +192,4 @@ class GroupsContextBuilderTest extends TestCase
             'groups' => ['group-a', 'group-b'],
         ], $context);
     }
-
-    public function testParentGroupsAreAdded(): void
-    {
-        $request = Request::create('/api/resource', 'GET', ['groups' => ['parent.group', 'another.child']]);
-
-        /** @var GroupsContextBuilder $contextBuilder */
-        $serializerContextBuilder = $this->prophesize(SerializerContextBuilderInterface::class);
-        $serializerContextBuilder->createFromRequest(Argument::is($request), Argument::any(), Argument::any())
-            ->willReturn([
-                'resource_class' => Person::class,
-            ]);
-
-        $contextBuilder = new GroupsContextBuilder(
-            $serializerContextBuilder->reveal(),
-            new ModelMetadataFactory(PropertyInfoExtractorFactory::create()),
-            'groups',
-        );
-
-        $context = $contextBuilder->createFromRequest($request, true);
-        $this->assertEquals([
-            'resource_class' => Person::class,
-            'groups' => ['parent.group', 'another.child', 'parent', 'another'],
-        ], $context);
-    }
 }

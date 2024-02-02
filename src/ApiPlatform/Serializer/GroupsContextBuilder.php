@@ -72,14 +72,6 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
 
         $context['groups'] = $effectiveGroups;
 
-        // add parent groups
-        foreach ($context['groups'] as $group) {
-            if ($pos = strpos($group, '.')) {
-                $parent = substr($group, 0, $pos);
-                $context['groups'][] = $parent;
-            }
-        }
-
         return $context;
     }
 }
