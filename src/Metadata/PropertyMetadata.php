@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Metadata;
 
 use Symfony\Component\PropertyInfo\Type;
@@ -122,7 +131,7 @@ class PropertyMetadata
     public function isBuiltinClass(): bool
     {
         foreach ($this->types as $type) {
-            if (in_array($type->getClassName(), self::BUILTIN_CLASSES)) {
+            if (\in_array($type->getClassName(), self::BUILTIN_CLASSES)) {
                 return true;
             }
         }
@@ -188,7 +197,7 @@ class PropertyMetadata
 
     public function getDateTimeFormat(): string
     {
-        return $this->attribute->getDateTimeFormat() ?? \DateTime::RFC3339_EXTENDED;
+        return $this->attribute->getDateTimeFormat() ?? \DateTimeInterface::RFC3339_EXTENDED;
     }
 
     public function isConstructorArgument(): bool

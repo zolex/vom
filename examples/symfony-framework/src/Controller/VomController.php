@@ -25,7 +25,7 @@ class VomController
             'zip' => '12345',
             'country_name' => 'United Kingdom',
             'email_address' => 'jane.doe@coxautoinc.com',
-            'phone' => '0123456789'
+            'phone' => '0123456789',
         ];
 
         $entity = $this->objectMapper->denormalize($data, Person::class);

@@ -1,15 +1,22 @@
 <?php
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyInfo\Type;
-use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;

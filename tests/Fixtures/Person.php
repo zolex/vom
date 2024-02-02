@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Test\Fixtures;
 
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -13,7 +22,6 @@ use Zolex\VOM\Mapping\Property;
         'preset-name' => ['group-a', 'group-b'],
     ],
 )]
-
 class Person
 {
     public function __construct(
@@ -26,7 +34,7 @@ class Person
         ?bool $isHilarious = null,
         ?bool $isDelicious = null,
         ?bool $isHoly = null,
-        ?Address $address = null
+        ?Address $address = null,
     ) {
         if (null !== $id) {
             $this->id = $id;

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Metadata\Factory;
 
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
@@ -26,11 +35,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     private array $typesCache = [];
 
     public function __construct(
-        private readonly PropertyInfoExtractorInterface $propertyInfoExtractor
+        private readonly PropertyInfoExtractorInterface $propertyInfoExtractor,
     ) {
     }
 
-    public function create(string $class, ?PropertyMetadata $parentPropertyMetadata = null): ?ModelMetadata
+    public function create(string $class): ?ModelMetadata
     {
         if (\array_key_exists($class, $this->localCache)) {
             return $this->localCache[$class];
@@ -92,8 +101,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute, $groups, $isConstructorArgument);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
-        } catch (\Throwable $e) {
-            $x = 1;
+        } catch (\Throwable) {
         }
 
         $type = null;

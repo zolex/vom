@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Symfony\PropertyInfo;
 
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
@@ -15,11 +24,11 @@ class PropertyInfoExtractorFactory
         $reflectionExtractor = new ReflectionExtractor();
 
         return new PropertyInfoExtractor(
-            //listExtractors: [$reflectionExtractor],
+            // listExtractors: [$reflectionExtractor],
             typeExtractors: [$phpDocExtractor, $reflectionExtractor],
-            //descriptionExtractors: [$phpDocExtractor]
-            //accessExtractors: [$reflectionExtractor],
-            //propertyInitializableExtractors: [$reflectionExtractor],
+            // descriptionExtractors: [$phpDocExtractor]
+            // accessExtractors: [$reflectionExtractor],
+            // propertyInitializableExtractors: [$reflectionExtractor],
         );
     }
 }

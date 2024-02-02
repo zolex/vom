@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -33,12 +42,12 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         return ['array'];
     }
 
-    public function supportsNormalization(mixed $data, string $format = null, array $context = []): bool
+    public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return (null === $format || 'array' === $format) && is_object($data);
+        return (null === $format || 'array' === $format) && \is_object($data);
     }
 
-    public function normalize(mixed $object, string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
+    public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
         $format ??= 'array';
         if ('object' === $format) {
@@ -49,13 +58,13 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             throw new InvalidArgumentException('Format can only be "array"');
         }
 
-        if (!is_object($object)) {
+        if (!\is_object($object)) {
             throw new \InvalidArgumentException('First argument must be an object.');
         }
 
         $context[self::PATH] ??= [];
         $data = $context[AbstractNormalizer::OBJECT_TO_POPULATE] ?? [];
-        if (!$metadata = $this->modelMetadataFactory->create(get_class($object))) {
+        if (!$metadata = $this->modelMetadataFactory->create($object::class)) {
             return (array) $object;
         }
 
@@ -63,7 +72,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             $propertyName = $property->getName();
             try {
                 $value = $this->propertyAccessor->getValue($object, $propertyName);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 continue;
             }
 
@@ -100,10 +109,10 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
     public function toObject(array|object $data): object|array
     {
-        if (is_array($data) && array_is_list($data)) {
+        if (\is_array($data) && array_is_list($data)) {
             $array = [];
             foreach ($data as $key => $value) {
-                if (is_array($value)) {
+                if (\is_array($value)) {
                     $array[$key] = $this->toObject($value);
                 } else {
                     $array[$key] = $value;
@@ -114,7 +123,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         } else {
             $object = new \stdClass();
             foreach ($data as $key => $value) {
-                if (is_array($value)) {
+                if (\is_array($value)) {
                     $object->{$key} = $this->toObject($value);
                 } else {
                     $object->{$key} = $value;
@@ -125,18 +134,18 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         }
     }
 
-    public function supportsDenormalization(mixed $data, string $type, string $format = null, array $context = []): bool
+    public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return (null === $format || 'array' === $format) && class_exists($type) && (is_array($data) || is_object($data));
+        return (null === $format || 'array' === $format) && class_exists($type) && (\is_array($data) || \is_object($data));
     }
 
-    public function denormalize(mixed $data, string $type, string $format = null, array $context = []): mixed
+    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         if (null === $data) {
             return null;
         }
 
-        if (is_array($data)) {
+        if (\is_array($data)) {
             if (array_is_list($data) && str_ends_with($type, '[]')) {
                 $array = [];
                 foreach ($data as $item) {
@@ -152,11 +161,10 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         $context[self::ROOT_FALLBACK] ??= false;
         $context[self::ROOT_DATA] ??= $data;
         $context[AbstractNormalizer::GROUPS] ??= [];
-        if (!is_array($context[AbstractNormalizer::GROUPS])) {
+        if (!\is_array($context[AbstractNormalizer::GROUPS])) {
             $context[AbstractNormalizer::GROUPS] = [$context[AbstractNormalizer::GROUPS]];
         }
 
-        $argumentNullable = [];
         $constructorArguments = [];
         $metadata = $this->modelMetadataFactory->create($type);
         foreach ($metadata->getConstructorArguments() as $argument) {
@@ -166,7 +174,6 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             }
 
             $constructorArguments[$argument->getName()] = $value;
-            $argumentNullable[$argument->getName()] = $argument->isNullable();
         }
 
         $model = new $type(...$constructorArguments);
@@ -185,17 +192,17 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         return $model;
     }
 
-    private function denormalizeProperty(mixed $data, PropertyMetadata $property, string $format = null, array $context = []): mixed
+    private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
-        if (count($context[AbstractNormalizer::GROUPS])
-            && !count(array_intersect($property->getGroups(), $context[AbstractNormalizer::GROUPS]))) {
+        if (\count($context[AbstractNormalizer::GROUPS])
+            && !\count(array_intersect($property->getGroups(), $context[AbstractNormalizer::GROUPS]))) {
             return null;
         }
 
         $accessor = $property->getAccessor();
         try {
             $value = $this->propertyAccessor->getValue($data, $accessor);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             if (!$property->isNested() || true === $context[self::ROOT_FALLBACK]) {
                 $value = $context[self::ROOT_DATA];
             } elseif ($property->isNested() && $property->isRoot()) {
@@ -215,21 +222,21 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
         if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
             $value = $this->denormalize($value, $collectionType.'[]', $format, $context);
-        } elseif (is_string($value) && $property->isDateTime()) {
+        } elseif (\is_string($value) && $property->isDateTime()) {
             $class = $property->getType();
             $value = new $class($value);
         } elseif ($property->isBool()) {
             if ($property->isFlag()) {
-                if (is_array($data)) {
+                if (\is_array($data)) {
                     // common flag
-                    if (in_array($accessor, $data, true)) {
+                    if (\in_array($accessor, $data, true)) {
                         $value = true;
-                    } elseif (in_array('!'.$accessor, $data, true)) {
+                    } elseif (\in_array('!'.$accessor, $data, true)) {
                         $value = false;
                     } else {
                         $value = null;
                     }
-                } elseif (is_object($data)) {
+                } elseif (\is_object($data)) {
                     // custom flag nested value
                     $value = !$property->isFalse($value);
                 }
@@ -251,8 +258,8 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
     {
         $fields = [];
         $context[self::PATH] ??= [];
-        $context[AbstractObjectNormalizer::GROUPS] ??= [];
-        if (is_string($metadata)) {
+        $context[AbstractNormalizer::GROUPS] ??= [];
+        if (\is_string($metadata)) {
             $metadata = $this->modelMetadataFactory->create($metadata);
         }
 
@@ -263,7 +270,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                 $accessChain = [$property->getAccessor()];
             }
 
-            if (count(array_intersect($property->getGroups(), $context[AbstractObjectNormalizer::GROUPS]))) {
+            if (\count(array_intersect($property->getGroups(), $context[AbstractNormalizer::GROUPS]))) {
                 $fields[] = implode('.', $accessChain);
             }
 

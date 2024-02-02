@@ -3,11 +3,10 @@
 use App\Model\Person;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Metadata\Factory\PropertyMetadataFactory;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\VersatileObjectMapper;
 
-require __DIR__ .'/vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
 
 // create the VOM instance
 $propertyAccessor = PropertyAccess::createPropertyAccessor();
@@ -24,12 +23,11 @@ $data = [
     'zip' => '12345',
     'country_name' => 'United Kingdom',
     'email_address' => 'jane.doe@coxautoinc.com',
-    'phone' => '0123456789'
+    'phone' => '0123456789',
 ];
 
 // create the model instance
 $person = $objectMapper->denormalize($data, Person::class);
-
 
 echo "INPUT DATA:\n";
 print_r($data);

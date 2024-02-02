@@ -76,10 +76,16 @@ jobs:
         uses: ramsey/composer-install@v2
         with:
           dependency-versions: stable
-          composer-options: '--prefer-dist'
+          composer-options: '--prefer-dist '
+
+      - name: Composer install
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: '--prefer-dist --working-dir=tools/php-cs-fixer'
 
       - name: PHP-CS-Fixer
-        run: vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
+        run: tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
 
       - name: Create Coverage Report
         run: |
