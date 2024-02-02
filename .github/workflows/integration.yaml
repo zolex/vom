@@ -72,13 +72,13 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: 'composer:v2, flex'
 
-      - name: Composer install
+      - name: Install Package Deps
         uses: ramsey/composer-install@v2
         with:
           dependency-versions: stable
           composer-options: '--prefer-dist '
 
-      - name: Composer install
+      - name: Install CodeStyle Deps
         uses: ramsey/composer-install@v2
         with:
           dependency-versions: stable
