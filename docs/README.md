@@ -26,6 +26,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 - [Attribute Configuration](#attribute-configuration)
   * [Constructor Arguments](#constructor-arguments)
   * [Constructor Property Promotion](#constructor-property-promotion)
+  * [Method Calls](#method-calls)
   * [The Accessor](#the-accessor)
   * [Nested properties](#nested-properties)
   * [Collections](#collections)
