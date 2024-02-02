@@ -18,12 +18,13 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
-use Zolex\VOM\Test\Fixtures\ArrayWithoutDocTag;
 use Zolex\VOM\Test\Fixtures\Booleans;
+use Zolex\VOM\Test\Fixtures\Calls;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
 use Zolex\VOM\Test\Fixtures\Person;
+use Zolex\VOM\Test\Fixtures\PrivateCall;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\SickChild;
 use Zolex\VOM\Test\Fixtures\SickRoot;
@@ -459,5 +460,23 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertTrue($constructed->getNullable());
         $this->assertfalse($constructed->getDefault());
+    }
+
+    public function testMethodCalls(): void
+    {
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Enis',
+        ];
+
+        $calls = $this->objectMapper->denormalize($data, Calls::class);
+        $this->assertEquals(42, $calls->getId());
+        $this->assertEquals('Peter Enis', $calls->getName());
+    }
+
+    public function testPrivateMethodCallThrowsException(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->objectMapper->denormalize([], PrivateCall::class);
     }
 }

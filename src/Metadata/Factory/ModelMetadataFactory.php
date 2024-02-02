@@ -19,6 +19,8 @@ use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
+use Zolex\VOM\Metadata\MethodCallMetadata;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
@@ -63,23 +65,41 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         if ($constructor = $reflectionClass->getConstructor()) {
             foreach ($constructor->getParameters() as $reflectionParameter) {
-                $this->addModelProperty($modelMetadata, $reflectionParameter, true);
+                if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionParameter)) {
+                    $modelMetadata->addConstructorArgument($propertyMetadata);
+                }
+            }
+        }
+
+        foreach ($reflectionClass->getMethods() as $reflectionMethod) {
+            if ('__construct' === $reflectionMethod->getName()) {
+                continue;
+            }
+            $methodArguments = [];
+            foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+                if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionParameter)) {
+                    if (!$reflectionMethod->isPublic()) {
+                        throw new RuntimeException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
+                    }
+                    $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+                }
+            }
+
+            if (\count($methodArguments)) {
+                $modelMetadata->addMethodCall(new MethodCallMetadata($reflectionMethod->getName(), $methodArguments));
             }
         }
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            if ($modelMetadata->hasProperty($reflectionProperty->getName())) {
-                // skip properties that already have been added via constructor
-                continue;
+            if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionProperty)) {
+                $modelMetadata->addProperty($propertyMetadata);
             }
-
-            $this->addModelProperty($modelMetadata, $reflectionProperty);
         }
 
         return $modelMetadata;
     }
 
-    private function addModelProperty(ModelMetadata $modelMetadata, \ReflectionParameter|\ReflectionProperty $reflectionProperty, bool $isConstructorArgument = false): void
+    private function createPropertyMetadata(ModelMetadata $modelMetadata, \ReflectionParameter|\ReflectionProperty $reflectionProperty): ?PropertyMetadata
     {
         $propertyAttribute = null;
         $groups = [];
@@ -94,11 +114,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         if (!$propertyAttribute) {
-            return;
+            return null;
         }
 
         $types = $this->getTypes($reflectionProperty->getDeclaringClass()->name, $reflectionProperty->name);
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute, $groups, $isConstructorArgument);
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types ?? [], $propertyAttribute, $groups);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {
@@ -116,7 +136,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             $propertyMetadata->setModelMetadata($propertyModelMetadata);
         }
 
-        $modelMetadata->addProperty($propertyMetadata);
+        return $propertyMetadata;
     }
 
     private function loadAttributes(\ReflectionMethod|\ReflectionClass|\ReflectionProperty|\ReflectionParameter $reflector): iterable
@@ -126,7 +146,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
     }
 
-    private function getTypes(string $class, string $property): iterable
+    private function getTypes(string $class, string $property): ?iterable
     {
         if (null === $this->propertyInfoExtractor) {
             return null;
