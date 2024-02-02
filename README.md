@@ -17,7 +17,7 @@
 The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models, by simply adding PHP attributes to existing classes.
 
 > [!CAUTION]
-> This package is in an early stadium and I can not recommend to use it on production before version `0.1.0` will be released.
+> This package is in an early stadium and I can not recommend to use it on production before version `0.1.0` will be released. Starting with that version the package will follow the [SemVer](https://semver.org/) standard. _Until the release of `0.1.0` you should expect BC's even for patch version increments!_
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
