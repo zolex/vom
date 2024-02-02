@@ -24,7 +24,7 @@ class SickRoot
     #[VOM\Property('ANOTHER')]
     public SickChild $anotherChild;
 
-    #[VOM\Property(nested: false)]
+    #[VOM\Property]
     public SickSack $sickSack;
 
     /**

@@ -89,7 +89,7 @@ To create a model instance from the input data, simply call the `denormalize()` 
 
 A very common use-case is to deserialize json for example with `json_decode()` or using symfony's serializer and pass the result to the `denormalize()` method.
 
-> ![NOTE]
+> [!NOTE]
 > Right now VOM implements only the symfony normalizer and denormalizer interfaces. Until release of version `0.1.0` it will also implement the serializer and normalizer-aware interfaces, so you won't even need to deserialize input before passing it to VOM!  
 
 ```php
@@ -211,6 +211,34 @@ class PropertyPromotion
     ) {
  }
 ```
+
+### Method Calls
+
+VOM Properties can also be added to public method arguments using the same technique. VOM will extract the source data for you and call the method with the specified arguments. This is mainly useful if your model expects all or some of the data using a method call and there is no other way to inject it.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    private int $id;
+    private string $name;
+
+    public function setData(
+        #[VOM\Property]
+        int $id,
+        #[VOM\Property]
+        string $name,
+    ): void {
+        $this->id = $id;
+        $this->name = $name;
+    }
+}
+```
+
+> [!NOTE]
+> When you are following the naming conventions of setters (e.g. `setName()`for a private `$name` property, specifying the property attributes on the setter method is not required. VOM can handle that using the attribute on the class property itself!
 
 
 ### The Accessor

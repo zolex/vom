@@ -19,6 +19,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -177,8 +178,24 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         }
 
         $model = new $type(...$constructorArguments);
+
+        foreach ($metadata->getMethodCalls() as $methodCall) {
+            $methodArguments = [];
+            foreach ($methodCall->getArguments() as $property) {
+                $methodArguments[$property->getName()] = $this->denormalizeProperty($data, $property, $format, $context);
+            }
+
+            try {
+                $model->{$methodCall->getMethod()}(...$methodArguments);
+            } catch (\Throwable $e) {
+                throw new RuntimeException(sprintf('Unable to call method %s on %s', $methodCall->getMethod(), $model::class), 0, $e);
+            }
+        }
+
         foreach ($metadata->getProperties() as $property) {
-            if ($property->isConstructorArgument()) {
+            if ($metadata->hasConstructorArgument($property->getName())) {
+                // skip, because they have already been injected in the constructor
+                // TODO: check if it makes sense to allow setting them them again (override)
                 continue;
             }
 

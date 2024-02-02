@@ -21,7 +21,16 @@ final class ModelMetadata
      * @var array|PropertyMetadata[]
      */
     private array $properties = [];
+    /**
+     * @var array|PropertyMetadata[]
+     */
+    private array $constructorArguments = [];
     private ?Model $attribute = null;
+
+    /**
+     * @var array|MethodCallMetadata[]
+     */
+    private array $methodCalls = [];
 
     public function getPreset(string $name): ?array
     {
@@ -38,6 +47,11 @@ final class ModelMetadata
         return $this->attribute;
     }
 
+    public function hasProperty(string $name): bool
+    {
+        return isset($this->properties[$name]);
+    }
+
     /**
      * @return PropertyMetadata[]
      */
@@ -51,28 +65,44 @@ final class ModelMetadata
         return $this->properties[$name] ?? null;
     }
 
-    public function hasProperty(string $name): bool
-    {
-        return isset($this->properties[$name]);
-    }
-
     public function addProperty(PropertyMetadata $property): void
     {
         $this->properties[$property->getName()] = $property;
+    }
+
+    public function hasConstructorArgument(string $name): bool
+    {
+        return isset($this->constructorArguments[$name]);
+    }
+
+    public function getConstructorArguments(): array
+    {
+        return $this->constructorArguments;
+    }
+
+    public function addConstructorArgument(PropertyMetadata $property): void
+    {
+        $this->constructorArguments[$property->getName()] = $property;
+    }
+
+    /**
+     * @return MethodCallMetadata[]
+     */
+    public function getMethodCalls(): iterable
+    {
+        foreach ($this->methodCalls as $methodCall) {
+            yield $methodCall;
+        }
+    }
+
+    public function addMethodCall(MethodCallMetadata $methodCall): void
+    {
+        $this->methodCalls[] = $methodCall;
     }
 
     // to get nested metadata with property-accessor
     public function __get($name): mixed
     {
         return $this->properties[$name] ?? null;
-    }
-
-    public function getConstructorArguments(): iterable
-    {
-        foreach ($this->properties as $property) {
-            if ($property->isConstructorArgument()) {
-                yield $property;
-            }
-        }
     }
 }
