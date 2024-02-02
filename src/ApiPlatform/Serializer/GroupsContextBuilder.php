@@ -26,6 +26,11 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
     ) {
     }
 
+    /**
+     * Looks at the symfony normalization context to see if the API-Platform resource class is present
+     * and if so, it applies groups from several sources, including a mapping for presets from the VOM\Model.
+     * as well as static-groups that are always added (for example 'id' would make sense here).
+     */
     public function createFromRequest(Request $request, bool $normalization, ?array $extractedAttributes = null): array
     {
         $context = $this->decorated->createFromRequest($request, $normalization, $extractedAttributes);
