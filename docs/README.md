@@ -22,14 +22,13 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 - [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
 - [Denormalization](#denormalization)
-  * [Collections](#collections)
 - [Normalization](#normalization)
 - [Attribute Configuration](#attribute-configuration)
   * [Constructor Arguments](#constructor-arguments)
   * [Constructor Property Promotion](#constructor-property-promotion)
   * [The Accessor](#the-accessor)
   * [Nested properties](#nested-properties)
-  * [Arrays of objects](#arrays-of-objects)
+  * [Collections](#collections)
   * [Data Types](#data-types)
     + [Booleans](#booleans)
     + [Flags](#flags)
@@ -97,17 +96,6 @@ A very common use-case is to deserialize json for example with `json_decode()` o
 $person = $objectMapper->denormalize($data, Person::class);
 ```
 
-### Collections
-
-VOM can process several types of collections, like arrays and DoctrineCollection, basically any iterable that can be detected as such by Symfony PropertyInfoExtractor.
-
-If you want to pass the `denormalize()` method such a collection, its required to pass an array notation of the model class (using the square brackets `[]`).
-
-```php
-$person = $objectMapper->denormalize($collectionOfPeople, Person::class.'[]');
-$person = $objectMapper->denormalize($collectionOfPeople, 'App\Entity\Person[]');
-```
-
 ## Normalization
 
 Normalization creates a plain old PHP array from your model instance. Because VOM implements the symfony normalizer interface, the `normalize()` method must return an array.
@@ -129,12 +117,7 @@ When attributes with no arguments are added to the model properties, VOM will ut
 Meaning that in this case no actual data transformation will be done, it will simply inject the values from the data structure where they match in the same structure of your models.
 
 ```php
-$data = [
-    'rooted' => 'I live on the root',
-    'nested' => (object)[
-        'value' => 'I am a nested value'
-    ];
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -154,6 +137,17 @@ class NestedClass
 }
 ```
 
+```php
+$data = [
+    'rooted' => 'I live on the root',
+    'nested' => (object)[
+        'value' => 'I am a nested value'
+    ];
+];
+
+$objectMapper->denormalize($data, RootClass:class);
+```
+
 As the data structures and names of all properties are identical, no additional configuration is required. _But as mentioned above, in this scenario you probably just want to use a symfony normalizer to save resources._
 
 > [!TIP]
@@ -167,6 +161,8 @@ As the data structures and names of all properties are identical, no additional 
 The `VOM\Property` attribute can be added on constructor arguments. VOM will pass the mapped values into the constructor. All required arguments must be property mapped and pre present in the source data. Otherwise VOM can not create an instance ob the model. Nullable arguments and those with a default value are optional in the source data.
 
 ```php
+use Zolex\VOM\Mapping as VOM;
+
 #[VOM\Model]
 class ConstructorArguments
 {
@@ -198,6 +194,8 @@ class ConstructorArguments
 Also constructor property promotion can be handled by VOM similar to normal constructor arguments.
 
 ```php
+use Zolex\VOM\Mapping as VOM;
+
 #[VOM\Model]
 class PropertyPromotion
 {
@@ -236,14 +234,7 @@ Note that **VOM always uses the object syntax**, even if the input data is an ar
 
 
 ```php
-$data = [
-    'onTheRoot' => 'I live on the root',
-    'deeper' [
-        'inThe' => [
-            'structure' => 'I live somewhere deeper in the data structure'
-        ]
-    ]
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -256,6 +247,19 @@ class RootClass
 }
 ```
 
+```php
+$data = [
+    'onTheRoot' => 'I live on the root',
+    'deeper' [
+        'inThe' => [
+            'structure' => 'I live somewhere deeper in the data structure'
+        ]
+    ]
+];
+
+$objectMapper->denormalize($data, RootClass::class);
+```
+
 
 ### Nested properties
 
@@ -264,10 +268,7 @@ When a property is an array or another class and has the nested argument set to 
 instead of applying the accessors where they appear in your model structure.
 
 ```php
-$data = [
-    'rooted' => 'I live on the root',
-    'value' => 'I am on the input data root too'
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -287,15 +288,19 @@ class NestedClass
 }
 ```
 
-VOM will only reset the source to the data root for nested entities that explicitly have the flag set to false, which means that you can decide where exactly you are expecting the input data on each level of deeply nested structures.
-
 ```php
 $data = [
     'rooted' => 'I live on the root',
-    'deeper' [
-        'effectivelyFromSecondDimension' => 'I am a nested value on the second dimension'
-    ]
+    'value' => 'I am on the input data root too'
 ];
+
+$objectMapper->denormalize($data, RootClass::class);
+```
+
+VOM will only reset the source to the data root for nested entities that explicitly have the flag set to false, which means that you can decide where exactly you are expecting the input data on each level of deeply nested structures.
+
+```php
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -325,15 +330,47 @@ class ThirdDimension
 }
 ```
 
-### Arrays of objects
+```php
+$data = [
+    'rooted' => 'I live on the root',
+    'deeper' [
+        'effectivelyFromSecondDimension' => 'I am a nested value on the second dimension'
+    ]
+];
 
-VOM can also handle arrays of entities. This is pretty straightforward and needs no further explanation, you just have to add an annotation for the array type.
+$objectMapper->denormalize($data, RootClass::class);
+```
 
-_In future VOM will also support `Iterator` and `Traversable` (for example Doctrine Collections etc.), but for now it only works with plain old PHP arrays._
+### Collections
+
+VOM can process several types of list, like arrays or doctrine collections, basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class RootClass
+{
+    /**
+     * @var NestedClass[] 
+     */
+    #[VOM\Property]
+    public array $valueCollection;
+}
+
+#[VOM\Model]
+class NestedClass
+{
+    #[VOM\Property]
+    public string $value;
+}
+```
+
+If you want to pass the `denormalize()` method a collection, it is required to also pass the array notation of the model class (using the square brackets `[]`).
 
 ```php
 $data = [
-    'nestedArray' [
+    'valueCollection' [
         [
             'value' => 'I am the value'
         ],
@@ -346,23 +383,10 @@ $data = [
     ]
 ];
 
-#[VOM\Model]
-class RootClass
-{
-    /**
-     * @var NestedClass[] 
-     */
-    #[VOM\Property]
-    public array $nestedArray;
-}
-
-#[VOM\Model]
-class NestedClass
-{
-    #[VOM\Property]
-    public string $value;
-}
+$person = $objectMapper->denormalize($collectionOfPeople, RootClass::class.'[]');
+$person = $objectMapper->denormalize($collectionOfPeople, 'RootClass[]');
 ```
+
 
 
 ### Data Types
@@ -385,7 +409,7 @@ The following values are considered to be `true`
 The following values are considered to be `false`
 
 ```php
-    null, false, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'
+    false, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'
 ```
 
 If your boolean is nullable, any value that does not match either the true or false list, the value will become null if it was uninitialized and stay null if it already was.
@@ -409,14 +433,12 @@ Flags are also booleans but behave in a different way when it comes to denormali
 
 ##### Common Flag
 
-The first flag-type type is a `Common Flag`. These flags must be strings that sit in an array.
-The presence of the flag will result in a true value. It's absence will result in a false value (or null if your property is nullable!).
+The first flag-type is the `Common Flag`. These flags must be strings that sit in an array.
+The presence of the flag will result in a true value. It's absence will result in a false value (or null if your property is nullable).
 Additionally, a Common flag can be explicitly set to false by prepending an exclamation mark (!) on the flag value.
 
 ```php
-$data = [
-    'flags' => ['is_great', '!is_weak'];
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -439,25 +461,20 @@ class Flags
 }
 ```
 
+```php
+$data = [
+    'flags' => ['is_great', '!is_weak'];
+];
+$objectMapper->denormalize($data, RootClass::class);
+```
+
 ##### Model Flag
 
-The second flag-type is a `Model Flag`. Actually it's not really a flag but just another model. This model can contain any properties, for example a label.
+The second flag-type is the `Model Flag`. It's not really a flag but just another model that can contain any properties, for example a label.
 If it has a bool property with the flag argument set to true, this will then become true for any value that is not in the false list of the boolean type documented above.
 
 ```php
-$data = [
-    "labeledFlags" => [
-        "flagA" => (object)[
-            "text" => "Flag A",
-            "value" => true,
-        ],
-        "flagB" => [
-            "text" => "Flag B",
-            "value" => "flagB",
-        ],
-    ],
-];
-
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class ModelFlag
@@ -483,18 +500,32 @@ class ModelFlagsContainer
 }
 ```
 
+```php
+$data = [
+    "labeledFlags" => [
+        "flagA" => (object)[
+            "text" => "Flag A",
+            "value" => true,
+        ],
+        "flagB" => [
+            "text" => "Flag B",
+            "value" => "flagB",
+        ],
+    ],
+];
+
+$objectMapper->denormalize($data, RootClass::class);
+```
+
 #### DateTime
 
 If VOM feeds a property that is a DateTime or DateTimeImmutable type, it will automatically convert the input value into the respective object.
 
 ```php
-$data = [
-    'createdAt' => '2024-01-20 06:00:00',
-    'sometime' => '1 year ago',
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class MyModel
+class DateTimeModel
 {
     #[VOM\Property]
     public \DateTime $createdAt;
@@ -504,23 +535,28 @@ class MyModel
 }
 ```
 
+```php
+$data = [
+    'createdAt' => '2024-01-20 06:00:00',
+    'sometime' => '1 year ago',
+];
+
+$objectMapper->denormalize($data, DateTimeModel::class);
+```
+
+For normalization purpose, the `dateTimeFormat` argument can be specified on the Property attribute. The default format is `RFC3339_EXTENDED`.
+
+```php
+#[VOM\Property(dateTimeFormat: \DateTimeInterface::W3C)]
+public \DateTime $createdAt;
+```
+
 ### Nesting with Accessors
 
 Combining the nested flag and the accessor gives you full control over your desired data transformation. Here is a slightly advanced example:
 
 ```php
-$data = [
-    'somewhere' => [
-        'but_not_root' => 'I live somewhere but not on the root',
-    ],
-    'second' [
-        'value' => 'I am matching the target data structure'
-        'effectivelyOnSecondDimension' => 'also on second dimension because third dimension is nested:false',
-        'again' => [
-            'aNestedAccessor' => 'I am nested again even if my parent is not',        
-        ]
-    ],
-];
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class RootClass
@@ -553,6 +589,23 @@ class ThirdDimension
 }
 ```
 
+```php
+$data = [
+    'somewhere' => [
+        'but_not_root' => 'I live somewhere but not on the root',
+    ],
+    'second' [
+        'value' => 'I am matching the target data structure'
+        'effectivelyOnSecondDimension' => 'also on second dimension because third dimension is nested:false',
+        'again' => [
+            'aNestedAccessor' => 'I am nested again even if my parent is not',        
+        ]
+    ],
+];
+
+$objectMapper->denormalize($data, RootClass::class);
+```
+
 ## Context
 
 VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
@@ -561,6 +614,7 @@ VOM's `normalize()` and `denormalize()` methods accept several useful properties
 
 ```php
 use Symfony\Component\Serializer\Annotation\Groups;
+use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class SomeModel

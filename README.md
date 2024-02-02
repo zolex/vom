@@ -75,7 +75,6 @@ and/or application models change while still in development, or if you want to r
 Instead of writing business logic that feeds your models, with VOM you simply configure the models using PHP attributes.
 
 ```php
-
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
