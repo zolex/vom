@@ -29,6 +29,7 @@
         <service id="zolex_vom.object_mapper" class="Zolex\VOM\VersatileObjectMapper">
             <argument type="service" id="zolex_vom.metadata.model_metadata_factory" />
             <argument type="service" id="property_accessor" />
+            <tag name="serializer.normalizer" />
         </service>
         <service id="Zolex\VOM\VersatileObjectMapper" alias="zolex_vom.object_mapper" />
 

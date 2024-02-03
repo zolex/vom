@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Metadata;
 
 use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping\Property;
 
 class PropertyMetadata
@@ -32,7 +33,7 @@ class PropertyMetadata
         private readonly iterable $types,
         private readonly Property $attribute,
         private readonly array $groups = ['default'],
-        private readonly bool $isConstructorArgument = false,
+        private readonly ?Context $context = null,
     ) {
     }
 
@@ -51,6 +52,17 @@ class PropertyMetadata
         foreach ($this->types as $type) {
             if ($class = $type->getClassName()) {
                 return $class;
+            }
+        }
+
+        return null;
+    }
+
+    public function getBuiltinType(): ?string
+    {
+        foreach ($this->types as $type) {
+            if ($type = $type->getBuiltinType()) {
+                return $type;
             }
         }
 
@@ -190,19 +202,9 @@ class PropertyMetadata
         return $this->attribute->getDefaultOrder();
     }
 
-    public function getArrayType(): ?string
-    {
-        return $this->arrayType;
-    }
-
     public function getDateTimeFormat(): string
     {
         return $this->attribute->getDateTimeFormat() ?? \DateTimeInterface::RFC3339_EXTENDED;
-    }
-
-    public function isConstructorArgument(): bool
-    {
-        return $this->isConstructorArgument;
     }
 
     public function isNullable(): bool
@@ -233,5 +235,20 @@ class PropertyMetadata
     public function __get($name): mixed
     {
         return $this->modelMetadata?->{$name} ?? null;
+    }
+
+    public function getContext(): array
+    {
+        return $this->context?->getContext() ?? [];
+    }
+
+    public function getNormalizationContext(): array
+    {
+        return array_merge($this->context?->getNormalizationContext() ?? [], $this->getContext());
+    }
+
+    public function getDenormalizationContext(): array
+    {
+        return array_merge($this->context?->getDenormalizationContext() ?? [], $this->getContext());
     }
 }
