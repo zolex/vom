@@ -47,7 +47,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             return $this->localCache[$class];
         }
 
-        $modelMetadata = new ModelMetadata();
+        if (!class_exists($class)) {
+            return null;
+        }
+
+        $modelMetadata = new ModelMetadata($class);
         $this->localCache[$class] = &$modelMetadata;
 
         $reflectionClass = new \ReflectionClass(trim($class, '?'));
@@ -61,6 +65,12 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ($attribute instanceof Context) {
             }
             */
+        }
+
+        if (!$modelMetadata->getAttribute()) {
+            unset($this->localCache[$class]);
+
+            return null;
         }
 
         if ($constructor = $reflectionClass->getConstructor()) {
@@ -101,15 +111,21 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
     private function createPropertyMetadata(ModelMetadata $modelMetadata, \ReflectionParameter|\ReflectionProperty $reflectionProperty): ?PropertyMetadata
     {
-        $propertyAttribute = null;
         $groups = [];
+        $contextAttribute = null;
+        $propertyAttribute = null;
         foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
             if ($attribute instanceof Property) {
                 $propertyAttribute = $attribute;
                 continue;
             }
+
             if ($attribute instanceof Groups) {
                 $groups = $attribute->getGroups();
+            }
+
+            if ($attribute instanceof Context) {
+                $contextAttribute = $attribute;
             }
         }
 
@@ -118,7 +134,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         $types = $this->getTypes($reflectionProperty->getDeclaringClass()->name, $reflectionProperty->name);
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types ?? [], $propertyAttribute, $groups);
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types ?? [], $propertyAttribute, $groups, $contextAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {

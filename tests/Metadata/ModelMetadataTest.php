@@ -31,7 +31,7 @@ class ModelMetadataTest extends TestCase
             searchable: ['searchable'],
         );
 
-        $metadata = new ModelMetadata();
+        $metadata = new ModelMetadata('class');
         $metadata->setAttribute($model);
         $types = [new Type('string')];
         $prop = new PropertyMetadata('name', $types, new Property(), ['group']);

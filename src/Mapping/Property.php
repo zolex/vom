@@ -23,8 +23,8 @@ final class Property
         private bool $root = false,
         private array $aliases = [],
         private bool $flag = false,
-        private bool|string|int|null $trueValue = true,
-        private bool|string|int|null $falseValue = false,
+        private bool|string|int|null $trueValue = null,
+        private bool|string|int|null $falseValue = null,
         private ?string $defaultOrder = null,
         private ?string $dateTimeFormat = null,
     ) {
@@ -71,19 +71,9 @@ final class Property
         return $this->trueValue;
     }
 
-    public function isTrue(mixed $value): bool
-    {
-        return \in_array($value, [true, 1, '1', 'on', 'ON', 'yes', 'YES', 'y', 'Y'], true);
-    }
-
     public function getFalseValue(): bool|string|int|null
     {
         return $this->falseValue;
-    }
-
-    public function isFalse(mixed $value): bool
-    {
-        return \in_array($value, [false, null, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'], true);
     }
 
     public function getDefaultOrder(): ?string

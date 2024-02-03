@@ -1,18 +1,13 @@
 <?php
 
 use App\Model\Person;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
+use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\VersatileObjectMapper;
 
 require __DIR__.'/vendor/autoload.php';
 
 // create the VOM instance
-$propertyAccessor = PropertyAccess::createPropertyAccessor();
-$propertyInfoExtractor = PropertyInfoExtractorFactory::create();
-$modelMetadataFactory = new ModelMetadataFactory($propertyInfoExtractor);
-$objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
+$objectMapper = VersatileObjectMapperFactory::create();
 
 // source data
 $data = [

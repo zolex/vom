@@ -24,4 +24,7 @@ class CommonFlags
 
     #[VOM\Property(flag: true)]
     public ?bool $flagC = null;
+
+    #[VOM\Property(flag: true)]
+    public bool $flagD = true;
 }

@@ -55,10 +55,10 @@ The models can be anything, so if you receive data from somewhere and need to wr
 
 ## The Object Mapper
 
-In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [symfony example](../examples/symfony-framework) 
+In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [symfony example](../examples/symfony-framework)
 
 ```php
-use Zolex\VOM\VersatileObjectMapper;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 class AnySymfonyService
 {
@@ -71,7 +71,7 @@ class AnySymfonyService
 Without symfony framework, you have to construct the mapper yourself. Also see the [plain php example](../examples/without-framework)
 
 ```php
-$objectMapper = new \Zolex\VOM\VersatileObjectMapper(
+$objectMapper = new \Zolex\VOM\Serializer\VersatileObjectMapper(
     new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(
         \Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory::create();
     ),
@@ -665,6 +665,54 @@ $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['grou
 
 $someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
 ```
+
+#### Groups in API-Platform
+
+API-Platform has many options to specify normalization and denormalization context groups, for example globally, per resoruce, per operation and dynamically using a ContextBuilder.
+
+VOM picks up these features and adds functionality that is common to use. The following example will by default only return the `id` and `name`of the entity.
+The id because it is always added via the `static-groups` and the name because is in the normalization context of the GetOperation.
+If the client sends for example a `&groups=createdAt` query parameter, VOM is going to replace the default normalization context groups (while still adding the static groups) with whatever the user has sent.
+The client can also send multiple groups by utilizing the array syntax `&groups[]=name&groups[]=createdAt`. Additionally, the query parameter value can be the name of a preset `&groups=preset-alias` which then resolved to the actual groups defined in the preset.
+With this approach the client can decide which representation of the resource he needs, which can save a lot of traffic when only a subset of properties (and nested models) is needed.
+
+
+```php
+namespace App\ApiResource;
+
+use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[ApiResource]
+#[Get(
+    normalizationContext: [
+        'groups' => ['name'],
+        'static-groups' => ['id'],
+    ],
+    provider: SomeStateProvider::class,
+)]
+#[VOM\Model(
+    presets: [
+        'preset-alias' => ['name', 'createdAt'],
+    ],
+)]
+class MyResourceClass
+{
+    #[ApiProperty(identifier: true)]
+    #[Groups(['id'])]
+    public int $id;
+    
+    #[Groups(['name'])]
+    public string $name;
+    
+    #[Groups(['createdAt'])]
+    public \DateTimeImmutable $createdAt;
+}
+```
+
 
 ### Skip Null Values
 
