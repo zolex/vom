@@ -19,33 +19,36 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use Symfony\Component\Serializer\Normalizer\DenormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\SerializerAwareInterface;
+use Symfony\Component\Serializer\SerializerAwareTrait;
+use Symfony\Component\Serializer\SerializerInterface;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Symfony\Serializer\SerializerFactory;
 
-final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwareInterface, DenormalizerInterface, DenormalizerAwareInterface
+final class VersatileObjectMapper implements NormalizerInterface, DenormalizerInterface, SerializerInterface, SerializerAwareInterface
 {
     use DenormalizerAwareTrait;
     use NormalizerAwareTrait;
+    use SerializerAwareTrait;
 
     public const ROOT_FALLBACK = 'root_fallback';
     private const ROOT_DATA = '__root_data';
     private const PATH = '__normalization_path';
+
+    private array $filters;
 
     public function __construct(
         private readonly ModelMetadataFactoryInterface $modelMetadataFactory,
         private readonly PropertyAccessorInterface $propertyAccessor,
     ) {
     }
-
-    private array $filters;
 
     public function getSupportedTypes(?string $format): array
     {
@@ -54,6 +57,24 @@ final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwar
             'object' => true,
             'native-array' => true,
         ];
+    }
+
+    public function serialize(mixed $data, string $format, array $context = []): string
+    {
+        if (!isset($this->serializer)) {
+            $this->serializer = SerializerFactory::create($this);
+        }
+
+        return $this->serializer->serialize($data, $format, $context);
+    }
+
+    public function deserialize(mixed $data, string $type, string $format, array $context = []): mixed
+    {
+        if (!isset($this->serializer)) {
+            $this->serializer = SerializerFactory::create($this);
+        }
+
+        return $this->serializer->deserialize($data, $type, $format, $context);
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -184,7 +205,7 @@ final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwar
         }
 
         if (!isset($this->denormalizer)) {
-            $this->denormalizer = &$this;
+            $this->denormalizer = SerializerFactory::create($this);
         }
 
         if (\is_array($data)) {
@@ -260,31 +281,27 @@ final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwar
 
         $accessor = $property->getAccessor();
         try {
-            $value = $this->propertyAccessor->getValue($data, $accessor);
-        } catch (\Throwable) {
-            if (!$property->isNested() || true === $context[self::ROOT_FALLBACK]) {
-                $value = $context[self::ROOT_DATA];
-            } elseif ($property->isNested() && $property->isRoot()) {
-                try {
-                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
-                } catch (\Throwable) {
-                    $value = null;
-                }
+            if ($property->isNested()) {
+                $value = $this->propertyAccessor->getValue($data, $accessor);
             } else {
-                $value = null;
+                $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
             }
+        } catch (\Throwable) {
+            return null;
         }
 
         if (null === $value && (true === ($context[AbstractObjectNormalizer::SKIP_NULL_VALUES] ?? false))) {
             return null;
         }
 
-        if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
+        return $this->denormalizer->denormalize($value, $property->getType() ?? $property->getBuiltinType(), $format, $context);
+
+        /*if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
             $value = $this->denormalizer->denormalize($value, $collectionType.'[]', $format, $context);
         } elseif (\is_string($value) && $property->isDateTime()) {
             $class = $property->getType();
             $value = new $class($value);
-        } elseif ($property->isBool()) {
+        } else*/ if ($property->isBool()) {
             if ($property->isFlag()) {
                 if (\is_array($data)) {
                     // common flag
@@ -302,11 +319,10 @@ final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwar
             } elseif (null !== $value) {
                 $value = $property->isTrue($value);
             }
-        } elseif (null !== $value && $property->isModel()) {
-            // we know it's a VOM model, so call our own method directly to avoid other normalizers "stealing" it
+        } elseif (null !== $value && $property->isModel() && $property->getType()) {
+            // we know it's a VOM model, so call our own method directly for better performance
             $value = $this->denormalize($value, $property->getType(), $format, $context);
-        } elseif ($this !== $this->denormalizer) {
-            // only call if we are in the symfony normalizer chain, otherwise it results in an endless recursion
+        } elseif (null !== $value) {
             $value = $this->denormalizer->denormalize($value, $property->getType() ?? $property->getBuiltinType(), $format, $context);
         }
 

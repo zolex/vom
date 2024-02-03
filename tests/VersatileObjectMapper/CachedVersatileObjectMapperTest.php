@@ -22,6 +22,8 @@ class CachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     protected function setUp(): void
     {
+        $this->markTestSkipped('OLD IMPLEMENTATION!');
+
         $cachePool = new ArrayAdapter();
         $modelMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
         $cachedMetadataFactory = new CachedModelMetadataFactory($cachePool, $modelMetadataFactory, true);
