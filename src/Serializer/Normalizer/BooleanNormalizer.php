@@ -15,7 +15,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
-class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
+final class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     public const TYPE = 'vom-bool';
     public const TRUE_VALUES = [true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'];

@@ -17,10 +17,10 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
-use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
-class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
+final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
     use SerializerAwareTrait;
 
@@ -28,8 +28,8 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
     public const CONTEXT_ROOT_DATA = '__root_data';
 
     public function __construct(
-        private ModelMetadataFactory $modelMetadataFactory,
-        private PropertyAccessorInterface $propertyAccessor,
+        private readonly ModelMetadataFactoryInterface $modelMetadataFactory,
+        private readonly PropertyAccessorInterface $propertyAccessor,
     ) {
     }
 
@@ -140,7 +140,7 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
                 } else {
                     $value = $this->propertyAccessor->getValue($context[self::CONTEXT_ROOT_DATA], $accessor);
                 }
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 $value = null;
             }
 
@@ -169,18 +169,17 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
         foreach ($metadata->getProperties() as $property) {
             try {
                 $context[self::CONTEXT_PROPERTY] = $property;
-                $value = $this->propertyAccessor->getValue($object, $property->getName());
-                $value = $this->serializer->normalize($value, $format, $context);
+                $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
+                $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
 
                 if ($property->isFlag()) {
-                    if (null !== $value) {
-                        $data[] = $value;
+                    if (null !== $normalizedValue) {
+                        $data[] = $normalizedValue;
                     }
                 } else {
-                    $data[$property->getName()] = $value;
+                    $data[$property->getName()] = $normalizedValue;
                 }
-            } catch (\Throwable $e) {
-                $x = 1;
+            } catch (\Throwable) {
             }
         }
 
