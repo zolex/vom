@@ -138,13 +138,17 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
     private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
+        $context = array_merge($property->getDenormalizationContext(), $property->getContext(), $context);
+
         if ($property->isFlag()) {
             $value = $data;
             $context[CommonFlagNormalizer::CONTEXT_NAME] = $property->getName();
         } else {
             $accessor = $property->getAccessor();
             try {
-                if ($property->isNested()) {
+                if ($property->isModel() && !$property->isNested()) {
+                    $value = $data;
+                } elseif ($property->isNested()) {
                     $value = $this->propertyAccessor->getValue($data, $accessor);
                 } else {
                     $value = $this->propertyAccessor->getValue($context[self::CONTEXT_ROOT_DATA], $accessor);
@@ -169,7 +173,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return false;
         }
 
-        return null !== $this->modelMetadataFactory->create($data::class);
+        return \is_object($data) && null !== $this->modelMetadataFactory->create($data::class);
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
@@ -185,6 +189,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                     continue;
                 }
 
+                $context = array_merge($property->getNormalizationContext(), $property->getContext(), $context);
                 $context[self::CONTEXT_PROPERTY] = $property;
                 $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
                 $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
