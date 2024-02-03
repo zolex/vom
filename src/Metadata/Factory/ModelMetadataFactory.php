@@ -47,6 +47,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             return $this->localCache[$class];
         }
 
+        if (!class_exists($class)) {
+            return null;
+        }
+
         $modelMetadata = new ModelMetadata();
         $this->localCache[$class] = &$modelMetadata;
 
