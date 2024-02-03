@@ -36,7 +36,7 @@ class PropertyMetadataTest extends TestCase
         $metadata = new PropertyMetadata('name', $types, $attribute);
 
         $this->assertEquals('name', $metadata->getName());
-        $this->assertNull($metadata->getType());
+        $this->assertEquals('vom-flag', $metadata->getType());
         $this->assertEquals('accessor', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
         $this->assertFalse($metadata->isNested());

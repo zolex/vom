@@ -19,17 +19,19 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer as SymfonyObjectNor
 use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
+use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 
 class SerializerFactory
 {
-    public static function create(ObjectNormalizer $objectNormalizer, BooleanNormalizer $booleanNormalizer): Serializer
+    public static function create(ObjectNormalizer $objectNormalizer, BooleanNormalizer $booleanNormalizer, CommonFlagNormalizer $commonFlagNormalizer): Serializer
     {
         return new Serializer(
             [
                 new UnwrappingDenormalizer(),
                 $objectNormalizer,
                 $booleanNormalizer,
+                $commonFlagNormalizer,
                 new DateTimeNormalizer(),
                 new JsonSerializableNormalizer(),
                 new ArrayDenormalizer(),

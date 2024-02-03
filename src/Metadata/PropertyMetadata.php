@@ -16,6 +16,7 @@ namespace Zolex\VOM\Metadata;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
 class PropertyMetadata
 {
@@ -49,13 +50,17 @@ class PropertyMetadata
 
     public function getType(): ?string
     {
+        if ($this->isFlag()) {
+            return CommonFlagNormalizer::TYPE;
+        }
+
         foreach ($this->types as $type) {
             if ($class = $type->getClassName()) {
                 return $class;
             }
         }
 
-        return null;
+        return $this->getBuiltinType();
     }
 
     public function getBuiltinType(): ?string

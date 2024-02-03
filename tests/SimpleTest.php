@@ -12,11 +12,13 @@
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
+use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Symfony\Serializer\SerializerFactory;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
+use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\NestedName;
@@ -33,7 +35,8 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
         $objectNormalizer = new ObjectNormalizer($modelMetadataFactory, $propertyAccessor);
         $booleanNormalizer = new BooleanNormalizer();
-        $this->serializer = SerializerFactory::create($objectNormalizer, $booleanNormalizer);
+        $commonFlagNormalizer = new CommonFlagNormalizer();
+        $this->serializer = SerializerFactory::create($objectNormalizer, $booleanNormalizer, $commonFlagNormalizer);
     }
 
     public function testBooleans(): void
@@ -86,6 +89,20 @@ class SimpleTest extends PHPUnit\Framework\TestCase
 
         $this->assertEquals($data['dateTime'], $dateAndTime->dateTime->format('Y-m-d H:i:s'));
         $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
+    }
+
+    public function testCommonFlags()
+    {
+        $data = [
+            'flagA',
+            '!flagB',
+        ];
+
+        /* @var CommonFlags $commonFlags */
+        $commonFlags = $this->serializer->denormalize($data, CommonFlags::class);
+        $this->assertTrue($commonFlags->flagA);
+        $this->assertFalse($commonFlags->flagB);
+        $this->assertFalse(isset($commonFlags->flagC));
     }
 
     public function testAccessor(): void

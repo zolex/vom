@@ -13,25 +13,39 @@ namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
-use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 
 class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
 {
-    public function __construct(private ModelMetadataFactory $modelMetadataFactory)
-    {
-    }
+    public const TYPE = 'vom-flag';
+    public const CONTEXT_NAME = '__vom_common_flag_name';
 
     public function getSupportedTypes(?string $format): array
     {
         return [
-            'native-array' => true,
+            self::TYPE => true,
         ];
     }
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return \is_array($data) && $this->modelMetadataFactory->create($type);
+        return self::TYPE === $type && \is_array($data) && isset($context[self::CONTEXT_NAME]);
+    }
+
+    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
+    {
+        if (!isset($context[self::CONTEXT_NAME])) {
+            return null;
+        }
+
+        if (\in_array($context[self::CONTEXT_NAME], $data, true)) {
+            return true;
+        }
+
+        if (\in_array('!'.$context[self::CONTEXT_NAME], $data, true)) {
+            return false;
+        }
+
+        return null;
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -39,17 +53,8 @@ class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
         return false;
     }
 
-    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
-    {
-        if (!$metadata = $this->modelMetadataFactory->create($type)) {
-            throw new RuntimeException('No metadata available for '.$type);
-        }
-
-        return ['commonflag' => 'xD'];
-    }
-
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        // TODO: Implement normalize() method.
+        return 'TODO: vom-flag normalize';
     }
 }

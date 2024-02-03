@@ -38,12 +38,13 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
     {
         return [
             'object' => true,
+            'native-array' => true,
         ];
     }
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return ((\is_array($data) && !array_is_list($data)) || \is_object($data)) && $this->modelMetadataFactory->create($type);
+        return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->create($type);
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
@@ -52,7 +53,7 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
             return null;
         }
 
-        if (\is_array($data)) {
+        if (\is_array($data) && !array_is_list($data)) {
             $data = $this->toObject($data);
         }
 
@@ -129,22 +130,27 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
 
     private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
-        $accessor = $property->getAccessor();
-        try {
-            if ($property->isNested()) {
-                $value = $this->propertyAccessor->getValue($data, $accessor);
-            } else {
-                $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
+        if ($property->isFlag()) {
+            $value = $data;
+            $context[CommonFlagNormalizer::CONTEXT_NAME] = $property->getName();
+        } else {
+            $accessor = $property->getAccessor();
+            try {
+                if ($property->isNested()) {
+                    $value = $this->propertyAccessor->getValue($data, $accessor);
+                } else {
+                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
+                }
+            } catch (\Throwable $e) {
+                $value = null;
             }
-        } catch (\Throwable) {
-            return null;
+
+            if (null === $value) {
+                return null;
+            }
         }
 
-        if (null === $value) {
-            return null;
-        }
-
-        return $this->serializer->denormalize($value, $property->getType() ?? $property->getBuiltinType(), $format, $context);
+        return $this->serializer->denormalize($value, $property->getType(), $format, $context);
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
