@@ -63,7 +63,8 @@ class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
         return \is_bool($data)
             && isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
             && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool();
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()
+            && !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag();
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
@@ -71,7 +72,8 @@ class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
         if (!\is_bool($object)
             || !isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
             || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()) {
+            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()
+            || $context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag()) {
             return null;
         }
 
