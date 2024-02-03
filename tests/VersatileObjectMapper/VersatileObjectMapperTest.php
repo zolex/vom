@@ -12,6 +12,7 @@
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
 use PHPUnit;
+use Prophecy\PhpUnit\ProphecyTrait;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Address;
@@ -30,11 +31,35 @@ use Zolex\VOM\Test\Fixtures\PropertyPromotion;
  */
 class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
 {
+    use ProphecyTrait;
+
     protected static VersatileObjectMapper $serializer;
 
     protected function setUp(): void
     {
         self::$serializer = VersatileObjectMapperFactory::create();
+    }
+
+    public function testDecoratedMethods(): void
+    {
+        $serialized = self::$serializer->serialize([2], 'json', [1]);
+        $this->assertEquals('[2]', $serialized);
+        $deserialized = self::$serializer->deserialize('[]', DateAndTime::class, 'json');
+        $this->assertEquals(new DateAndTime(), $deserialized);
+
+        $supportedTypes = self::$serializer->getSupportedTypes('json');
+        $this->assertEquals(['*' => false], $supportedTypes);
+
+        $supportsNormalization = self::$serializer->supportsNormalization(new DateAndTime());
+        $this->assertTrue($supportsNormalization);
+        $normalized = self::$serializer->normalize(new \DateTime('2010-01-01 00:00:00'), 'json');
+        $this->assertEquals('2010-01-01T00:00:00+00:00', $normalized);
+
+        $supportsDenormalization = self::$serializer->supportsDenormalization(['dateTime' => '2010-01-01 10:10:10'], DateAndTime::class);
+        $this->assertTrue($supportsDenormalization);
+
+        $denormalized = self::$serializer->denormalize([2], DateAndTime::class);
+        $this->assertEquals(new DateAndTime(), $denormalized);
     }
 
     public function testBooleansUninitialized(): void
