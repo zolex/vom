@@ -64,7 +64,6 @@ class GroupsContextBuilderTest extends TestCase
         $context = $contextBuilder->createFromRequest($request, true);
         $this->assertEquals([
             'resource_class' => Person::class,
-            'groups' => [],
         ], $context);
     }
 

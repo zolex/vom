@@ -77,6 +77,10 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
 
         $context['groups'] = $effectiveGroups;
 
+        if (!\count($context['groups'])) {
+            unset($context['groups']);
+        }
+
         return $context;
     }
 }
