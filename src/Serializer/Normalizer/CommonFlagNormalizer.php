@@ -13,6 +13,7 @@ namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Zolex\VOM\Metadata\PropertyMetadata;
 
 class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
 {
@@ -22,7 +23,7 @@ class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
     public function getSupportedTypes(?string $format): array
     {
         return [
-            self::TYPE => true,
+            '*' => true,
         ];
     }
 
@@ -50,11 +51,29 @@ class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return false;
+        return \is_bool($data)
+            && isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag();
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        return 'TODO: vom-flag normalize';
+        if (!\is_bool($object)
+            || !isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+            || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
+            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag()) {
+            return null;
+        }
+
+        if (true === $object) {
+            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getName();
+        }
+
+        if (false === $object) {
+            return '!'.$context[ObjectNormalizer::CONTEXT_PROPERTY]->getName();
+        }
+
+        return null;
     }
 }
