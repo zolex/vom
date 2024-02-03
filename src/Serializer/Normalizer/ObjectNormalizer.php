@@ -11,6 +11,7 @@
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
+use ApiPlatform\Metadata\Operation;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -43,6 +44,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
+        if ($this->skipApiPlatformOperation($context)) {
+            return false;
+        }
+
         return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->create($type);
     }
 
@@ -154,8 +159,19 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         return $this->serializer->denormalize($value, $property->getType(), $format, $context);
     }
 
+    protected function skipApiPlatformOperation(array $context): bool
+    {
+        return ((isset($context['operation']) && $context['operation'] instanceof Operation)
+            || (isset($context['root_operation']) && $context['root_operation'] instanceof Operation))
+            && (!isset($context['vom']) || !$context['vom']);
+    }
+
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
+        if ($this->skipApiPlatformOperation($context)) {
+            return false;
+        }
+
         return null !== $this->modelMetadataFactory->create($data::class);
     }
 
@@ -176,8 +192,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                     if (null !== $normalizedValue) {
                         $data[] = $normalizedValue;
                     }
+                } elseif ($property->isNested()) {
+                    $data[$property->getAccessor()] = $normalizedValue;
                 } else {
-                    $data[$property->getName()] = $normalizedValue;
+                    $data = array_merge($data, $normalizedValue);
                 }
             } catch (\Throwable) {
             }
