@@ -13,19 +13,28 @@ declare(strict_types=1);
 
 namespace Zolex\VOM;
 
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\Pagination\PaginatorInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
+use Symfony\Component\Serializer\Normalizer\DenormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\DenormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
-final class VersatileObjectMapper implements NormalizerInterface, DenormalizerInterface
+final class VersatileObjectMapper implements NormalizerInterface, NormalizerAwareInterface, DenormalizerInterface, DenormalizerAwareInterface
 {
+    use DenormalizerAwareTrait;
+    use NormalizerAwareTrait;
+
     public const ROOT_FALLBACK = 'root_fallback';
     private const ROOT_DATA = '__root_data';
     private const PATH = '__normalization_path';
@@ -40,12 +49,27 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
 
     public function getSupportedTypes(?string $format): array
     {
-        return ['array'];
+        // TODO: do we need other iterable/traversable?
+        return [
+            'object' => true,
+            'native-array' => true,
+        ];
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return (null === $format || 'array' === $format) && \is_object($data);
+        // do not normalize api-platform paginator
+        if ($data instanceof PaginatorInterface) {
+            return false;
+        }
+
+        // do not normalize when in api platform operation and not explicitly requested to normalize.
+        // otherwise we would map it back to its source structure instead of returning a nice ApiResource!
+        if ($this->skipApiPlatformOperation($context)) {
+            return false;
+        }
+
+        return \is_object($data) || \is_array($data);
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
@@ -53,10 +77,6 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         $format ??= 'array';
         if ('object' === $format) {
             throw new InvalidArgumentException('To get an object use the "array" format and then call the toObject($array) on the VersatileObjectMapper.');
-        }
-
-        if ('array' !== $format) {
-            throw new InvalidArgumentException('Format can only be "array"');
         }
 
         if (!\is_object($object)) {
@@ -135,9 +155,26 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         }
     }
 
+    protected function skipApiPlatformOperation(array $context): bool
+    {
+        return ((isset($context['operation']) && \is_object($context['operation']) && $context['operation'] instanceof Operation)
+            || (isset($context['root_operation']) && \is_object($context['root_operation']) && $context['root_operation'] instanceof Operation))
+            && (!isset($context['vom']) || !$context['vom']);
+    }
+
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return (null === $format || 'array' === $format) && class_exists($type) && (\is_array($data) || \is_object($data));
+        // do not denormalize when in an api platform operation and not explicitly requested to denormalize.
+        // otherwise we would break api-platform's standard behavior by just installing VOM.
+        if ($this->skipApiPlatformOperation($context)) {
+            return false;
+        }
+
+        if (str_ends_with($type, '[]')) {
+            $type = substr($type, 0, -2);
+        }
+
+        return null !== $this->modelMetadataFactory->create($type);
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
@@ -146,11 +183,15 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             return null;
         }
 
+        if (!isset($this->denormalizer)) {
+            $this->denormalizer = &$this;
+        }
+
         if (\is_array($data)) {
             if (array_is_list($data) && str_ends_with($type, '[]')) {
                 $array = [];
                 foreach ($data as $item) {
-                    $array[] = $this->denormalize($item, substr($type, 0, -2), $format, $context);
+                    $array[] = $this->denormalizer->denormalize($item, substr($type, 0, -2), $format, $context);
                 }
 
                 return $array;
@@ -166,8 +207,9 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             $context[AbstractNormalizer::GROUPS] = [$context[AbstractNormalizer::GROUPS]];
         }
 
-        $constructorArguments = [];
         $metadata = $this->modelMetadataFactory->create($type);
+
+        $constructorArguments = [];
         foreach ($metadata->getConstructorArguments() as $argument) {
             $value = $this->denormalizeProperty($data, $argument, $format, $context);
             if (null === $value && $argument->hasDefaultValue()) {
@@ -238,7 +280,7 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         }
 
         if ($property->isCollection() && $collectionType = $property->getCollectionType()) {
-            $value = $this->denormalize($value, $collectionType.'[]', $format, $context);
+            $value = $this->denormalizer->denormalize($value, $collectionType.'[]', $format, $context);
         } elseif (\is_string($value) && $property->isDateTime()) {
             $class = $property->getType();
             $value = new $class($value);
@@ -254,14 +296,18 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
                         $value = null;
                     }
                 } elseif (\is_object($data)) {
-                    // custom flag nested value
+                    // model flag nested value
                     $value = !$property->isFalse($value);
                 }
             } elseif (null !== $value) {
                 $value = $property->isTrue($value);
             }
         } elseif (null !== $value && $property->isModel()) {
+            // we know it's a VOM model, so call our own method directly to avoid other normalizers "stealing" it
             $value = $this->denormalize($value, $property->getType(), $format, $context);
+        } elseif ($this !== $this->denormalizer) {
+            // only call if we are in the symfony normalizer chain, otherwise it results in an endless recursion
+            $value = $this->denormalizer->denormalize($value, $property->getType() ?? $property->getBuiltinType(), $format, $context);
         }
 
         return $value;

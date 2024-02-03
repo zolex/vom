@@ -39,10 +39,17 @@ class VersatileObjectMapperTest extends TestCase
     protected function setUp(): void
     {
         $propertyInfo = PropertyInfoExtractorFactory::create();
-
         $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
         $this->objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
+
+        /*
+        $encoders = [new JsonEncoder()];
+        $normalizers = [new UnwrappingDenormalizer(), new ArrayDenormalizer(), new ObjectNormalizer()];
+        $serializer = new Serializer($normalizers, $encoders);
+        $this->objectMapper->setNormalizer($serializer);
+        $this->objectMapper->setDenormalizer($serializer);
+        */
     }
 
     public function testBooleans()
@@ -135,6 +142,13 @@ class VersatileObjectMapperTest extends TestCase
         $expected->dateTime = new \DateTime('2024-01-20 06:00:00');
         $expected->dateTimeImmutable = new \DateTimeImmutable('2001-04-11 14:14:00');
         $this->assertEquals($expected, $model);
+
+        $array = $this->objectMapper->normalize($expected);
+
+        $this->assertEquals('2024-01-20 06:00:00', $array['dateTime']);
+        $this->assertEquals('2001-04-11 14:14:00', $array['dateTimeImmutable']);
+
+        $x = 1;
     }
 
     public function testConversions()
