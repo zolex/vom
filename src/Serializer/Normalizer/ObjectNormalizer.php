@@ -171,7 +171,14 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
                 $context[self::CONTEXT_PROPERTY] = $property;
                 $value = $this->propertyAccessor->getValue($object, $property->getName());
                 $value = $this->serializer->normalize($value, $format, $context);
-                $data[$property->getName()] = $value;
+
+                if ($property->isFlag()) {
+                    if (null !== $value) {
+                        $data[] = $value;
+                    }
+                } else {
+                    $data[$property->getName()] = $value;
+                }
             } catch (\Throwable $e) {
                 $x = 1;
             }

@@ -54,6 +54,29 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $this->assertNull($normalized['nullableBool']);
     }
 
+    public function testNullableBooleanExplicitlyNull()
+    {
+        $data = [
+            'nullableBool' => null,
+        ];
+
+        /* @var Booleans $booleans */
+        $booleans = $this->serializer->denormalize($data, Booleans::class);
+        $this->assertFalse(isset($booleans->bool));
+        $this->assertNull($booleans->nullableBool);
+    }
+
+    /**
+     * @dataProvider provideBooleans
+     */
+    public function testBooleans($data, $expected): void
+    {
+        /* @var Booleans $booleans */
+        $booleans = $this->serializer->denormalize($data, Booleans::class);
+        $normalized = $this->serializer->normalize($booleans);
+        $this->assertEquals($expected, $normalized);
+    }
+
     public function provideBooleans(): iterable
     {
         yield [
@@ -111,29 +134,6 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideBooleans
-     */
-    public function testBooleans($data, $expected): void
-    {
-        /* @var Booleans $booleans */
-        $booleans = $this->serializer->denormalize($data, Booleans::class);
-        $normalized = $this->serializer->normalize($booleans);
-        $this->assertEquals($expected, $normalized);
-    }
-
-    public function testNullableBooleanExplicitlyNull()
-    {
-        $data = [
-            'nullableBool' => null,
-        ];
-
-        /* @var Booleans $booleans */
-        $booleans = $this->serializer->denormalize($data, Booleans::class);
-        $this->assertFalse(isset($booleans->bool));
-        $this->assertNull($booleans->nullableBool);
-    }
-
     public function testDateAndTime(): void
     {
         $data = [];
@@ -157,18 +157,62 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
     }
 
-    public function testCommonFlags()
+    /**
+     * @dataProvider provideCommonFlags
+     */
+    public function testCommonFlags($data, $expected)
     {
-        $data = [
-            'flagA',
-            '!flagB',
-        ];
-
         /* @var CommonFlags $commonFlags */
         $commonFlags = $this->serializer->denormalize($data, CommonFlags::class);
-        $this->assertTrue($commonFlags->flagA);
-        $this->assertFalse($commonFlags->flagB);
-        $this->assertFalse(isset($commonFlags->flagC));
+
+        // when the nullable flagC is not passed, it should stay null!
+        if (!in_array('flagC', $data) && !in_array('!flagC', $data)) {
+            $this->assertNull($commonFlags->flagC);
+        }
+
+        $normalized = $this->serializer->normalize($commonFlags);
+        $this->assertIsArray($normalized);
+        $this->assertCount(count($expected), $normalized);
+        $this->assertTrue(array_is_list($normalized));
+        foreach ($expected as $expectedFlag) {
+            $this->assertTrue(in_array($expectedFlag, $normalized));
+        }
+    }
+
+    public function provideCommonFlags(): iterable
+    {
+        // flagD has a default value true, so it will
+        // always be there unless explicitly passed as !flagD
+
+        yield [
+            ['flagA', '!flagB'],
+            ['flagA', '!flagB', 'flagD'],
+        ];
+
+        yield [
+            ['!flagA', 'flagB', 'flagC'],
+            ['!flagA', 'flagB', 'flagC', 'flagD'],
+        ];
+
+        yield [
+            ['flagC'],
+            ['flagC', 'flagD'],
+        ];
+
+        yield [
+            ['!flagC', 'flagA'],
+            ['!flagC', 'flagD', 'flagA'],
+        ];
+
+        yield [
+            ['!flagC', '!flagD'],
+            ['!flagC', '!flagD'],
+        ];
+
+        yield [
+            [],
+            ['flagD'],
+        ];
     }
 
     public function testAccessor(): void
