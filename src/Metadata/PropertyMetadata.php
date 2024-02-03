@@ -60,7 +60,13 @@ class PropertyMetadata
         }
 
         foreach ($this->types as $type) {
-            if ($class = $type->getClassName()) {
+            if ($type->isCollection()) {
+                foreach ($type->getCollectionValueTypes() as $collectionValueType) {
+                    if ($class = $collectionValueType->getClassName()) {
+                        return $class.'[]';
+                    }
+                }
+            } elseif ($class = $type->getClassName()) {
                 return $class;
             }
         }
