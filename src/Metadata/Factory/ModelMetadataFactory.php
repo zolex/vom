@@ -63,6 +63,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             */
         }
 
+        if (!$modelMetadata->getAttribute()) {
+            return null;
+        }
+
         if ($constructor = $reflectionClass->getConstructor()) {
             foreach ($constructor->getParameters() as $reflectionParameter) {
                 if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionParameter)) {
