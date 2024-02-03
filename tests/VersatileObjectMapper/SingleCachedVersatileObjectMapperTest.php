@@ -9,23 +9,21 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Test\VersatileObjectMapper;
+namespace VersatileObjectMapper;
 
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
+use Zolex\VOM\Test\VersatileObjectMapper\VersatileObjectMapperTest;
 
-/**
- * Same as the test with cached metadata factory, but keeps the same instance for all tests!
- */
-class CachedVersatileObjectMapperTest extends VersatileObjectMapperTest
+class SingleCachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     public static function setUpBeforeClass(): void
     {
-        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
+        // dont setup
     }
 
     protected function setUp(): void
     {
-        // do not reinitialize before each test
+        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
     }
 }

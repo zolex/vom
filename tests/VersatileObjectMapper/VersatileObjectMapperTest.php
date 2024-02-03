@@ -11,421 +11,260 @@
 
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
-use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
-use Zolex\VOM\Test\Fixtures\Address;
-use Zolex\VOM\Test\Fixtures\Arrays;
+use PHPUnit;
+use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
+use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
-use Zolex\VOM\Test\Fixtures\FlagParent;
-use Zolex\VOM\Test\Fixtures\Person;
-use Zolex\VOM\Test\Fixtures\PrivateCall;
+use Zolex\VOM\Test\Fixtures\NestedName;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
-use Zolex\VOM\Test\Fixtures\SickChild;
-use Zolex\VOM\Test\Fixtures\SickRoot;
-use Zolex\VOM\Test\Fixtures\SickSack;
-use Zolex\VOM\Test\Fixtures\SickSuck;
-use Zolex\VOM\VersatileObjectMapper;
 
-class VersatileObjectMapperTest extends TestCase
+/**
+ * Base test with a fresh instance of the VOM for each test.
+ */
+class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
 {
-    protected VersatileObjectMapper $objectMapper;
+    protected static VersatileObjectMapper $serializer;
 
     protected function setUp(): void
     {
-        $this->markTestSkipped('OLD IMPLEMENTATION!');
-
-        $propertyInfo = PropertyInfoExtractorFactory::create();
-        $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        $this->objectMapper = new VersatileObjectMapper($modelMetadataFactory, $propertyAccessor);
+        self::$serializer = VersatileObjectMapperFactory::create();
     }
 
-    public function testBooleans()
+    public function testBooleansUninitialized(): void
     {
-        $model = $this->objectMapper->denormalize(['bool' => 'on', 'nullableBool' => 1], Booleans::class);
-        $this->assertTrue($model->bool);
-        $this->assertTrue($model->nullableBool);
+        $data = [];
 
-        $model = $this->objectMapper->denormalize(['bool' => 'off', 'nullableBool' => 0], Booleans::class);
-        $this->assertFalse($model->bool);
-        $this->assertFalse($model->nullableBool);
+        /* @var Booleans $booleans */
+        $booleans = self::$serializer->denormalize($data, Booleans::class);
+        $this->assertFalse(isset($booleans->bool));
+        $this->assertFalse(isset($booleans->nullableBool));
 
-        $model = $this->objectMapper->denormalize([], Booleans::class);
-        $this->assertFalse(isset($model->bool));
-        $this->assertFalse(isset($model->nullableBool));
+        $normalized = self::$serializer->normalize($booleans);
+        $this->assertArrayNotHasKey('bool', $normalized);
+        $this->assertArrayHasKey('nullableBool', $normalized);
+        $this->assertNull($normalized['nullableBool']);
     }
 
-    /*
-    public function testArrayWithoutDocTag(): void
-    {
-        $this->markTestSkipped('New implementation. Check if we want to throw');
-
-        $this->expectException(RuntimeException::class);
-        $data = ['list' => [[], [], []]];
-        $this->objectMapper->denormalize($data, ArrayWithoutDocTag::class);
-    }
-    */
-
-    public function testFlags()
+    public function testNullableBooleanExplicitlyNull()
     {
         $data = [
-            'commonFlags' => [
-                'flagA',
-                '!flagB',
-            ],
-            'somethingElse' => [
-                'flagD',
-            ],
-            'labeledFlagsArray' => [
-                'flagA' => (object) [
-                    'text' => 'Fahne A',
-                    'value' => 'flagA',
-                ],
-                'flagB' => [
-                    'text' => 'Fahne B',
-                    'value' => true,
-                ],
-            ],
-            'labeledFlagsObject' => (object) [
-                'flagA' => [
-                    'text' => 'Fahne A',
-                    'value' => false,
-                ],
-                'flagB' => (object) [
-                    'text' => 'Fahne B',
-                    'value' => 'OFF',
-                ],
-            ],
+            'nullableBool' => null,
         ];
 
-        $model = $this->objectMapper->denormalize($data, FlagParent::class);
-
-        // TODO: fix by adding * to supportedTypes in VOM?
-        // $this->assertTrue($model->commonFlags->flagA);
-        // $this->assertFalse($model->commonFlags->flagB);
-        $this->assertNull($model->commonFlags->flagC);
-
-        $this->assertTrue($model->labeledFlagsArray->flagA->isEnabled);
-        $this->assertTrue($model->labeledFlagsArray->flagB->isEnabled);
-        $this->assertNull($model->labeledFlagsArray->flagC);
-
-        $this->assertFalse($model->labeledFlagsObject->flagA->isEnabled);
-        $this->assertFalse($model->labeledFlagsObject->flagB->isEnabled);
-        $this->assertNull($model->labeledFlagsObject->flagC);
-    }
-
-    public function testDateTime()
-    {
-        $model = $this->objectMapper->denormalize([], DateAndTime::class);
-        $this->assertEquals(new DateAndTime(), $model);
-
-        $model = $this->objectMapper->denormalize(['dateTime' => null, 'dateTimeImmutable' => null], DateAndTime::class);
-        $this->assertEquals(new DateAndTime(), $model);
-
-        $model = $this->objectMapper->denormalize([
-            'dateTime' => '2024-01-20 06:00:00',
-            'dateTimeImmutable' => '2001-04-11 14:14:00',
-        ], DateAndTime::class);
-
-        $expected = new DateAndTime();
-        $expected->dateTime = new \DateTime('2024-01-20 06:00:00');
-        $expected->dateTimeImmutable = new \DateTimeImmutable('2001-04-11 14:14:00');
-        $this->assertEquals($expected, $model);
-
-        $array = $this->objectMapper->normalize($expected);
-
-        $this->assertEquals('2024-01-20 06:00:00', $array['dateTime']);
-        $this->assertEquals('2001-04-11 14:14:00', $array['dateTimeImmutable']);
-
-        $x = 1;
-    }
-
-    public function testConversions()
-    {
-        $root = new SickRoot();
-        $root = new SickRoot();
-
-        $child1 = new SickChild();
-        $child1->firstname = 'Javier';
-        $child1->hasHair = true;
-        $root->singleChild = $child1;
-
-        $child2 = new SickChild();
-        $child2->firstname = 'Andreas';
-        $child2->hasHair = false;
-        $root->anotherChild = $child2;
-
-        $child3 = new SickChild();
-        $child3->firstname = 'Peter';
-        $child3->hasHair = true;
-        $root->tooManyChildren[] = $child3;
-
-        $child4 = new SickChild();
-        $child4->firstname = 'Hank';
-        $child4->hasHair = false;
-        $root->tooManyChildren[] = $child4;
-
-        $sickSuck = new SickSuck();
-        $sickSuck->sickedy = 'sickedysick';
-        $sickSuck->sackedy = 'sackedysack';
-
-        $sickSack = new SickSack();
-        $sickSack->sick = 1337;
-        $sickSack->sack = 'sackywacky';
-        $sickSack->sickSuck = $sickSuck;
-        $root->sickSack = $sickSack;
-
-        $array1 = $this->objectMapper->normalize($root);
-        $model1 = $this->objectMapper->denormalize($array1, SickRoot::class);
-
-        $object1 = $this->objectMapper->toObject($this->objectMapper->normalize($root));
-        $object2 = $this->objectMapper->toObject($this->objectMapper->normalize($model1));
-
-        $model2 = $this->objectMapper->denormalize($object2, SickRoot::class);
-
-        $this->assertEquals($root, $model1);
-        $this->assertEquals($root, $model2);
-        $this->assertEquals($object1, $object2);
+        /* @var Booleans $booleans */
+        $booleans = self::$serializer->denormalize($data, Booleans::class);
+        $this->assertFalse(isset($booleans->bool));
+        $this->assertNull($booleans->nullableBool);
     }
 
     /**
-     * @dataProvider createModelDataProvider
+     * @dataProvider provideBooleans
      */
-    public function testCreateModel(array $data, string $className, string|array $groups, object $expectedModel)
+    public function testBooleans($data, $expected): void
     {
-        $model = $this->objectMapper->denormalize($data, $className, null, ['groups' => $groups]);
-        $this->assertEquals($expectedModel, $model);
+        /* @var Booleans $booleans */
+        $booleans = self::$serializer->denormalize($data, Booleans::class);
+        $normalized = self::$serializer->normalize($booleans);
+        $this->assertEquals($expected, $normalized);
     }
 
-    public function createModelDataProvider(): array
+    public function provideBooleans(): iterable
     {
-        return [
+        yield [
             [
-                [
-                    'id' => 42,
-                    'name' => [
-                        'firstname' => 'The',
-                        'lastname' => 'Dude',
-                    ],
-                ],
-                Person::class,
-                ['id'],
-                new Person(id: 42),
+                // bool has no explicit true-value configured
+                'bool' => 1,
+                'nullableBool' => 0,
+                'stringBool' => 'yeah',
+                'anotherBool' => 'FALSE',
             ],
             [
-                [
-                    'id' => 42,
-                    'name' => [
-                        'firstname' => 'The',
-                        'lastname' => 'Dude',
-                    ],
-                    'int_age' => 38,
-                    'contact_email' => 'some@mail.to',
-                    'address' => [
-                        'street' => 'nowhere',
-                    ],
-                ],
-                Person::class,
-                ['standard'],
-                new Person(id: 42, firstname: 'The', lastname: 'Dude', age: 38, email: 'some@mail.to'),
+                // to the result will be true for anything in the default true-values list
+                'bool' => true,
+                'nullableBool' => false,
+                'stringBool' => 'yeah',
+                'anotherBool' => 'FALSE',
+            ],
+        ];
+
+        yield [
+            [
+                'bool' => true,
+                'nullableBool' => 'NO',
+                'stringBool' => 'nope',
+                'anotherBool' => 'TRUE',
             ],
             [
-                [
-                    'id' => 42,
-                    'int_age' => 42,
-                    'contact_email' => 'some@mail.to',
-                    'address' => [
-                        'street' => 'Fireroad',
-                        'housenumber' => 666,
-                        'zipcode' => 56070,
-                        'city' => 'Hell',
-                    ],
-                    'bool_awesome' => 'y',
-                    'hilarious' => 'OFF',
-                    'flags' => [
-                        'delicious' => 'delicious',
-                        'holy' => 'holy',
-                    ],
-                ],
-                Person::class,
-                'extended',
-                new Person(
-                    id: 42,
-                    age: 42,
-                    email: 'some@mail.to',
-                    isAwesome: true,
-                    isHilarious: false,
-                    address: new Address(
-                        street: 'Fireroad',
-                        houseNo: 666,
-                        zip: 56070,
-                        city: 'Hell',
-                    ),
-                ),
+                'bool' => true,
+                'nullableBool' => false,
+                'stringBool' => 'nope',
+                'anotherBool' => 'TRUE',
+            ],
+        ];
+
+        yield [
+            [
+                'nullableBool' => null,
+                // VOM property explicitly requires the string 'TRUE'
+                'anotherBool' => true,
             ],
             [
-                [
-                    'id' => 43,
-                    'int_age' => 42,
-                    'contact_email' => 'some@mail.to',
-                    'address' => [
-                        'street' => 'Fireroad',
-                        'housenumber' => 666,
-                        'zipcode' => 56070,
-                        'city' => 'Hell',
-                    ],
-                    'bool_awesome' => 'true',
-                    'hilarious' => 'ON',
-                    'flags' => [
-                        'delicious' => 'delicious',
-                    ],
-                ],
-                Person::class,
-                ['id', 'isHoly', 'isHilarious'],
-                new Person(
-                    id: 43,
-                    isHilarious: true,
-                ),
+                'nullableBool' => null,
+                // so the bool true becomes the property's false-value!
+                'anotherBool' => 'FALSE',
             ],
+        ];
+
+        yield [
+            [],
             [
-                [
-                    'id' => 44,
-                    'hilarious' => 'ON',
-                    'address' => [
-                        'street' => 'Fireroad',
-                        'housenumber' => 666,
-                        'zipcode' => 56070,
-                        'city' => 'Hell',
-                    ],
-                ],
-                Person::class,
-                ['id', 'address'],
-                new Person(
-                    id: 44,
-                    address: new Address(
-                        street: 'Fireroad',
-                        houseNo: 666,
-                        zip: 56070,
-                        city: 'Hell',
-                    ),
-                ),
-            ],
-            [
-                [
-                    'id' => 45,
-                    'address' => [
-                        'street' => 'Fireroad',
-                        'housenumber' => 666,
-                    ],
-                ],
-                Person::class,
-                ['address'],
-                new Person(
-                    address: new Address(
-                        street: 'Fireroad',
-                        houseNo: 666,
-                        zip: null,
-                        city: null,
-                        country: null
-                    ),
-                ),
+                // only bools that are nullable can be null :P
+                // rest must be uninitialized
+                'nullableBool' => null,
             ],
         ];
     }
 
-    public function testArrayOnRoot(): void
+    public function testDateAndTime(): void
+    {
+        $data = [];
+
+        /* @var DateAndTime $dateAndTime */
+        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
+        $this->assertFalse(isset($dateAndTime->dateTime));
+        $this->assertFalse(isset($dateAndTime->dateTimeImmutable));
+
+        $data = [
+            'dateTime' => '2024-02-03 13:05:00',
+            'dateTimeImmutable' => '1985-01-20 12:34:56',
+        ];
+
+        /* @var DateAndTime $dateAndTime */
+        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
+        $this->assertTrue(isset($dateAndTime->dateTime));
+        $this->assertTrue(isset($dateAndTime->dateTimeImmutable));
+
+        $this->assertEquals($data['dateTime'], $dateAndTime->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * @dataProvider provideCommonFlags
+     */
+    public function testCommonFlags($data, $expected)
+    {
+        /* @var CommonFlags $commonFlags */
+        $commonFlags = self::$serializer->denormalize($data, CommonFlags::class);
+
+        // when the nullable flagC is not passed, it should stay null!
+        if (!\in_array('flagC', $data) && !\in_array('!flagC', $data)) {
+            $this->assertNull($commonFlags->flagC);
+        }
+
+        $normalized = self::$serializer->normalize($commonFlags, 'json');
+        $this->assertIsArray($normalized);
+        $this->assertCount(\count($expected), $normalized);
+        $this->assertTrue(array_is_list($normalized));
+        foreach ($expected as $expectedFlag) {
+            $this->assertTrue(\in_array($expectedFlag, $normalized));
+        }
+    }
+
+    public function provideCommonFlags(): iterable
+    {
+        // flagD has a default value true, so it will
+        // always be there unless explicitly passed as !flagD
+
+        yield [
+            ['flagA', '!flagB'],
+            ['flagA', '!flagB', 'flagD'],
+        ];
+
+        yield [
+            ['!flagA', 'flagB', 'flagC'],
+            ['!flagA', 'flagB', 'flagC', 'flagD'],
+        ];
+
+        yield [
+            ['flagC'],
+            ['flagC', 'flagD'],
+        ];
+
+        yield [
+            ['!flagC', 'flagA'],
+            ['!flagC', 'flagD', 'flagA'],
+        ];
+
+        yield [
+            ['!flagC', '!flagD'],
+            ['!flagC', '!flagD'],
+        ];
+
+        yield [
+            [],
+            ['flagD'],
+        ];
+    }
+
+    public function testAccessor(): void
     {
         $data = [
-            ['dateTime' => '2024-01-01 00:00:00'],
-            ['dateTime' => '2024-01-02 00:00:00'],
-            ['dateTime' => '2024-01-03 00:00:00'],
+            'nested' => [
+                'firstname' => 'Andreas',
+                'deeper' => [
+                    'surname' => 'Linden',
+                ],
+            ],
         ];
 
-        /** @var DateAndTime[] $arrayOfDateAndTime */
-        $arrayOfDateAndTime = $this->objectMapper->denormalize($data, DateAndTime::class.'[]');
-        $this->assertCount(3, $arrayOfDateAndTime);
-        $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
-        $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
-        $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
+        /* @var NestedName $nestedName */
+        $nestedName = self::$serializer->denormalize($data, NestedName::class);
+        $this->assertEquals($data['nested']['firstname'], $nestedName->firstname);
+        $this->assertEquals($data['nested']['deeper']['surname'], $nestedName->lastname);
     }
 
-    public function testRecursiveStructures(): void
+    public function testArrayOfModels(): void
     {
         $data = [
-            'dateTimeList' => [
-                ['dateTime' => '2024-01-01 00:00:00'],
-            ],
-            'recursiveList' => [
-                [
-                    'dateTimeList' => [
-                        ['dateTime' => '2024-01-02 00:00:00'],
-                        ['dateTime' => '2024-01-03 00:00:00'],
-                    ],
-                    'recursiveList' => [
-                        [
-                            'dateTimeList' => [
-                                ['dateTime' => '2024-01-03 00:00:00'],
-                                ['dateTime' => '2024-01-04 00:00:00'],
-                                ['dateTime' => '2024-01-05 00:00:00'],
-                            ],
-                            'recursiveList' => [
-                                [
-                                    'dateTimeList' => [
-                                        ['dateTime' => '2024-06-01 00:00:00'],
-                                        ['dateTime' => '2024-07-01 00:00:00'],
-                                        ['dateTime' => '2024-08-01 00:00:00'],
-                                        ['dateTime' => '2024-09-01 00:00:00'],
-                                    ],
-                                ],
-                            ],
-                        ],
+            [
+                'nested' => [
+                    'firstname' => 'Andreas',
+                    'deeper' => [
+                        'surname' => 'Linden',
                     ],
                 ],
-                [
-                    'dateTimeList' => [
-                        ['dateTime' => '2024-01-10 00:00:00'],
+            ],
+            [
+                'nested' => [
+                    'firstname' => 'Javier',
+                    'deeper' => [
+                        'surname' => 'Caballero',
                     ],
-                    'recursiveList' => [
-                        [
-                            'dateTimeList' => [
-                                ['dateTime' => '2024-01-11 00:00:00'],
-                                ['dateTime' => '2024-01-12 00:00:00'],
-                            ],
-                            'recursiveList' => [
-                                [
-                                    'dateTimeList' => [
-                                        ['dateTime' => '2024-01-13 00:00:00'],
-                                        ['dateTime' => '2024-01-14 00:00:00'],
-                                        ['dateTime' => '2024-01-15 00:00:00'],
-                                    ],
-                                    'recursiveList' => [
-                                        [
-                                            'dateTimeList' => [
-                                                ['dateTime' => '2024-06-16 00:00:00'],
-                                                ['dateTime' => '2024-07-17 00:00:00'],
-                                                ['dateTime' => '2024-08-18 00:00:00'],
-                                                ['dateTime' => '2024-09-19 00:00:00'],
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
+                ],
+            ],
+            [
+                'nested' => [
+                    'firstname' => 'Peter',
+                    'deeper' => [
+                        'surname' => 'Enis',
                     ],
                 ],
             ],
         ];
 
-        $items = $this->objectMapper->denormalize($data, Arrays::class);
-        $data2 = $this->objectMapper->normalize($items);
+        /* @var array|NestedName[] $nestedName */
+        $nestedNames = self::$serializer->denormalize($data, NestedName::class.'[]');
 
-        $this->assertEquals($data, $data2);
+        $this->assertIsArray($nestedNames);
+        $this->assertCount(3, $nestedNames);
+        foreach ($data as $index => $item) {
+            $this->assertEquals($item['nested']['firstname'], $nestedNames[$index]->firstname);
+            $this->assertEquals($item['nested']['deeper']['surname'], $nestedNames[$index]->lastname);
+        }
     }
 
     public function testConstruct(): void
@@ -437,7 +276,7 @@ class VersatileObjectMapperTest extends TestCase
             'default' => true,
         ];
 
-        $constructed = $this->objectMapper->denormalize($data, ConstructorArguments::class);
+        $constructed = self::$serializer->denormalize($data, ConstructorArguments::class);
         $this->assertEquals(42, $constructed->getId());
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertFalse($constructed->getNullable());
@@ -451,7 +290,7 @@ class VersatileObjectMapperTest extends TestCase
             'name' => 'Peter Pan',
         ];
 
-        $constructed = $this->objectMapper->denormalize($data, PropertyPromotion::class);
+        $constructed = self::$serializer->denormalize($data, PropertyPromotion::class);
         $this->assertEquals(42, $constructed->getId());
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertNull($constructed->getNullable());
@@ -464,7 +303,7 @@ class VersatileObjectMapperTest extends TestCase
             'nullable' => true,
         ];
 
-        $constructed = $this->objectMapper->denormalize($data, PropertyPromotion::class);
+        $constructed = self::$serializer->denormalize($data, PropertyPromotion::class);
         $this->assertEquals(42, $constructed->getId());
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertTrue($constructed->getNullable());
@@ -478,14 +317,8 @@ class VersatileObjectMapperTest extends TestCase
             'name' => 'Peter Enis',
         ];
 
-        $calls = $this->objectMapper->denormalize($data, Calls::class);
+        $calls = self::$serializer->denormalize($data, Calls::class);
         $this->assertEquals(42, $calls->getId());
         $this->assertEquals('Peter Enis', $calls->getName());
-    }
-
-    public function testPrivateMethodCallThrowsException(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->objectMapper->denormalize([], PrivateCall::class);
     }
 }
