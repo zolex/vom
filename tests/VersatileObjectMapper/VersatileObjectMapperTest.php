@@ -14,12 +14,15 @@ namespace Zolex\VOM\Test\VersatileObjectMapper;
 use PHPUnit;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
+use Zolex\VOM\Test\Fixtures\Address;
+use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
 use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\NestedName;
+use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 
 /**
@@ -320,5 +323,242 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $calls = self::$serializer->denormalize($data, Calls::class);
         $this->assertEquals(42, $calls->getId());
         $this->assertEquals('Peter Enis', $calls->getName());
+    }
+
+    public function testArrayOnRoot(): void
+    {
+        $data = [
+            ['dateTime' => '2024-01-01 00:00:00'],
+            ['dateTime' => '2024-01-02 00:00:00'],
+            ['dateTime' => '2024-01-03 00:00:00'],
+        ];
+
+        /** @var DateAndTime[] $arrayOfDateAndTime */
+        $arrayOfDateAndTime = self::$serializer->denormalize($data, DateAndTime::class.'[]');
+        $this->assertCount(3, $arrayOfDateAndTime);
+        $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
+    }
+
+    public function testRecursiveStructures(): void
+    {
+        $data = [
+            'dateTimeList' => [
+                ['dateTime' => '2024-01-01 00:00:00'],
+            ],
+            'recursiveList' => [
+                [
+                    'dateTimeList' => [
+                        ['dateTime' => '2024-01-02 00:00:00'],
+                        ['dateTime' => '2024-01-03 00:00:00'],
+                    ],
+                    'recursiveList' => [
+                        [
+                            'dateTimeList' => [
+                                ['dateTime' => '2024-01-03 00:00:00'],
+                                ['dateTime' => '2024-01-04 00:00:00'],
+                                ['dateTime' => '2024-01-05 00:00:00'],
+                            ],
+                            'recursiveList' => [
+                                [
+                                    'dateTimeList' => [
+                                        ['dateTime' => '2024-01-06 00:00:00'],
+                                        ['dateTime' => '2024-01-07 00:00:00'],
+                                        ['dateTime' => '2024-01-08 00:00:00'],
+                                        ['dateTime' => '2024-01-09 00:00:00'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'dateTimeList' => [
+                        ['dateTime' => '2024-01-10 00:00:00'],
+                    ],
+                    'recursiveList' => [
+                        [
+                            'dateTimeList' => [
+                                ['dateTime' => '2024-01-11 00:00:00'],
+                                ['dateTime' => '2024-01-12 00:00:00'],
+                            ],
+                            'recursiveList' => [
+                                [
+                                    'dateTimeList' => [
+                                        ['dateTime' => '2024-01-13 00:00:00'],
+                                        ['dateTime' => '2024-01-14 00:00:00'],
+                                        ['dateTime' => '2024-01-15 00:00:00'],
+                                    ],
+                                    'recursiveList' => [
+                                        [
+                                            'dateTimeList' => [
+                                                ['dateTime' => '2024-01-16 00:00:00'],
+                                                ['dateTime' => '2024-01-17 00:00:00'],
+                                                ['dateTime' => '2024-01-18 00:00:00'],
+                                                ['dateTime' => '2024-01-19 00:00:00'],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $items = self::$serializer->denormalize($data, Arrays::class);
+        $data2 = self::$serializer->normalize($items);
+
+        $this->assertEquals($data, $data2);
+    }
+
+    /**
+     * @dataProvider createNestedModelsDataProvider
+     */
+    public function testCreateNestedModels(array $data, string $className, string|array $groups, object $expectedModel)
+    {
+        $model = self::$serializer->denormalize($data, $className, null, ['groups' => $groups]);
+        $this->assertEquals($expectedModel, $model);
+    }
+
+    public function createNestedModelsDataProvider(): iterable
+    {
+        yield [
+            [
+                'id' => 42,
+                'name' => [
+                    'firstname' => 'The',
+                    'lastname' => 'Dude',
+                ],
+            ],
+            Person::class,
+            ['id'],
+            new Person(id: 42),
+        ];
+
+        yield [
+            [
+                'id' => 42,
+                'name' => [
+                    'firstname' => 'The',
+                    'lastname' => 'Dude',
+                ],
+                'int_age' => 38,
+                'contact_email' => 'some@mail.to',
+                'address' => [
+                    'street' => 'nowhere',
+                ],
+            ],
+            Person::class,
+            ['standard'],
+            new Person(id: 42, firstname: 'The', lastname: 'Dude', age: 38, email: 'some@mail.to'),
+        ];
+
+        yield [
+            [
+                'id' => 42,
+                'int_age' => 42,
+                'contact_email' => 'some@mail.to',
+                'address' => [
+                    'street' => 'Fireroad',
+                    'housenumber' => '666',
+                    'zipcode' => '56070',
+                    'city' => 'Hell',
+                ],
+                'bool_awesome' => 'y',
+                'hilarious' => 'OFF',
+                'flags' => [
+                    'delicious' => 'delicious',
+                    'holy' => 'holy',
+                ],
+            ],
+            Person::class,
+            ['extended'],
+            new Person(
+                id: 42,
+                age: 42,
+                email: 'some@mail.to',
+                isAwesome: true,
+                isHilarious: false,
+                address: new Address(
+                    street: 'Fireroad',
+                    houseNo: 666,
+                    zip: 56070,
+                    city: 'Hell',
+                ),
+            ),
+        ];
+
+        yield [
+            [
+                'id' => 43,
+                'int_age' => 42,
+                'contact_email' => 'some@mail.to',
+                'address' => [
+                    'street' => 'Fireroad',
+                    'housenumber' => '32',
+                    'zipcode' => '50210',
+                    'city' => 'Hell',
+                ],
+                'bool_awesome' => 'true',
+                'hilarious' => 'ON',
+                'flags' => [
+                    'delicious' => 'delicious',
+                ],
+            ],
+            Person::class,
+            ['id', 'isHoly', 'isHilarious'],
+            new Person(
+                id: 43,
+                isHilarious: true,
+            ),
+        ];
+
+        yield [
+            [
+                'id' => 44,
+                'hilarious' => 'ON',
+                'address' => [
+                    'street' => 'Fireroad',
+                    'housenumber' => '213456',
+                    'zipcode' => '98765',
+                    'city' => 'Dunkel',
+                ],
+            ],
+            Person::class,
+            ['id', 'address'],
+            new Person(
+                id: 44,
+                address: new Address(
+                    street: 'Fireroad',
+                    houseNo: '213456',
+                    zip: '98765',
+                    city: 'Dunkel',
+                ),
+            ),
+        ];
+
+        yield [
+            [
+                'id' => 45,
+                'address' => [
+                    'street' => 'Elmstreet',
+                    'housenumber' => '666',
+                ],
+            ],
+            Person::class,
+            ['address'],
+            new Person(
+                address: new Address(
+                    street: 'Elmstreet',
+                    houseNo: '666',
+                    zip: null,
+                    city: null,
+                    country: null
+                ),
+            ),
+        ];
     }
 }
