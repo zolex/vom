@@ -6,7 +6,7 @@
     "require": {
         "php": ">=8.2",
         "phpdocumentor/reflection-docblock": "^5.3",
-        "zolex/vom": "^0.0.4"
+        "zolex/vom": "^0.0.6"
     },
     "config": {
         "allow-plugins": {
