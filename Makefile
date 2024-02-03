@@ -6,10 +6,10 @@ export PHP_VERSION ?= 8
 mkfile_dir := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 
 deps:
-	composer install --prefer-dist --no-plugins --no-scripts
+	XDEBUG_MODE=off composer install --prefer-dist --no-plugins --no-scripts
 
 codestyle-deps:
-	composer install --prefer-dist --working-dir=tools/php-cs-fixer
+	XDEBUG_MODE=off composer install --prefer-dist --working-dir=tools/php-cs-fixer
 
 test: deps	## Run the testsuite
 	XDEBUG_MODE=coverage vendor/bin/phpunit \
@@ -18,7 +18,7 @@ test: deps	## Run the testsuite
 		--testdox
 
 codestyle: codestyle-deps	## Show PHP-Codestxyle issues
-	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix \
+	XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix \
 		--dry-run \
 		--diff \
 		--format=junit \
@@ -26,7 +26,7 @@ codestyle: codestyle-deps	## Show PHP-Codestxyle issues
 
 
 fix-codestyle: codestyle-deps	## Show PHP-Codestxyle issues
-	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix \
+	XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix \
 		--diff \
 		--format=junit \
 		--show-progress=dots
