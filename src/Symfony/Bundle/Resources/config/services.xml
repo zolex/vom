@@ -31,5 +31,11 @@
             <argument type="service" id="property_accessor" />
         </service>
         <service id="Zolex\VOM\VersatileObjectMapper" alias="zolex_vom.object_mapper" />
+
+        <!-- do not add by default because it may be a security risk. see the docs -->
+        <!--service id="Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder">
+            <argument type="service" id="api_platform.serializer.context_builder" />
+            <argument type="service" id="zolex_vom.metadata.model_metadata_factory.cached" />
+        </service-->
     </services>
 </container>
