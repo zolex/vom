@@ -11,6 +11,7 @@
 
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 use Zolex\VOM\Symfony\Serializer\SerializerFactory;
@@ -31,7 +32,7 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
         $objectNormalizer = new ObjectNormalizer($modelMetadataFactory, $propertyAccessor);
-        $booleanNormalizer = new Zolex\VOM\Serializer\Normalizer\BooleanNormalizer();
+        $booleanNormalizer = new BooleanNormalizer();
         $this->serializer = SerializerFactory::create($objectNormalizer, $booleanNormalizer);
     }
 
@@ -102,6 +103,46 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $nestedName = $this->serializer->denormalize($data, NestedName::class);
         $this->assertEquals($data['nested']['firstname'], $nestedName->firstname);
         $this->assertEquals($data['nested']['deeper']['surname'], $nestedName->lastname);
+    }
+
+    public function testArrayOfModels(): void
+    {
+        $data = [
+            [
+                'nested' => [
+                    'firstname' => 'Andreas',
+                    'deeper' => [
+                        'surname' => 'Linden',
+                    ],
+                ],
+            ],
+            [
+                'nested' => [
+                    'firstname' => 'Javier',
+                    'deeper' => [
+                        'surname' => 'Caballero',
+                    ],
+                ],
+            ],
+            [
+                'nested' => [
+                    'firstname' => 'Peter',
+                    'deeper' => [
+                        'surname' => 'Enis',
+                    ],
+                ],
+            ],
+        ];
+
+        /* @var array|NestedName[] $nestedName */
+        $nestedNames = $this->serializer->denormalize($data, NestedName::class.'[]');
+
+        $this->assertIsArray($nestedNames);
+        $this->assertCount(3, $nestedNames);
+        foreach ($data as $index => $item) {
+            $this->assertEquals($item['nested']['firstname'], $nestedNames[$index]->firstname);
+            $this->assertEquals($item['nested']['deeper']['surname'], $nestedNames[$index]->lastname);
+        }
     }
 
     public function testConstruct(): void
