@@ -15,7 +15,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
-class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
+final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     public const TYPE = 'vom-flag';
     public const CONTEXT_NAME = '__vom_common_flag_name';

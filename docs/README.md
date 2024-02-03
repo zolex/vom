@@ -55,10 +55,10 @@ The models can be anything, so if you receive data from somewhere and need to wr
 
 ## The Object Mapper
 
-In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [symfony example](../examples/symfony-framework) 
+In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [symfony example](../examples/symfony-framework)
 
 ```php
-use Zolex\VOM\VersatileObjectMapper;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 class AnySymfonyService
 {
@@ -71,7 +71,7 @@ class AnySymfonyService
 Without symfony framework, you have to construct the mapper yourself. Also see the [plain php example](../examples/without-framework)
 
 ```php
-$objectMapper = new \Zolex\VOM\VersatileObjectMapper(
+$objectMapper = new \Zolex\VOM\Serializer\VersatileObjectMapper(
     new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(
         \Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory::create();
     ),

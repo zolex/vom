@@ -51,7 +51,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             return null;
         }
 
-        $modelMetadata = new ModelMetadata();
+        $modelMetadata = new ModelMetadata($class);
         $this->localCache[$class] = &$modelMetadata;
 
         $reflectionClass = new \ReflectionClass(trim($class, '?'));
