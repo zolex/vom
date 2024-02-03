@@ -13,6 +13,7 @@ namespace Zolex\VOM\Serializer\Normalizer;
 
 use ApiPlatform\Metadata\Operation;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerAwareInterface;
@@ -91,7 +92,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         foreach ($metadata->getProperties() as $property) {
             if ($metadata->hasConstructorArgument($property->getName())) {
                 // skip, because they have already been injected in the constructor
-                // TODO: check if it makes sense to allow setting them them again (override)
+                continue;
+            }
+
+            if (!$this->inContextGroups($property, $context)) {
                 continue;
             }
 
@@ -159,13 +163,6 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         return $this->serializer->denormalize($value, $property->getType(), $format, $context);
     }
 
-    protected function skipApiPlatformOperation(array $context): bool
-    {
-        return ((isset($context['operation']) && $context['operation'] instanceof Operation)
-            || (isset($context['root_operation']) && $context['root_operation'] instanceof Operation))
-            && (!isset($context['vom']) || !$context['vom']);
-    }
-
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
         if ($this->skipApiPlatformOperation($context)) {
@@ -184,6 +181,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         $data = [];
         foreach ($metadata->getProperties() as $property) {
             try {
+                if (!$this->inContextGroups($property, $context)) {
+                    continue;
+                }
+
                 $context[self::CONTEXT_PROPERTY] = $property;
                 $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
                 $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
@@ -202,5 +203,27 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         return $data;
+    }
+
+    private function inContextGroups(PropertyMetadata $property, array $context): bool
+    {
+        if (!isset($context[AbstractNormalizer::GROUPS])) {
+            return true;
+        }
+
+        foreach ($property->getGroups() as $group) {
+            if (\in_array($group, $context[AbstractNormalizer::GROUPS])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function skipApiPlatformOperation(array $context): bool
+    {
+        return ((isset($context['operation']) && $context['operation'] instanceof Operation)
+                || (isset($context['root_operation']) && $context['root_operation'] instanceof Operation))
+            && (!isset($context['vom']) || !$context['vom']);
     }
 }
