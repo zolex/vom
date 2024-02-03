@@ -21,4 +21,10 @@ class Booleans
 
     #[VOM\Property]
     public ?bool $nullableBool;
+
+    #[VOM\Property(trueValue: 'yeah', falseValue: 'nope')]
+    public bool $stringBool;
+
+    #[VOM\Property(trueValue: 'TRUE', falseValue: 'FALSE')]
+    public bool $anotherBool;
 }

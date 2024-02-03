@@ -39,7 +39,7 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $this->serializer = SerializerFactory::create($objectNormalizer, $booleanNormalizer, $commonFlagNormalizer);
     }
 
-    public function testBooleans(): void
+    public function testBooleansUninitialized(): void
     {
         $data = [];
 
@@ -48,16 +48,82 @@ class SimpleTest extends PHPUnit\Framework\TestCase
         $this->assertFalse(isset($booleans->bool));
         $this->assertFalse(isset($booleans->nullableBool));
 
-        $data = [
-            'bool' => 'ON',
-            'nullableBool' => 'no',
+        $normalized = $this->serializer->normalize($booleans);
+        $this->assertArrayNotHasKey('bool', $normalized);
+        $this->assertArrayHasKey('nullableBool', $normalized);
+        $this->assertNull($normalized['nullableBool']);
+    }
+
+    public function provideBooleans(): iterable
+    {
+        yield [
+            [
+                // bool has no explicit true-value configured
+                'bool' => 1,
+                'nullableBool' => 0,
+                'stringBool' => 'yeah',
+                'anotherBool' => 'FALSE',
+            ],
+            [
+                // to the result will be true for anything in the default true-values list
+                'bool' => true,
+                'nullableBool' => false,
+                'stringBool' => 'yeah',
+                'anotherBool' => 'FALSE',
+            ],
         ];
 
+        yield [
+            [
+                'bool' => true,
+                'nullableBool' => 'NO',
+                'stringBool' => 'nope',
+                'anotherBool' => 'TRUE',
+            ],
+            [
+                'bool' => true,
+                'nullableBool' => false,
+                'stringBool' => 'nope',
+                'anotherBool' => 'TRUE',
+            ],
+        ];
+
+        yield [
+            [
+                'nullableBool' => null,
+                // VOM property explicitly requires the string 'TRUE'
+                'anotherBool' => true,
+            ],
+            [
+                'nullableBool' => null,
+                // so the bool true becomes the property's false-value!
+                'anotherBool' => 'FALSE',
+            ],
+        ];
+
+        yield [
+            [],
+            [
+                // only bools that are nullable can be null :P
+                // rest must be uninitialized
+                'nullableBool' => null,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideBooleans
+     */
+    public function testBooleans($data, $expected): void
+    {
         /* @var Booleans $booleans */
         $booleans = $this->serializer->denormalize($data, Booleans::class);
-        $this->assertTrue($booleans->bool);
-        $this->assertFalse($booleans->nullableBool);
+        $normalized = $this->serializer->normalize($booleans);
+        $this->assertEquals($expected, $normalized);
+    }
 
+    public function testNullableBooleanExplicitlyNull()
+    {
         $data = [
             'nullableBool' => null,
         ];

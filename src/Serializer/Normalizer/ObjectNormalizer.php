@@ -24,9 +24,8 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
 {
     use SerializerAwareTrait;
 
-    public const ROOT_FALLBACK = 'root_fallback';
-    private const ROOT_DATA = '__root_data';
-    private const PATH = '__normalization_path';
+    public const CONTEXT_PROPERTY = '__vom_property';
+    public const CONTEXT_ROOT_DATA = '__root_data';
 
     public function __construct(
         private ModelMetadataFactory $modelMetadataFactory,
@@ -139,7 +138,7 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
                 if ($property->isNested()) {
                     $value = $this->propertyAccessor->getValue($data, $accessor);
                 } else {
-                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $accessor);
+                    $value = $this->propertyAccessor->getValue($context[self::CONTEXT_ROOT_DATA], $accessor);
                 }
             } catch (\Throwable $e) {
                 $value = null;
@@ -150,16 +149,34 @@ class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, Se
             }
         }
 
+        $context[self::CONTEXT_PROPERTY] = $property;
+
         return $this->serializer->denormalize($value, $property->getType(), $format, $context);
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return false;
+        return null !== $this->modelMetadataFactory->create($data::class);
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        return ['object' => 'xD'];
+        if (!$metadata = $this->modelMetadataFactory->create($object::class)) {
+            return null;
+        }
+
+        $data = [];
+        foreach ($metadata->getProperties() as $property) {
+            try {
+                $context[self::CONTEXT_PROPERTY] = $property;
+                $value = $this->propertyAccessor->getValue($object, $property->getName());
+                $value = $this->serializer->normalize($value, $format, $context);
+                $data[$property->getName()] = $value;
+            } catch (\Throwable $e) {
+                $x = 1;
+            }
+        }
+
+        return $data;
     }
 }

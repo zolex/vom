@@ -16,6 +16,7 @@ namespace Zolex\VOM\Metadata;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
 class PropertyMetadata
@@ -52,6 +53,10 @@ class PropertyMetadata
     {
         if ($this->isFlag()) {
             return CommonFlagNormalizer::TYPE;
+        }
+
+        if ($this->isBool()) {
+            return BooleanNormalizer::TYPE;
         }
 
         foreach ($this->types as $type) {
@@ -190,16 +195,6 @@ class PropertyMetadata
     public function getFalseValue(): bool|string|int|null
     {
         return $this->attribute->getFalseValue();
-    }
-
-    public function isTrue(mixed $value): bool
-    {
-        return $this->attribute->isTrue($value);
-    }
-
-    public function isFalse(mixed $value): bool
-    {
-        return $this->attribute->isFalse($value);
     }
 
     public function getDefaultOrder(): ?string
