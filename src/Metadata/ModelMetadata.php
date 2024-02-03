@@ -32,6 +32,15 @@ final class ModelMetadata
      */
     private array $methodCalls = [];
 
+    public function __construct(private readonly string $class)
+    {
+    }
+
+    public function getClass(): string
+    {
+        return $this->class;
+    }
+
     public function getPreset(string $name): ?array
     {
         return $this->attribute?->getPreset($name) ?? null;

@@ -26,10 +26,29 @@
             <tag name="cache.pool" />
         </service>
 
-        <service id="zolex_vom.object_mapper" class="Zolex\VOM\VersatileObjectMapper">
-            <argument type="service" id="zolex_vom.metadata.model_metadata_factory" />
-            <argument type="service" id="property_accessor" />
+        <service id="zolex_vom.serializer.versatile_object_mapper" class="Zolex\VOM\Serializer\VersatileObjectMapper">
+            <argument type="service" id="serializer" />
         </service>
-        <service id="Zolex\VOM\VersatileObjectMapper" alias="zolex_vom.object_mapper" />
+        <service id="Zolex\VOM\Serializer\VersatileObjectMapper" alias="zolex_vom.serializer.versatile_object_mapper" />
+
+        <service id="zolex_vom.serializer.normalizer.object_normalizer" class="Zolex\VOM\Serializer\Normalizer\ObjectNormalizer">
+            <argument type="service" id="zolex_vom.metadata.model_metadata_factory.cached"/>
+            <argument type="service" id="property_accessor"/>
+            <tag name="serializer.normalizer" priority="100" />
+        </service>
+
+        <service id="zolex_vom.serializer.normalizer.boolean_normalizer" class="Zolex\VOM\Serializer\Normalizer\BooleanNormalizer">
+            <tag name="serializer.normalizer" priority="90" />
+        </service>
+
+        <service id="zolex_vom.serializer.normalizer.common_flag_normalizer" class="Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer">
+            <tag name="serializer.normalizer" priority="80" />
+        </service>
+
+        <!-- do not add by default because it may be a security risk. see the docs -->
+        <!--service id="Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder">
+            <argument type="service" id="api_platform.serializer.context_builder" />
+            <argument type="service" id="zolex_vom.metadata.model_metadata_factory.cached" />
+        </service-->
     </services>
 </container>

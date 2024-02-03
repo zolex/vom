@@ -2,6 +2,7 @@
 
 namespace App\ApiResource;
 
+use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]

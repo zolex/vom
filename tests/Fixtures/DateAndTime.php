@@ -11,14 +11,18 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class DateAndTime
 {
-    #[VOM\Property(dateTimeFormat: 'Y-m-d H:i:s')]
+    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
+    #[VOM\Property()]
     public \DateTime $dateTime;
 
-    #[VOM\Property(dateTimeFormat: 'Y-m-d H:i:s')]
+    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
+    #[VOM\Property()]
     public \DateTimeImmutable $dateTimeImmutable;
 }
