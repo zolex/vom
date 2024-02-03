@@ -8,13 +8,24 @@ use ApiPlatform\Metadata\Tests\Fixtures\Metadata\Get;
 use App\State\PersonStateProvider;
 use Zolex\VOM\Mapping as VOM;
 
-#[Get(provider: PersonStateProvider::class)]
+#[Get(
+    provider: PersonStateProvider::class
+)]
+
+#[Get(
+    uriTemplate: '/people/{id}/legacy',
+    normalizationContext: ['vom' => true],
+    provider: PersonStateProvider::class
+)]
+
 #[Post]
+
 #[Post(
     uriTemplate: '/people/legacy',
     normalizationContext: ['vom' => true],
     denormalizationContext: ['vom' => true],
 )]
+
 #[VOM\Model]
 class Person
 {
