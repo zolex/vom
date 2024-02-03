@@ -13,35 +13,46 @@ namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Zolex\VOM\Metadata\PropertyMetadata;
 
 class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
 {
+    public const TYPE = 'vom-bool';
     public const TRUE_VALUES = [true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'];
     public const FALSE_VALUES = [false, 0, '0', 'FALSE', 'false', 'F', 'f', 'OFF', 'off', 'NO', 'no', 'N', 'n'];
 
     public function getSupportedTypes(?string $format): array
     {
         return [
-            'string' => true,
-            'int' => true,
-            'bool' => true,
-            'vom-bool' => true,
+            '*' => true,
         ];
     }
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return \in_array($data, self::TRUE_VALUES, true) || \in_array($data, self::FALSE_VALUES, true);
+        return 'vom-bool' === $type;
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        if (\in_array($data, self::TRUE_VALUES, true)) {
-            return true;
-        }
+        if (isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()) {
+            if (null !== $trueValue = $context[ObjectNormalizer::CONTEXT_PROPERTY]->getTrueValue()) {
+                return $data === $trueValue;
+            }
 
-        if (\in_array($data, self::FALSE_VALUES, true)) {
-            return false;
+            if (null !== $falseValue = $context[ObjectNormalizer::CONTEXT_PROPERTY]->getFalseValue()) {
+                return $data === $falseValue;
+            }
+
+            if (\in_array($data, self::TRUE_VALUES, true)) {
+                return true;
+            }
+
+            if (\in_array($data, self::FALSE_VALUES, true)) {
+                return false;
+            }
         }
 
         return null;
@@ -49,11 +60,29 @@ class BooleanNormalizer implements NormalizerInterface, DenormalizerInterface
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return false;
+        return \is_bool($data)
+            && isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool();
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        return 'yes';
+        if (!\is_bool($object)
+            || !isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+            || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
+            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()) {
+            return null;
+        }
+
+        if (true === $object) {
+            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getTrueValue() ?? true;
+        }
+
+        if (false === $object) {
+            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getFalseValue() ?? false;
+        }
+
+        return null;
     }
 }
