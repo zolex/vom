@@ -79,19 +79,6 @@ class PropertyMetadata
         return null;
     }
 
-    public function getCollectionType(): ?string
-    {
-        foreach ($this->types as $type) {
-            if ($type->isCollection()) {
-                foreach ($type->getCollectionValueTypes() as $collectionType) {
-                    return $collectionType->getClassName();
-                }
-            }
-        }
-
-        return null;
-    }
-
     public function getGroups(): array
     {
         return $this->groups;
@@ -101,18 +88,6 @@ class PropertyMetadata
     {
         foreach ($this->types as $type) {
             if ('bool' === $type->getBuiltinType()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function isDateTime(): bool
-    {
-        foreach ($this->types as $type) {
-            $class = $type->getClassName();
-            if (\DateTime::class === $class || \DateTimeImmutable::class === $class) {
                 return true;
             }
         }
