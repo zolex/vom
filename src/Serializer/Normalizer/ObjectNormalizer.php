@@ -21,6 +21,7 @@ use Symfony\Component\Serializer\SerializerAwareTrait;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
@@ -59,7 +60,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         if (\is_array($data) && !array_is_list($data)) {
-            $data = $this->toObject($data);
+            $data = VersatileObjectMapper::toObject($data);
         }
 
         $metadata = $this->modelMetadataFactory->getMetadataFor($type);
@@ -107,33 +108,6 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         return $model;
-    }
-
-    public function toObject(array|object $data): object|array
-    {
-        if (\is_array($data) && array_is_list($data)) {
-            $array = [];
-            foreach ($data as $key => $value) {
-                if (\is_array($value)) {
-                    $array[$key] = $this->toObject($value);
-                } else {
-                    $array[$key] = $value;
-                }
-            }
-
-            return $array;
-        } else {
-            $object = new \stdClass();
-            foreach ($data as $key => $value) {
-                if (\is_array($value)) {
-                    $object->{$key} = $this->toObject($value);
-                } else {
-                    $object->{$key} = $value;
-                }
-            }
-
-            return $object;
-        }
     }
 
     private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
@@ -194,7 +168,11 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                         $data[] = $normalizedValue;
                     }
                 } elseif ($property->isNested()) {
-                    $data[$property->getAccessor()] = $normalizedValue;
+                    try {
+                        $accessor = '['.implode('][', explode('.', $property->getAccessor())).']';
+                        $this->propertyAccessor->setValue($data, $accessor, $normalizedValue);
+                    } catch (\Throwable) {
+                    }
                 } else {
                     $data = array_merge($data, $normalizedValue);
                 }

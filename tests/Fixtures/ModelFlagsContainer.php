@@ -24,4 +24,7 @@ class ModelFlagsContainer
 
     #[VOM\Property]
     public ?ModelFlag $flagC = null;
+
+    #[VOM\Property]
+    public ModelFlag $flagD;
 }

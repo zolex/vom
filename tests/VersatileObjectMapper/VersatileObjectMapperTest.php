@@ -22,9 +22,14 @@ use Zolex\VOM\Test\Fixtures\Calls;
 use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
+use Zolex\VOM\Test\Fixtures\FlagParent;
 use Zolex\VOM\Test\Fixtures\NestedName;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
+use Zolex\VOM\Test\Fixtures\SickChild;
+use Zolex\VOM\Test\Fixtures\SickRoot;
+use Zolex\VOM\Test\Fixtures\SickSack;
+use Zolex\VOM\Test\Fixtures\SickSuck;
 
 /**
  * Base test with a fresh instance of the VOM for each test.
@@ -236,6 +241,52 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             [],
             ['flagD'],
         ];
+    }
+
+    public function testComplexFlags()
+    {
+        $data = [
+            'commonFlags' => [
+                'flagA',
+                '!flagB',
+            ],
+            'labeledFlagsArray' => [
+                'flagA' => (object) [
+                    'text' => 'Fahne A',
+                    'value' => true,
+                ],
+                'flagB' => [
+                    'text' => 'Fahne B',
+                    'value' => 'true',
+                ],
+            ],
+            'labeledFlagsObject' => (object) [
+                'flagA' => [
+                    'text' => 'Fahne A',
+                    'value' => 'NO',
+                ],
+                'flagB' => (object) [
+                    'text' => 'Fahne B',
+                    'value' => 'OFF',
+                ],
+            ],
+        ];
+
+        $model = self::$serializer->denormalize($data, FlagParent::class);
+
+        $this->assertTrue($model->commonFlags->flagA);
+        $this->assertFalse($model->commonFlags->flagB);
+        $this->assertNull($model->commonFlags->flagC);
+
+        $this->assertTrue($model->labeledFlagsArray->flagA->isEnabled);
+        $this->assertTrue($model->labeledFlagsArray->flagB->isEnabled);
+        $this->assertNull($model->labeledFlagsArray->flagC);
+        $this->assertFalse(isset($model->labeledFlagsArray->flagD));
+
+        $this->assertFalse($model->labeledFlagsObject->flagA->isEnabled);
+        $this->assertFalse($model->labeledFlagsObject->flagB->isEnabled);
+        $this->assertNull($model->labeledFlagsObject->flagC);
+        $this->assertFalse(isset($model->labeledFlagsObject->flagD));
     }
 
     public function testAccessor(): void
@@ -585,5 +636,46 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
                 ),
             ),
         ];
+    }
+
+    public function testConversions()
+    {
+        $root = new SickRoot();
+        $root = new SickRoot();
+
+        $child1 = new SickChild();
+        $child1->firstname = 'Javier';
+        $child1->hasHair = true;
+        $root->singleChild = $child1;
+
+        $child2 = new SickChild();
+        $child2->firstname = 'Andreas';
+        $child2->hasHair = false;
+        $root->anotherChild = $child2;
+
+        $child3 = new SickChild();
+        $child3->firstname = 'Peter';
+        $child3->hasHair = true;
+        $root->tooManyChildren[] = $child3;
+
+        $child4 = new SickChild();
+        $child4->firstname = 'Hank';
+        $child4->hasHair = false;
+        $root->tooManyChildren[] = $child4;
+
+        $sickSuck = new SickSuck();
+        $sickSuck->sickedy = 'sickedysick';
+        $sickSuck->sackedy = 'sackedysack';
+
+        $sickSack = new SickSack();
+        $sickSack->sick = 1337;
+        $sickSack->sack = 'sackywacky';
+        $sickSack->sickSuck = $sickSuck;
+        $root->sickSack = $sickSack;
+
+        $array1 = self::$serializer->normalize($root);
+        $model1 = self::$serializer->denormalize($array1, SickRoot::class);
+
+        $this->assertEquals($root, $model1);
     }
 }

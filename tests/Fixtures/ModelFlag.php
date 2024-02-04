@@ -19,6 +19,6 @@ class ModelFlag
     #[VOM\Property('text')]
     public string $label;
 
-    #[VOM\Property('value', flag: true)]
+    #[VOM\Property('value')]
     public bool $isEnabled;
 }

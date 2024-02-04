@@ -28,7 +28,7 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return self::TYPE === $type && \is_array($data);
+        return self::TYPE === $type && (\is_array($data) || \is_object($data));
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
@@ -36,6 +36,10 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
         if (!isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
         || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata) {
             return null;
+        }
+
+        if (\is_object($data)) {
+            $data = (array) $data;
         }
 
         if (\in_array($context[ObjectNormalizer::CONTEXT_PROPERTY]->getName(), $data, true)) {
