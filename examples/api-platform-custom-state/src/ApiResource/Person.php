@@ -40,10 +40,10 @@ class Person
     public string $lastname;
 
     #[ApiProperty(genId: false)]
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public Address $address;
 
     #[ApiProperty(genId: false)]
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public Contact $contact;
 }

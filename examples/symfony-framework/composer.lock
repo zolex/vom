@@ -2991,12 +2991,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zolex/vom.git",
-                "reference": "269f578fd7da5990103b7e907e1e3d7f287116c9"
+                "reference": "0ef38af34437d50f5a6969e453569d27559a43f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zolex/vom/zipball/269f578fd7da5990103b7e907e1e3d7f287116c9",
-                "reference": "269f578fd7da5990103b7e907e1e3d7f287116c9",
+                "url": "https://api.github.com/repos/zolex/vom/zipball/0ef38af34437d50f5a6969e453569d27559a43f0",
+                "reference": "0ef38af34437d50f5a6969e453569d27559a43f0",
                 "shasum": ""
             },
             "require": {
@@ -3035,7 +3035,7 @@
                 "issues": "https://github.com/zolex/vom/issues",
                 "source": "https://github.com/zolex/vom/tree/0.0.7"
             },
-            "time": "2024-02-04T17:31:47+00:00"
+            "time": "2024-02-04T20:07:24+00:00"
         }
     ],
     "packages-dev": [],
