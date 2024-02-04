@@ -27,6 +27,7 @@ final class Property
         private bool|string|int|null $falseValue = null,
         private ?string $defaultOrder = null,
         private ?string $dateTimeFormat = null,
+        private ?array $groups = null,
     ) {
         $this->field ??= $this->accessor;
     }
@@ -84,5 +85,10 @@ final class Property
     public function getDateTimeFormat(): ?string
     {
         return $this->dateTimeFormat;
+    }
+
+    public function getGroups(): ?array
+    {
+        return $this->groups;
     }
 }
