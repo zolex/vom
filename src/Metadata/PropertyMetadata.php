@@ -156,15 +156,6 @@ class PropertyMetadata
         return $this->attribute->getDateTimeFormat() ?? \DateTimeInterface::RFC3339_EXTENDED;
     }
 
-    public function isNullable(): bool
-    {
-        foreach ($this->types as $type) {
-            return $type->isNullable();
-        }
-
-        return false;
-    }
-
     public function getDefaultValue(): mixed
     {
         return $this->defaultValue;
