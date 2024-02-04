@@ -25,32 +25,46 @@ class Address
         ?string $city = null,
         ?string $country = null,
     ) {
-        $this->street = $street;
-        $this->houseNo = $houseNo;
-        $this->zip = $zip;
-        $this->city = $city;
-        $this->country = $country;
+        if (null !== $street) {
+            $this->street = $street;
+        }
+
+        if (null !== $houseNo) {
+            $this->houseNo = $houseNo;
+        }
+
+        if (null !== $zip) {
+            $this->zip = $zip;
+        }
+
+        if (null !== $city) {
+            $this->city = $city;
+        }
+
+        if (null !== $country) {
+            $this->country = $country;
+        }
     }
 
     #[Groups(['address', 'address.street', 'extended'])]
     #[Property()]
-    private ?string $street;
+    private string $street;
 
     #[Groups(['address', 'address.houseno', 'extended'])]
     #[Property('housenumber')]
-    private ?string $houseNo;
+    private string $houseNo;
 
     #[Groups(['address', 'address.zipcode', 'extended'])]
     #[Property('zipcode')]
-    private ?string $zip;
+    private string $zip;
 
     #[Groups(['address', 'address.city', 'extended'])]
     #[Property()]
-    private ?string $city;
+    private string $city;
 
     #[Groups(['address', 'address.country', 'extended'])]
     #[Property()]
-    private ?string $country;
+    private string $country;
 
     public function getStreet(): ?string
     {
