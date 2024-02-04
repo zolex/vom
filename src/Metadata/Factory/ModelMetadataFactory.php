@@ -32,7 +32,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     private array $localCache = [];
 
     /**
-     * @var Type[]
+     * @var iterable|Type[]
      */
     private array $typesCache = [];
 
@@ -133,8 +133,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             return null;
         }
 
-        $types = $this->getTypes($reflectionProperty->getDeclaringClass()->name, $reflectionProperty->name);
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types ?? [], $propertyAttribute, $groups, $contextAttribute);
+        $class = $reflectionProperty->getDeclaringClass()->name;
+        $property = $reflectionProperty->name;
+        $types = $this->getTypes($class, $property);
+        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $types);
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute, $groups, $contextAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {
@@ -148,6 +151,60 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         foreach ($reflector->getAttributes() as $attribute) {
             yield $attribute->newInstance();
         }
+    }
+
+    /**
+     * @param Type[] $types
+     */
+    private function extractPropertyType(string $parentClass, string $property, iterable $types): array
+    {
+        $hasClass = $class = false;
+        $instantiableClass = null;
+        $arrayAccessType = null;
+        foreach ($types as $type) {
+            if ($type->isCollection()) {
+                [$collectionType] = $this->extractPropertyType($parentClass, $property, $type->getCollectionValueTypes());
+                if ($collectionType) {
+                    return [$collectionType.'[]', $arrayAccessType];
+                }
+            } elseif ($class = $type->getClassName()) {
+                if (\in_array(\ArrayAccess::class, class_implements($class))) {
+                    try {
+                        $reflection = new \ReflectionClass($class);
+                        if ($reflection->isInstantiable()) {
+                            $arrayAccessType = $class;
+                            continue;
+                        }
+                    } catch (\ReflectionException) {
+                    }
+                }
+
+                $hasClass = true;
+                try {
+                    $reflection = new \ReflectionClass($class);
+                    if ($reflection->isInstantiable()) {
+                        $instantiableClass = $class;
+                    }
+                } catch (\ReflectionException) {
+                }
+            }
+        }
+
+        if ($hasClass) {
+            if (null === $instantiableClass) {
+                throw new RuntimeException(sprintf('Could not find a class that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable type.', $parentClass, $property, $class));
+            }
+
+            return [$instantiableClass.(null !== $arrayAccessType ? '[]' : ''), $arrayAccessType];
+        }
+
+        foreach ($types as $type) {
+            if ($builtinType = $type->getBuiltinType()) {
+                return [$builtinType, null];
+            }
+        }
+
+        return [null, null];
     }
 
     private function getTypes(string $class, string $property): ?iterable

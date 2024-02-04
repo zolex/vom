@@ -12,7 +12,6 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
@@ -32,8 +31,7 @@ class PropertyMetadataTest extends TestCase
             'desc',
             \DateTime::W3C,
         );
-        $types = [new Type('int')];
-        $metadata = new PropertyMetadata('name', $types, $attribute);
+        $metadata = new PropertyMetadata('name', 'int', null, $attribute);
 
         $this->assertEquals('name', $metadata->getName());
         $this->assertEquals('vom-flag', $metadata->getType());

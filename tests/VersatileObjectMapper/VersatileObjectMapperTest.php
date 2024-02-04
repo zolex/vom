@@ -11,6 +11,7 @@
 
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
@@ -23,6 +24,7 @@ use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
+use Zolex\VOM\Test\Fixtures\InstantiableNestedCollection;
 use Zolex\VOM\Test\Fixtures\NestedName;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
@@ -415,6 +417,32 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
         $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
         $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
+    }
+
+    public function testArrayAccessCollection(): void
+    {
+        $data = [
+            'people' => [
+                [
+                    'id' => 1,
+                    'name' => [
+                        'firstname' => 'Andreas',
+                        'lastname' => 'Linden',
+                    ],
+                ], [
+                    'id' => 2,
+                    'name' => [
+                        'firstname' => 'Peter',
+                        'lastname' => 'Enis',
+                    ],
+                ],
+            ],
+        ];
+
+        $instantiableNestedCollection = self::$serializer->denormalize($data, InstantiableNestedCollection::class);
+        $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiableNestedCollection);
+        $this->assertInstanceOf(ArrayCollection::class, $instantiableNestedCollection->people);
+        $this->assertCount(2, $instantiableNestedCollection->people);
     }
 
     public function testRecursiveStructures(): void
