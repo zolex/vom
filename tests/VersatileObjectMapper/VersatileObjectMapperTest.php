@@ -428,11 +428,19 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
                         'firstname' => 'Andreas',
                         'lastname' => 'Linden',
                     ],
+                    'address' => [
+                        'street' => 'Elmstreet',
+                        'housenumber' => '123',
+                    ],
                 ], [
                     'id' => 2,
                     'name' => [
                         'firstname' => 'Peter',
                         'lastname' => 'Enis',
+                    ],
+                    'address' => [
+                        'zipcode' => '54321',
+                        'country' => 'DE',
                     ],
                 ],
             ],
