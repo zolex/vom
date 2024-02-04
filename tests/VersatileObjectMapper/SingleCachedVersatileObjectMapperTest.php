@@ -19,11 +19,11 @@ class SingleCachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     public static function setUpBeforeClass(): void
     {
-        // dont setup
+        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
     }
 
     protected function setUp(): void
     {
-        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
+        // do not reinitialize before each test
     }
 }
