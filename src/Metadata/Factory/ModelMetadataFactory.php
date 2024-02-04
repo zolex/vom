@@ -31,11 +31,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      */
     private array $localCache = [];
 
-    /**
-     * @var iterable|Type[]
-     */
-    private array $typesCache = [];
-
     public function __construct(
         private readonly PropertyInfoExtractorInterface $propertyInfoExtractor,
     ) {
@@ -135,8 +130,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         $class = $reflectionProperty->getDeclaringClass()->name;
         $property = $reflectionProperty->name;
-        $types = $this->getTypes($class, $property);
-        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $types);
+        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $this->propertyInfoExtractor->getTypes($class, $property));
         $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute, $groups, $contextAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
@@ -212,25 +206,5 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         return [null, null];
-    }
-
-    private function getTypes(string $class, string $property): ?iterable
-    {
-        if (null === $this->propertyInfoExtractor) {
-            return null;
-        }
-
-        $key = $class.'::'.$property;
-        if (isset($this->typesCache[$key])) {
-            return false === $this->typesCache[$key] ? null : $this->typesCache[$key];
-        }
-
-        if (null !== $types = $this->propertyInfoExtractor->getTypes($class, $property)) {
-            return $this->typesCache[$key] = $types;
-        }
-
-        $this->typesCache[$key] = false;
-
-        return null;
     }
 }
