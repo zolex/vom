@@ -41,7 +41,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function create(string $class): ?ModelMetadata
+    public function getMetadataFor(string $class): ?ModelMetadata
     {
         if (\array_key_exists($class, $this->localCache)) {
             return $this->localCache[$class];
@@ -138,18 +138,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {
-        }
-
-        $type = null;
-        if ($propertyMetadata->isCollection()) {
-            $type = $propertyMetadata->getCollectionType();
-        } elseif ($className = $propertyMetadata->getType()) {
-            $type = $className;
-        }
-
-        if (null !== $type) {
-            $propertyModelMetadata = $this->create($type);
-            $propertyMetadata->setModelMetadata($propertyModelMetadata);
         }
 
         return $propertyMetadata;

@@ -12,10 +12,10 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -45,16 +45,18 @@ class ModelMetadataTest extends TestCase
         $this->assertSame($prop, $metadata->getProperty('name'));
     }
 
-    public function testGetNestedMetadataWithPropertyAccessor(): void
+    public function testGetNestedMetadata(): void
     {
         $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
-        $metadata = $factory->create(SickRoot::class);
-        $accessor = PropertyAccess::createPropertyAccessor();
+        $metadata = $factory->getMetadataFor(SickRoot::class);
 
-        $firstname = $accessor->getValue($metadata, 'singleChild.firstname');
+        $firstname = $metadata->find('singleChild.firstname', $factory);
         $this->assertInstanceOf(PropertyMetadata::class, $firstname);
 
-        $sickedy = $accessor->getValue($metadata, 'sickSack.sickSuck.sickedy');
+        $sickedy = $metadata->find('sickSack.sickSuck.sickedy', $factory);
         $this->assertInstanceOf(PropertyMetadata::class, $sickedy);
+
+        $this->expectException(RuntimeException::class);
+        $metadata->find('singleChild.non.existent', $factory);
     }
 }

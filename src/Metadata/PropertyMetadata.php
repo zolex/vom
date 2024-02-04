@@ -21,12 +21,6 @@ use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
 class PropertyMetadata
 {
-    public const BUILTIN_CLASSES = [
-        \DateTime::class,
-        \DateTimeImmutable::class,
-    ];
-
-    private ?ModelMetadata $modelMetadata = null;
     private readonly mixed $defaultValue;
 
     public function __construct(
@@ -151,22 +145,6 @@ class PropertyMetadata
         return $this->attribute->isNested();
     }
 
-    public function isModel(): bool
-    {
-        return null !== $this->modelMetadata;
-    }
-
-    public function isBuiltinClass(): bool
-    {
-        foreach ($this->types as $type) {
-            if (\in_array($type->getClassName(), self::BUILTIN_CLASSES)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public function isCollection(): bool
     {
         foreach ($this->types as $type) {
@@ -181,16 +159,6 @@ class PropertyMetadata
     public function isRoot(): bool
     {
         return $this->attribute->isRoot();
-    }
-
-    public function getModelMetadata(): ?ModelMetadata
-    {
-        return $this->modelMetadata;
-    }
-
-    public function setModelMetadata(?ModelMetadata $modelMetadata): void
-    {
-        $this->modelMetadata = $modelMetadata;
     }
 
     public function getTrueValue(): bool|string|int|null
@@ -235,12 +203,6 @@ class PropertyMetadata
     public function hasDefaultValue(): bool
     {
         return isset($this->defaultValue);
-    }
-
-    // to get nested metadata with property-accessor
-    public function __get($name): mixed
-    {
-        return $this->modelMetadata?->{$name} ?? null;
     }
 
     public function getContext(): array
