@@ -442,6 +442,9 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiableNestedCollection);
         $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->people);
         $this->assertCount(2, $instantiableNestedCollection->people);
+
+        $normalized = self::$serializer->normalize($instantiableNestedCollection);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testRecursiveStructures(): void
