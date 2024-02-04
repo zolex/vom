@@ -112,11 +112,14 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
             if ($attribute instanceof Property) {
                 $propertyAttribute = $attribute;
+                if (null !== $propertyGroups = $attribute->getGroups()) {
+                    $groups += $propertyGroups;
+                }
                 continue;
             }
 
             if ($attribute instanceof Groups) {
-                $groups = $attribute->getGroups();
+                $groups += $attribute->getGroups();
             }
 
             if ($attribute instanceof Context) {
