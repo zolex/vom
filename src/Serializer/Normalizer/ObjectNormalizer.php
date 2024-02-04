@@ -125,7 +125,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             } else {
                 $value = &$data;
             }
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             $value = null;
         }
 
@@ -133,7 +133,12 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return null;
         }
 
-        return $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        if ($arrayAccessClass = $property->getArrayAccessType()) {
+            return new $arrayAccessClass($result);
+        }
+
+        return $result;
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool

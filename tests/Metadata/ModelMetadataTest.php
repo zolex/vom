@@ -12,7 +12,6 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\Exception\RuntimeException;
@@ -33,8 +32,7 @@ class ModelMetadataTest extends TestCase
 
         $metadata = new ModelMetadata('class');
         $metadata->setAttribute($model);
-        $types = [new Type('string')];
-        $prop = new PropertyMetadata('name', $types, new Property(), ['group']);
+        $prop = new PropertyMetadata('name', 'string', null, new Property(), ['group']);
         $metadata->addProperty($prop);
         $properties = $metadata->getProperties();
 

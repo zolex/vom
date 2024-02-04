@@ -25,8 +25,9 @@ class PropertyMetadata
 
     public function __construct(
         private readonly string $name,
-        /** @var array|Type[] */
-        private readonly iterable $types,
+        /* @var array|Type[] */
+        private string $type,
+        private ?string $arrayAccessType,
         private readonly Property $attribute,
         private readonly array $groups = ['default'],
         private readonly ?Context $context = null,
@@ -43,6 +44,11 @@ class PropertyMetadata
         return $this->attribute->getField() ?? $this->attribute->getAccessor();
     }
 
+    public function getArrayAccessType(): ?string
+    {
+        return $this->arrayAccessType;
+    }
+
     public function getType(): ?string
     {
         if ($this->isFlag()) {
@@ -53,19 +59,7 @@ class PropertyMetadata
             return BooleanNormalizer::TYPE;
         }
 
-        foreach ($this->types as $type) {
-            if ($type->isCollection()) {
-                foreach ($type->getCollectionValueTypes() as $collectionValueType) {
-                    if ($class = $collectionValueType->getClassName()) {
-                        return $class.'[]';
-                    }
-                }
-            } elseif ($class = $type->getClassName()) {
-                return $class;
-            }
-        }
-
-        return $this->getBuiltinType();
+        return $this->type;
     }
 
     public function getBuiltinType(): ?string
@@ -86,13 +80,7 @@ class PropertyMetadata
 
     public function isBool(): bool
     {
-        foreach ($this->types as $type) {
-            if ('bool' === $type->getBuiltinType()) {
-                return true;
-            }
-        }
-
-        return false;
+        return 'bool' === $this->type;
     }
 
     public function isFlag(): bool
