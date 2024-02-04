@@ -70,7 +70,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         if ($constructor = $reflectionClass->getConstructor()) {
             foreach ($constructor->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionParameter)) {
+                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter)) {
                     $modelMetadata->addConstructorArgument($propertyMetadata);
                 }
             }
@@ -82,7 +82,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
             $methodArguments = [];
             foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionParameter)) {
+                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter)) {
                     if (!$reflectionMethod->isPublic()) {
                         throw new RuntimeException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
                     }
@@ -96,7 +96,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            if ($propertyMetadata = $this->createPropertyMetadata($modelMetadata, $reflectionProperty)) {
+            if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty)) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
         }
@@ -104,7 +104,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         return $modelMetadata;
     }
 
-    private function createPropertyMetadata(ModelMetadata $modelMetadata, \ReflectionParameter|\ReflectionProperty $reflectionProperty): ?PropertyMetadata
+    private function createPropertyMetadata(\ReflectionParameter|\ReflectionProperty $reflectionProperty): ?PropertyMetadata
     {
         $groups = [];
         $contextAttribute = null;
@@ -113,13 +113,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ($attribute instanceof Property) {
                 $propertyAttribute = $attribute;
                 if (null !== $propertyGroups = $attribute->getGroups()) {
-                    $groups += $propertyGroups;
+                    $groups = array_merge($groups, $propertyGroups);
                 }
                 continue;
             }
 
             if ($attribute instanceof Groups) {
-                $groups += $attribute->getGroups();
+                $groups = array_merge($groups, $attribute->getGroups());
             }
 
             if ($attribute instanceof Context) {
