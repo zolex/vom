@@ -31,6 +31,36 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         }
     }
 
+    /**
+     * Makes a deep conversion to an object. Every array will become an object, except for indexed arrays.
+     */
+    public static function toObject(array|object $data): object|array
+    {
+        if (\is_array($data) && array_is_list($data)) {
+            $array = [];
+            foreach ($data as $key => $value) {
+                if (\is_array($value)) {
+                    $array[$key] = self::toObject($value);
+                } else {
+                    $array[$key] = $value;
+                }
+            }
+
+            return $array;
+        } else {
+            $object = new \stdClass();
+            foreach ($data as $key => $value) {
+                if (\is_array($value)) {
+                    $object->{$key} = self::toObject($value);
+                } else {
+                    $object->{$key} = $value;
+                }
+            }
+
+            return $object;
+        }
+    }
+
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         return $this->decorated->denormalize($data, $type, $format, $context);

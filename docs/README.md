@@ -44,18 +44,20 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 <!-- tocstop -->
 
 ## Recommended Workflow
-When starting a new project or refactoring an existing one, you should always design your models first. For example If it's a REST API reading the state from Solr or Soap utilizing API-Platform,
-the design of your models will directly reflect it's OpenAPI specification. If it's a commandline tool like a queue-consumer that is sending data to a third party API, your models should reflect the input format of that API etc.
-The models can be anything, so if you receive data from somewhere and need to write data to a database, the models can also be Doctrine Entities.
+When starting a new project or refactoring an existing one, you should always design your models first. For example If it's an API-Platform REST API, the design of your models will directly reflect it's OpenAPI specification.
+If you have the need to receive an arbitary data format in your existing application, the models should already be in place. This is a great starting point vor the Versatile Object Mapper.
+The models can be anything, so if you receive data from somewhere and need to write it to a database, the models can also be Doctrine Entities. See the example [API-Platform with Doctrine](../examples/api-platform-doctrine).
 
-1. **The first step always is to design your models.** At this point you should not have implemented any business logic. Just the plain models.
-2. **Now it makes sense to add the VOM attributes to your models.** This way you avoid changing the mapping attributes as your models evolve.
-3. **Finally, implement your business logic.** With well-designed models, automatically fed by VOM, implementing your business logic will be a piece of cake.
+1. **The first step always is to design your models.** _At this point you should not implement any business logic. Just the plain models._
+2. **Now it makes sense to add the VOM attributes to your models.** _This way you avoid changing the mapping attributes as your models evolve._
+3. **Finally, implement your business logic.** _With well-designed models, automatically fed by VOM, implementing your business logic will be a piece of cake._
 
 
 ## The Object Mapper
 
-In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [symfony example](../examples/symfony-framework)
+In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](../examples/symfony-framework).
+The recommended way to use it is by type-hinting Symfony's `SerializerInterface` or `VersatileObjectMapper`.
+_(The latter decorates the Symfony serializer, which then delegates the calls to the VOM normalizers.)_
 
 ```php
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -68,16 +70,12 @@ class AnySymfonyService
 }
 ```
 
-Without symfony framework, you have to construct the mapper yourself. Also see the [plain php example](../examples/without-framework)
+Without symfony framework, you can construct the mapper yourself or simply use the factory. Also see the [plain php example](../examples/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
 
 ```php
-$objectMapper = new \Zolex\VOM\Serializer\VersatileObjectMapper(
-    new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(
-        \Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory::create();
-    ),
-    \Symfony\Component\PropertyAccess\PropertyAccess::createPropertyAccessor(),
-);
+$objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
 ```
+
 
 > [!TIP]
 > The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available such as PHPStan an Doctrine. You can write a custom extractor to give VOM additional information on your model's properties.
@@ -106,7 +104,7 @@ If you need it converted to an object, use the `toObject()` method and pass it t
 $person = new Person();
 // ...
 $array = $objectMapper->normalize($person);
-$object = $objectMapper->toObject($array);
+$object = \Zolex\VOM\Serializer\VersatileObjectMapper::toObject($array);
 ```
 
 Note that in the current version it can not convert back data structures to their original, that contain or solely exist of other classes like entities or models. It will instead output normal arrays or objects.
@@ -458,23 +456,11 @@ public bool $nullableState;
 
 #### Flags
 
-Flags are also booleans but behave in a different way when it comes to denormalization. Usually a set of flags sits in an array or object. VOM can handle two types of Flags.
-
-##### Common Flag
-
-The first flag-type is the `Common Flag`. These flags must be strings that sit in an array.
-The presence of the flag will result in a true value. It's absence will result in a false value (or null if your property is nullable).
-Additionally, a Common flag can be explicitly set to false by prepending an exclamation mark (!) on the flag value.
+Flags are also booleans but behave in a different way. In the normalized form, flags are strings that sit in an array.
+The presence of the flag will result in a true value. It's absence will result in an uninitialized value (or null the respective property is nullable).
 
 ```php
 use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class RootClass
-{
-    #[VOM\Property]
-    public Flags $flags;
-}
 
 #[VOM\Model]
 class Flags
@@ -491,59 +477,8 @@ class Flags
 ```
 
 ```php
-$data = [
-    'flags' => ['is_great', '!is_weak'];
-];
-$objectMapper->denormalize($data, RootClass::class);
-```
-
-##### Model Flag
-
-The second flag-type is the `Model Flag`. It's not really a flag but just another model that can contain any properties, for example a label.
-If it has a bool property with the flag argument set to true, this will then become true for any value that is not in the false list of the boolean type documented above.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class ModelFlag
-{
-    #[VOM\Property('text')]
-    public string $label;
-
-    #[VOM\Property('value', flag: true)]
-    public bool $isEnabled;
-}
-
-#[VOM\Model]
-class ModelFlagsContainer
-{
-    #[VOM\Property]
-    public ModelFlag $flagA;
-
-    #[VOM\Property]
-    public ModelFlag $flagB;
-
-    #[VOM\Property]
-    public ModelFlag $flagC;
-}
-```
-
-```php
-$data = [
-    "labeledFlags" => [
-        "flagA" => (object)[
-            "text" => "Flag A",
-            "value" => true,
-        ],
-        "flagB" => [
-            "text" => "Flag B",
-            "value" => "flagB",
-        ],
-    ],
-];
-
-$objectMapper->denormalize($data, RootClass::class);
+$data = ['is_great', '!is_weak'];
+$objectMapper->denormalize($data, Flags::class);
 ```
 
 #### DateTime
