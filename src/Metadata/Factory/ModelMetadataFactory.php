@@ -158,17 +158,20 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      */
     private function extractPropertyType(string $parentClass, string $property, iterable $types): array
     {
-        $hasClass = $class = false;
+        $hasClass = $hasArrayAccess = $isCollection = false;
         $instantiableClass = null;
         $arrayAccessType = null;
         foreach ($types as $type) {
             if ($type->isCollection()) {
+                $isCollection = true;
                 [$collectionType] = $this->extractPropertyType($parentClass, $property, $type->getCollectionValueTypes());
                 if ($collectionType) {
-                    return [$collectionType.'[]', $arrayAccessType];
+                    $hasClass = true;
+                    $instantiableClass = $collectionType;
                 }
             } elseif ($class = $type->getClassName()) {
                 if (\in_array(\ArrayAccess::class, class_implements($class))) {
+                    $hasArrayAccess = true;
                     try {
                         $reflection = new \ReflectionClass($class);
                         if ($reflection->isInstantiable()) {
@@ -195,7 +198,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 throw new RuntimeException(sprintf('Could not find a class that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable type.', $parentClass, $property, $class));
             }
 
-            return [$instantiableClass.(null !== $arrayAccessType ? '[]' : ''), $arrayAccessType];
+            if ($hasArrayAccess && null === $arrayAccessType) {
+                throw new RuntimeException(sprintf('Could not find an ArrayAccess that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable ArrayAccess type like ArrayObject.', $parentClass, $property, $class));
+            }
+
+            return [$instantiableClass.($hasArrayAccess || $isCollection ? '[]' : ''), $arrayAccessType];
         }
 
         foreach ($types as $type) {
