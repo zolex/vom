@@ -49,7 +49,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return false;
         }
 
-        return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->create($type);
+        return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->getMetadataFor($type);
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
@@ -62,7 +62,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             $data = $this->toObject($data);
         }
 
-        $metadata = $this->modelMetadataFactory->create($type);
+        $metadata = $this->modelMetadataFactory->getMetadataFor($type);
 
         $constructorArguments = [];
         foreach ($metadata->getConstructorArguments() as $argument) {
@@ -139,30 +139,25 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
     private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
         $context = array_merge($property->getDenormalizationContext(), $property->getContext(), $context);
-
-        if ($property->isFlag()) {
-            $value = $data;
-            $context[CommonFlagNormalizer::CONTEXT_NAME] = $property->getName();
-        } else {
-            $accessor = $property->getAccessor();
-            try {
-                if ($property->isModel() && !$property->isNested()) {
-                    $value = $data;
-                } elseif ($property->isNested()) {
-                    $value = $this->propertyAccessor->getValue($data, $accessor);
-                } else {
-                    $value = $this->propertyAccessor->getValue($context[self::CONTEXT_ROOT_DATA], $accessor);
-                }
-            } catch (\Throwable) {
-                $value = null;
-            }
-
-            if (null === $value) {
-                return null;
-            }
+        $context[self::CONTEXT_PROPERTY] = &$property;
+        if ($property->isRoot()) {
+            $data = &$context[self::CONTEXT_ROOT_DATA];
         }
 
-        $context[self::CONTEXT_PROPERTY] = $property;
+        $accessor = $property->getAccessor();
+        try {
+            if ($property->isNested() && !$property->isFlag()) {
+                $value = $this->propertyAccessor->getValue($data, $accessor);
+            } else {
+                $value = &$data;
+            }
+        } catch (\Throwable) {
+            $value = null;
+        }
+
+        if (null === $value) {
+            return null;
+        }
 
         return $this->serializer->denormalize($value, $property->getType(), $format, $context);
     }
@@ -173,12 +168,12 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return false;
         }
 
-        return \is_object($data) && null !== $this->modelMetadataFactory->create($data::class);
+        return \is_object($data) && null !== $this->modelMetadataFactory->getMetadataFor($data::class);
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        if (!$metadata = $this->modelMetadataFactory->create($object::class)) {
+        if (!$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
             return null;
         }
 
@@ -189,8 +184,8 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                     continue;
                 }
 
-                $context = array_merge($property->getNormalizationContext(), $property->getContext(), $context);
-                $context[self::CONTEXT_PROPERTY] = $property;
+                $context = array_merge($property->getNormalizationContext(), $context);
+                $context[self::CONTEXT_PROPERTY] = &$property;
                 $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
                 $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
 

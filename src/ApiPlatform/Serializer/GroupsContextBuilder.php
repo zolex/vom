@@ -38,7 +38,7 @@ final class GroupsContextBuilder implements SerializerContextBuilderInterface
             return $context;
         }
 
-        if (!$metadata = $this->modelMetadataFactory->create($context['resource_class'])) {
+        if (!$metadata = $this->modelMetadataFactory->getMetadataFor($context['resource_class'])) {
             return $context;
         }
 

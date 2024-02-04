@@ -12,8 +12,8 @@
 namespace Zolex\VOM\Metadata\Factory\Exception;
 
 use Zolex\VOM\Exception\ExceptionInterface;
-use Zolex\VOM\Exception\RuntimeException as VOMRuntimeException;
+use Zolex\VOM\Metadata\Exception\RuntimeException as MetadataRuntimeException;
 
-class RuntimeException extends VOMRuntimeException implements ExceptionInterface
+class RuntimeException extends MetadataRuntimeException implements ExceptionInterface
 {
 }

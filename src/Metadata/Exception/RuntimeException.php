@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Metadata\Factory;
+namespace Zolex\VOM\Metadata\Exception;
 
-use Zolex\VOM\Metadata\ModelMetadata;
+use Zolex\VOM\Exception\ExceptionInterface;
+use Zolex\VOM\Exception\RuntimeException as VOMRuntimeException;
 
-interface ModelMetadataFactoryInterface
+class RuntimeException extends VOMRuntimeException implements ExceptionInterface
 {
-    public function getMetadataFor(string $class): ?ModelMetadata;
 }

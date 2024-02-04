@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Zolex\VOM\Metadata;
 
 use Zolex\VOM\Mapping\Model;
+use Zolex\VOM\Metadata\Exception\RuntimeException;
+use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 
 final class ModelMetadata
 {
@@ -109,9 +111,22 @@ final class ModelMetadata
         $this->methodCalls[] = $methodCall;
     }
 
-    // to get nested metadata with property-accessor
-    public function __get($name): mixed
+    public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata
     {
-        return $this->properties[$name] ?? null;
+        $property = null;
+        $path = explode('.', $query);
+        $metadata = &$this;
+
+        foreach ($path as $item) {
+            if (!$property = $metadata->getProperty($item)) {
+                throw new RuntimeException(sprintf('Could not find metadata path "%s" in "%s"', $query, $this->class));
+            }
+
+            if ($modelMetadata = $factory->getMetadataFor($property->getType())) {
+                $metadata = &$modelMetadata;
+            }
+        }
+
+        return $property;
     }
 }

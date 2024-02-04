@@ -29,7 +29,7 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function create(string $class): ?ModelMetadata
+    public function getMetadataFor(string $class): ?ModelMetadata
     {
         $cacheKey = self::CACHE_KEY_PREFIX.md5($class);
         if (\array_key_exists($cacheKey, $this->localCache)) {
@@ -47,7 +47,7 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
-        $this->localCache[$cacheKey] = $this->decorated->create($class);
+        $this->localCache[$cacheKey] = $this->decorated->getMetadataFor($class);
         if ($this->cachePoolEnabled && isset($cacheItem)) {
             $cacheItem->set($this->localCache[$cacheKey]);
             $this->cacheItemPool->save($cacheItem);

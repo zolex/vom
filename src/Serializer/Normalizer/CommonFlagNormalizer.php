@@ -18,7 +18,6 @@ use Zolex\VOM\Metadata\PropertyMetadata;
 final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     public const TYPE = 'vom-flag';
-    public const CONTEXT_NAME = '__vom_common_flag_name';
 
     public function getSupportedTypes(?string $format): array
     {
@@ -29,20 +28,21 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return self::TYPE === $type && \is_array($data) && isset($context[self::CONTEXT_NAME]);
+        return self::TYPE === $type && \is_array($data);
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        if (!isset($context[self::CONTEXT_NAME])) {
+        if (!isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
+        || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata) {
             return null;
         }
 
-        if (\in_array($context[self::CONTEXT_NAME], $data, true)) {
+        if (\in_array($context[ObjectNormalizer::CONTEXT_PROPERTY]->getName(), $data, true)) {
             return true;
         }
 
-        if (\in_array('!'.$context[self::CONTEXT_NAME], $data, true)) {
+        if (\in_array('!'.$context[ObjectNormalizer::CONTEXT_PROPERTY]->getName(), $data, true)) {
             return false;
         }
 
