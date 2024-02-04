@@ -63,6 +63,8 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             $data = VersatileObjectMapper::toObject($data);
         }
 
+        $context[self::CONTEXT_ROOT_DATA] ??= $data;
+
         $metadata = $this->modelMetadataFactory->getMetadataFor($type);
 
         $constructorArguments = [];
@@ -157,6 +159,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         $data = [];
+        if (!isset($context[self::CONTEXT_ROOT_DATA])) {
+            $context[self::CONTEXT_ROOT_DATA] = &$data;
+        }
+
         foreach ($metadata->getProperties() as $property) {
             try {
                 if (!$this->inContextGroups($property, $context)) {
@@ -168,18 +174,24 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                 $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
                 $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
 
+                if ($property->isRoot()) {
+                    $target = &$context[self::CONTEXT_ROOT_DATA];
+                } else {
+                    $target = &$data;
+                }
+
                 if ($property->isFlag()) {
                     if (null !== $normalizedValue) {
-                        $data[] = $normalizedValue;
+                        $target[] = $normalizedValue;
                     }
                 } elseif ($property->isNested()) {
                     try {
                         $accessor = '['.implode('][', explode('.', $property->getAccessor())).']';
-                        $this->propertyAccessor->setValue($data, $accessor, $normalizedValue);
+                        $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
                     } catch (\Throwable) {
                     }
                 } else {
-                    $data = array_merge($data, $normalizedValue);
+                    $target = array_merge($target, $normalizedValue);
                 }
             } catch (\Throwable) {
             }

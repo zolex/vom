@@ -21,7 +21,6 @@ class PropertyTest extends TestCase
         $prop = new Property(
             accessor: 'foo',
             field: 'bar',
-            nested: false,
             root: true,
             aliases: ['foo' => 'bar'],
             flag: true,
@@ -33,7 +32,7 @@ class PropertyTest extends TestCase
 
         $this->assertEquals('foo', $prop->getAccessor());
         $this->assertEquals('bar', $prop->getField());
-        $this->assertFalse($prop->isNested());
+        $this->assertTrue($prop->isNested());
         $this->assertTrue($prop->isRoot());
         $this->assertEquals(['foo' => 'bar'], $prop->getAliases());
         $this->assertTrue($prop->isFlag());

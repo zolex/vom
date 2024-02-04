@@ -288,11 +288,11 @@ $objectMapper->denormalize($data, RootClass::class);
 ```
 
 
-### Nested properties
+### Nested Models
 
-The data structures can be as deeply nested as you want. By default, every property has the nested argument set to true, which results in the behavior of a standard denormalizer as described above.
-When a property is an array or another class and has the nested argument set to false, VOM will reset the all accessors of the directly nested attributes to the source data root,
-instead of applying the accessors where they appear in your model structure.
+The data structures can be as deeply nested as you want. By default, every property has the accessor argument set to true, which enables nesting. When the accessor is a string as described above, the nesting is also evaluated as true.
+
+If a property is another `VOM\Model` or any type of collection that contains models, and it has `accessor: false` configured, VOM will look for the nested model's properties on the same nesting level as the property itself. 
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -303,7 +303,7 @@ class RootClass
     #[VOM\Property]
     public string $rooted;
     
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public NestedClass $nested;
 }
 
@@ -324,7 +324,7 @@ $data = [
 $objectMapper->denormalize($data, RootClass::class);
 ```
 
-VOM will only reset the source to the data root for nested entities that explicitly have the flag set to false, which means that you can decide where exactly you are expecting the input data on each level of deeply nested structures.
+VOM only disables nesting for properties, which explicitly have the accessor set to false. So other models that are nested within this one will not be flattened. This allows mapping between nested and _partially_ flattened data structures.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -335,7 +335,7 @@ class RootClass
     #[VOM\Property]
     public string $rooted;
     
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public NestedClass $nested;
 }
 
@@ -360,6 +360,7 @@ class ThirdDimension
 ```php
 $data = [
     'rooted' => 'I live on the root',
+    'value' => 'I am here too!',
     'deeper' [
         'effectivelyFromSecondDimension' => 'I am a nested value on the second dimension'
     ]
@@ -367,6 +368,57 @@ $data = [
 
 $objectMapper->denormalize($data, RootClass::class);
 ```
+
+### Root flag
+
+The `root` flag can can be used on every property (unlike `acessor: false` which only makes sense on properties that are other models). It will make VOM apply the property's accessor to the root of the source data.
+When applied on a property that is a model, or any type of collection that contains other models, the data structure within that model will be kept intact. 
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class RootClass
+{
+    #[VOM\Property]
+    public string $rooted;
+    
+    #[VOM\Property]
+    public NestedClass $nested;
+}
+
+#[VOM\Model]
+class NestedClass
+{
+    #[VOM\Property(root: true)]
+    public string $value;
+    
+    #[VOM\Property]
+    public ThirdDimension $deeper;
+}
+
+#[VOM\Model]
+class ThirdDimension
+{
+    #[VOM\Property(root: true)]
+    public string $effectivelyOnRoot;
+}
+```
+
+```php
+$data = [
+    'rooted' => 'I live on the root',
+    'value' => 'I am here too!',
+    'effectivelyOnRoot' => 'Where else would you expect me?'
+];
+
+$objectMapper->denormalize($data, RootClass::class);
+```
+
+> [!NOTE]
+> A combination of actual accessors, `accessor: false` and `root: true` gives you full control over the data mapping. Some results can be achieved with different combinations of these settings.
+> But there are scenarios which can only be achieved with a clever combination of all of them.   
+
 
 ### Collections
 
@@ -538,7 +590,7 @@ class SecondDimension
     #[VOM\Property]
     public string $value;
     
-    #[VOM\Property('third', nested: false)]
+    #[VOM\Property('third', accessor: false)]
     public ThirdDimension $deeper;
 }
 

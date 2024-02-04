@@ -25,6 +25,7 @@ use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\FlagParent;
 use Zolex\VOM\Test\Fixtures\InstantiableNestedCollection;
 use Zolex\VOM\Test\Fixtures\NestedName;
+use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\SickChild;
@@ -715,5 +716,31 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $model1 = self::$serializer->denormalize($array1, SickRoot::class);
 
         $this->assertEquals($root, $model1);
+    }
+
+    public function testRootWithNestedAndAccessors(): void
+    {
+        $data = [
+            'ROOT' => [
+                'VALUE' => '0',
+            ],
+            'LEVEL_ONE' => [
+                'LEVEL_ONE_VALUE' => '1',
+            ],
+            'LEVEL_TWO_VALUE' => '2',
+            'LEVEL_THREE' => [
+                'LEVEL_FOUR' => [
+                    'LEVEL_FOUR_VALUE' => '4',
+                ],
+            ],
+            'NESTED' => [
+                'LEVEL_THREE_VALUE' => '3',
+            ],
+        ];
+
+        $nestingRoot = self::$serializer->denormalize($data, NestingRoot::class);
+        $normalized = self::$serializer->normalize($nestingRoot);
+
+        $this->assertEquals($data, $normalized);
     }
 }

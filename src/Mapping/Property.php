@@ -17,9 +17,8 @@ namespace Zolex\VOM\Mapping;
 final class Property
 {
     public function __construct(
-        private ?string $accessor = null,
+        private string|bool $accessor = true,
         private ?string $field = null,
-        private bool $nested = true,
         private bool $root = false,
         private array $aliases = [],
         private bool $flag = false,
@@ -29,12 +28,11 @@ final class Property
         private ?string $dateTimeFormat = null,
         private ?array $groups = null,
     ) {
-        $this->field ??= $this->accessor;
     }
 
     public function isNested(): bool
     {
-        return $this->nested;
+        return (bool) $this->accessor;
     }
 
     public function isRoot(): bool
@@ -47,7 +45,7 @@ final class Property
         return $this->flag;
     }
 
-    public function getAccessor(): ?string
+    public function getAccessor(): string|bool
     {
         return $this->accessor;
     }
