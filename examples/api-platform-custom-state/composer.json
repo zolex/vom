@@ -18,7 +18,7 @@
         "symfony/yaml": "7.0.*",
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0",
-        "zolex/vom": "^0.0.6"
+        "zolex/vom": "^0.0.7"
     },
     "config": {
         "allow-plugins": {
