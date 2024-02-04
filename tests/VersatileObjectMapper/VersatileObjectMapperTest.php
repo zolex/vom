@@ -11,7 +11,6 @@
 
 namespace Zolex\VOM\Test\VersatileObjectMapper;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
@@ -441,7 +440,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
 
         $instantiableNestedCollection = self::$serializer->denormalize($data, InstantiableNestedCollection::class);
         $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiableNestedCollection);
-        $this->assertInstanceOf(ArrayCollection::class, $instantiableNestedCollection->people);
+        $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->people);
         $this->assertCount(2, $instantiableNestedCollection->people);
     }
 

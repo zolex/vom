@@ -11,16 +11,14 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
 class InstantiableNestedCollection
 {
     /**
-     * @var ArrayCollection|Collection|Person[]
+     * @var \ArrayObject|Person[]
      */
     #[VOM\Property]
-    public Collection $people;
+    public \ArrayAccess $people;
 }
