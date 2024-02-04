@@ -14,14 +14,11 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class SickSack
+class NestingLevelThree
 {
-    #[VOM\Property]
-    public int $sick;
+    #[VOM\Property('NESTED.LEVEL_THREE_VALUE', root: true)]
+    public string $value;
 
-    #[VOM\Property]
-    public string $sack;
-
-    #[VOM\Property(accessor: false)]
-    public SickSuck $sickSuck;
+    #[VOM\Property('LEVEL_FOUR')]
+    public NestingLevelFour $levelFour;
 }

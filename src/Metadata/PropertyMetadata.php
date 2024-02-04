@@ -88,9 +88,11 @@ class PropertyMetadata
         return $this->attribute->isFlag();
     }
 
-    public function getAccessor(): ?string
+    public function getAccessor(): string|false
     {
-        return $this->attribute->getAccessor() ?? $this->name;
+        $accessor = $this->attribute->getAccessor();
+
+        return true === $accessor ? $this->name : $accessor;
     }
 
     public function getAliases(): array

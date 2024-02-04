@@ -22,7 +22,6 @@ class PropertyMetadataTest extends TestCase
         $attribute = new Property(
             'accessor',
             'field',
-            false,
             true,
             ['foo' => 'bar'],
             true,
@@ -37,7 +36,7 @@ class PropertyMetadataTest extends TestCase
         $this->assertEquals('vom-flag', $metadata->getType());
         $this->assertEquals('accessor', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
-        $this->assertFalse($metadata->isNested());
+        $this->assertTrue($metadata->isNested());
         $this->assertTrue($metadata->isRoot());
         $this->assertEquals(['foo' => 'bar'], $metadata->getAliases());
         $this->assertEquals('bar', $metadata->getAlias('foo'));
