@@ -13,9 +13,9 @@ class Person
     #[VOM\Property('surname')]
     public string $lastname;
 
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public Address $address;
 
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     public Contact $contact;
 }

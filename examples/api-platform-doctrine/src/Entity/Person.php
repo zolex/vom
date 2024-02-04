@@ -87,12 +87,12 @@ class Person
 
     #[Groups(['person', 'address'])]
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     private ?Address $address = null;
 
     #[Groups(['person', 'contact'])]
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[VOM\Property(nested: false)]
+    #[VOM\Property(accessor: false)]
     private ?Contact $contact = null;
 
     public function getId(): ?int
