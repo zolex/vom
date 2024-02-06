@@ -41,7 +41,7 @@ class PropertyMetadata
 
     public function getField(): ?string
     {
-        return $this->attribute->getField() ?? $this->attribute->getAccessor();
+        return $this->attribute->getField() ?? (($accessor = $this->getAccessor()) ? $accessor : null);
     }
 
     public function getArrayAccessType(): ?string
