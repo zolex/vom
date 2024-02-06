@@ -22,13 +22,13 @@ class ConstructorArguments
     private bool $default;
 
     public function __construct(
-        #[VOM\Property]
+        #[VOM\Argument]
         int $id,
-        #[VOM\Property]
+        #[VOM\Argument]
         string $name,
-        #[VOM\Property]
+        #[VOM\Argument]
         ?bool $nullable,
-        #[VOM\Property]
+        #[VOM\Argument]
         bool $default = true,
     ) {
         $this->id = $id;

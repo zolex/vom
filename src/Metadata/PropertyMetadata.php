@@ -15,11 +15,11 @@ namespace Zolex\VOM\Metadata;
 
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
-use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Mapping\AbstractProperty;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
-class PropertyMetadata
+class PropertyMetadata implements GroupsAwareMetadataInterface
 {
     private readonly mixed $defaultValue;
 
@@ -28,7 +28,7 @@ class PropertyMetadata
         /* @var array|Type[] */
         private string $type,
         private ?string $arrayAccessType,
-        private readonly Property $attribute,
+        private readonly AbstractProperty $attribute,
         private readonly array $groups = ['default'],
         private readonly ?Context $context = null,
     ) {

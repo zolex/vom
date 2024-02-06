@@ -17,13 +17,13 @@ use Zolex\VOM\Mapping as VOM;
 class PropertyPromotion
 {
     public function __construct(
-        #[VOM\Property]
+        #[VOM\Argument]
         private int $id,
-        #[VOM\Property]
+        #[VOM\Argument]
         private string $name,
-        #[VOM\Property]
+        #[VOM\Argument]
         private ?bool $nullable,
-        #[VOM\Property]
+        #[VOM\Argument]
         private bool $default = true,
     ) {
     }

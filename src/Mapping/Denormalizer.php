@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Mapping;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
-final class Property extends AbstractProperty
+#[\Attribute(\Attribute::TARGET_METHOD)]
+final class Denormalizer
 {
 }

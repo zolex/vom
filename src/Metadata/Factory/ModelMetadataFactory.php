@@ -17,11 +17,13 @@ use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping\AbstractProperty;
+use Zolex\VOM\Mapping\Argument;
+use Zolex\VOM\Mapping\Denormalizer;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Normalizer;
-use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
-use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
+use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -72,7 +74,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         if ($constructor = $reflectionClass->getConstructor()) {
             foreach ($constructor->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter)) {
+                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $constructor)) {
                     $modelMetadata->addConstructorArgument($propertyMetadata);
                 }
             }
@@ -82,28 +84,51 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ('__construct' === $reflectionMethod->getName()) {
                 continue;
             }
-            $methodArguments = [];
-            foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
-                    if (!$reflectionMethod->isPublic()) {
-                        throw new RuntimeException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
-                    }
-                    $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
-                }
-            }
 
-            if (\count($methodArguments)) {
-                $modelMetadata->addDenormalizer(new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments));
-            }
-
+            $groups = [];
+            $normalizer = null;
+            $denormalizer = null;
             foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
-                if ($attribute instanceof Normalizer) {
-                    $modelMetadata->addNormalizer(new NormalizerMetadata($reflectionMethod->getName()));
+                if ($attribute instanceof Groups) {
+                    $groups = $attribute->getGroups();
                 }
+                if ($attribute instanceof Normalizer) {
+                    $normalizer = new NormalizerMetadata($reflectionMethod->getName());
+                }
+                if ($attribute instanceof Denormalizer) {
+                    $methodArguments = [];
+                    foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+                        if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
+                            if (!$reflectionMethod->isPublic()) {
+                                throw new MappingException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
+                            }
+                            $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+                        }
+                    }
+
+                    if (!\count($methodArguments)) {
+                        throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+                    }
+
+                    $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments);
+                }
+            }
+
+            if (null !== $normalizer) {
+                $normalizer->setGroups($groups);
+                $modelMetadata->addNormalizer($normalizer);
+            }
+
+            if (null !== $denormalizer) {
+                $denormalizer->setGroups($groups);
+                $modelMetadata->addDenormalizer($denormalizer);
             }
         }
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+            if ($modelMetadata->hasConstructorArgument($reflectionProperty->getName())) {
+                continue;
+            }
             if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty)) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
@@ -121,16 +146,17 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         $contextAttribute = null;
         $propertyAttribute = null;
         foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
-            if ($attribute instanceof Property) {
-                $propertyAttribute = $attribute;
-                if (null !== $propertyGroups = $attribute->getGroups()) {
-                    $groups = array_merge($groups, $propertyGroups);
+            if ($attribute instanceof AbstractProperty) {
+                /* @see Argument why we trow this php-like error */
+                if (null === $reflectionMethod && $attribute instanceof Argument) {
+                    throw new MappingException(sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
                 }
+                $propertyAttribute = $attribute;
                 continue;
             }
 
             if ($attribute instanceof Groups) {
-                $groups = array_merge($groups, $attribute->getGroups());
+                $groups = $attribute->getGroups();
             }
 
             if ($attribute instanceof Context) {
@@ -207,11 +233,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         if ($hasClass) {
             if (null === $instantiableClass) {
-                throw new RuntimeException(sprintf('Could not find a class that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable type.', $parentClass, $property, $class));
+                throw new MappingException(sprintf('Could not find a class that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable type.', $parentClass, $property, $class));
             }
 
             if ($hasArrayAccess && null === $arrayAccessType) {
-                throw new RuntimeException(sprintf('Could not find an ArrayAccess that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable ArrayAccess type like ArrayObject.', $parentClass, $property, $class));
+                throw new MappingException(sprintf('Could not find an ArrayAccess that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable ArrayAccess type like ArrayObject.', $parentClass, $property, $class));
             }
 
             return [$instantiableClass.($hasArrayAccess || $isCollection ? '[]' : ''), $arrayAccessType];

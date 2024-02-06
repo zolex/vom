@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * This file is part of the VOM package.
  *
@@ -11,9 +9,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Mapping;
+namespace Zolex\VOM\Metadata;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
-final class Property extends AbstractProperty
+interface GroupsAwareMetadataInterface
 {
+    public function getGroups(): array;
 }

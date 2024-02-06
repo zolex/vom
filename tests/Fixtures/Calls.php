@@ -11,6 +11,7 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
+use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
@@ -19,11 +20,13 @@ class Calls
     private array $data = [];
     private array $moreData = [];
 
+    #[Groups('data')]
+    #[VOM\Denormalizer]
     public function setData(
         /* @type int $id */
-        #[VOM\Property]
+        #[VOM\Argument]
         int $id,
-        #[VOM\Property]
+        #[VOM\Argument]
         string $name,
     ): void {
         $this->data = [
@@ -38,11 +41,13 @@ class Calls
         return $this->data;
     }
 
+    #[Groups(['more'])]
+    #[VOM\Denormalizer]
     public function setMoreData(
         /* @type int $id */
-        #[VOM\Property('data2_id')]
+        #[VOM\Argument('data2_id')]
         int $id,
-        #[VOM\Property('data2_name')]
+        #[VOM\Argument('data2_name')]
         string $name,
     ): void {
         $this->moreData = [
