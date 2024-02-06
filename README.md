@@ -34,8 +34,9 @@ composer require zolex/vom ^0.0.8
 
 ### Symfony
 
-When using symfony, the package also integrates as a bundle. With flex and autoconfiguration there is nothing else to do: You are ready to use the [VersatileObjectMapper as a Symfony service](./examples/symfony-framework). For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
-Without autoconfiguration, or if you choose to not run symfony/flex recipe generation, you have to enable the bundle manually by adding it to `config/bundles.php`.
+When using symfony, the package also integrates as a bundle. With flex and autoconfiguration there is nothing else to do. You are ready to use the [VersatileObjectMapper as a Symfony service](./examples/symfony-framework). For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
+
+_Without autoconfiguration, or if you choose to not run symfony/flex recipe generation, you have to enable the bundle manually by adding it to `config/bundles.php`._
 
 ```php
 <?php
