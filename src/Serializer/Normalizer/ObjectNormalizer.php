@@ -11,7 +11,6 @@
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
-use ApiPlatform\Metadata\Operation;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -47,7 +46,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        if ($this->skipApiPlatformOperation($context)) {
+        if (!isset($context['vom']) || !$context['vom']) {
             return false;
         }
 
@@ -150,7 +149,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        if ($this->skipApiPlatformOperation($context)) {
+        if (!isset($context['vom']) || !$context['vom']) {
             return false;
         }
 
@@ -227,12 +226,5 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         return false;
-    }
-
-    private function skipApiPlatformOperation(array $context): bool
-    {
-        return ((isset($context['operation']) && $context['operation'] instanceof Operation)
-                || (isset($context['root_operation']) && $context['root_operation'] instanceof Operation))
-            && (!isset($context['vom']) || !$context['vom']);
     }
 }

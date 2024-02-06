@@ -60,7 +60,8 @@ The models can be anything, so if you receive data from somewhere and need to wr
 
 In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](../examples/symfony-framework).
 The recommended way to use it is by type-hinting Symfony's `SerializerInterface` or `VersatileObjectMapper`.
-_(The latter decorates the Symfony serializer, which then delegates the calls to the VOM normalizers.)_
+
+The only difference is, that `VersatileObjectMapper` by default processes the VOM attributes and Serializer does not.
 
 ```php
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -69,6 +70,30 @@ class AnySymfonyService
 {
     public function __construct(private VersatileObjectMapper $objectMapper)
     {
+    }
+    
+    public function deserialize(): void
+    {
+        $person = $this->objectMapper->deserialize('{"id": 123, "firstname": "Peter"}', Person::class);
+    }
+}
+```
+
+Symfony Serializer needs additional context to enable the VersatileObjectMapper, to not interfere with the framework's behavior if not explicitly wanted (especially with API-Platform).
+A particular use-case for this is API-Platform, where it would otherwise always return the VOM normalized data.
+Check the [custom StateProvider](../examples/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](../examples/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state.
+
+```php
+use Symfony\Component\Serializer\SerializerInterface;
+class AnySymfonyService
+{
+    public function __construct(private SerializerInterface $serializer)
+    {
+    }
+    
+    public function deserialize(): void
+    {
+        $person = $this->serializer->deserialize('{"id": 123, "firstname": "Peter"}', Person::class, context: ['vom' => true]);
     }
 }
 ```
@@ -766,52 +791,4 @@ $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['grou
 
 $someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
 ```
-
-#### Groups in API-Platform
-
-API-Platform has many options to specify normalization and denormalization context groups, for example globally, per resoruce, per operation and dynamically using a ContextBuilder.
-
-VOM picks up these features and adds functionality that is common to use. The following example will by default only return the `id` and `name`of the entity.
-The id because it is always added via the `static-groups` and the name because is in the normalization context of the GetOperation.
-If the client sends for example a `&groups=createdAt` query parameter, VOM is going to replace the default normalization context groups (while still adding the static groups) with whatever the user has sent.
-The client can also send multiple groups by utilizing the array syntax `&groups[]=name&groups[]=createdAt`. Additionally, the query parameter value can be the name of a preset `&groups=preset-alias` which then resolved to the actual groups defined in the preset.
-With this approach the client can decide which representation of the resource he needs, which can save a lot of traffic when only a subset of properties (and nested models) is needed.
-
-
-```php
-namespace App\ApiResource;
-
-use ApiPlatform\Metadata\ApiProperty;
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Zolex\VOM\Mapping as VOM;
-
-#[ApiResource]
-#[Get(
-    normalizationContext: [
-        'groups' => ['name'],
-        'static-groups' => ['id'],
-    ],
-    provider: SomeStateProvider::class,
-)]
-#[VOM\Model(
-    presets: [
-        'preset-alias' => ['name', 'createdAt'],
-    ],
-)]
-class MyResourceClass
-{
-    #[ApiProperty(identifier: true)]
-    #[Groups(['id'])]
-    public int $id;
-    
-    #[Groups(['name'])]
-    public string $name;
-    
-    #[Groups(['createdAt'])]
-    public \DateTimeImmutable $createdAt;
-}
-```
-
 
