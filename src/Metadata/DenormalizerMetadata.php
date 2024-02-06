@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-class MethodCallMetadata
+class DenormalizerMetadata
 {
     public function __construct(
         private readonly string $method,

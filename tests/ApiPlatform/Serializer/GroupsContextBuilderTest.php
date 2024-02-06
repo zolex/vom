@@ -18,7 +18,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 
 class GroupsContextBuilderTest extends TestCase

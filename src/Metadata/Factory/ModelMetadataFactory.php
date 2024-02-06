@@ -18,10 +18,12 @@ use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping\Model;
+use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
-use Zolex\VOM\Metadata\MethodCallMetadata;
 use Zolex\VOM\Metadata\ModelMetadata;
+use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
 class ModelMetadataFactory implements ModelMetadataFactoryInterface
@@ -82,7 +84,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
             $methodArguments = [];
             foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter)) {
+                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
                     if (!$reflectionMethod->isPublic()) {
                         throw new RuntimeException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
                     }
@@ -91,7 +93,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
 
             if (\count($methodArguments)) {
-                $modelMetadata->addMethodCall(new MethodCallMetadata($reflectionMethod->getName(), $methodArguments));
+                $modelMetadata->addDenormalizer(new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments));
+            }
+
+            foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
+                if ($attribute instanceof Normalizer) {
+                    $modelMetadata->addNormalizer(new NormalizerMetadata($reflectionMethod->getName()));
+                }
             }
         }
 
@@ -104,8 +112,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         return $modelMetadata;
     }
 
-    private function createPropertyMetadata(\ReflectionParameter|\ReflectionProperty $reflectionProperty): ?PropertyMetadata
-    {
+    private function createPropertyMetadata(
+        \ReflectionParameter|\ReflectionProperty $reflectionProperty,
+        ?\ReflectionClass $reflectionClass = null,
+        ?\ReflectionMethod $reflectionMethod = null,
+    ): ?PropertyMetadata {
         $groups = [];
         $contextAttribute = null;
         $propertyAttribute = null;
@@ -133,7 +144,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         $class = $reflectionProperty->getDeclaringClass()->name;
         $property = $reflectionProperty->name;
-        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $this->propertyInfoExtractor->getTypes($class, $property));
+        $types = $this->propertyInfoExtractor->getTypes($class, $property, [
+            'reflection_class' => $reflectionClass,
+            'reflection_method' => $reflectionMethod,
+        ]);
+        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $types);
         $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute, $groups, $contextAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());

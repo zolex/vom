@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Symfony\PropertyInfo;
+namespace Zolex\VOM\PropertyInfo\Extractor;
 
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
@@ -22,13 +22,14 @@ class PropertyInfoExtractorFactory
     {
         $phpDocExtractor = new PhpDocExtractor();
         $reflectionExtractor = new ReflectionExtractor();
+        $methodCallExtractor = new MethodCallExtractor();
 
         return new PropertyInfoExtractor(
-            // listExtractors: [$reflectionExtractor],
-            typeExtractors: [$phpDocExtractor, $reflectionExtractor],
+            listExtractors: [$reflectionExtractor],
+            typeExtractors: [$phpDocExtractor, $reflectionExtractor, $methodCallExtractor],
             // descriptionExtractors: [$phpDocExtractor]
-            // accessExtractors: [$reflectionExtractor],
-            // propertyInitializableExtractors: [$reflectionExtractor],
+            accessExtractors: [$reflectionExtractor],
+            initializableExtractors: [$reflectionExtractor],
         );
     }
 }

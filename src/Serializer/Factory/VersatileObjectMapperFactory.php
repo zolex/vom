@@ -22,11 +22,11 @@ use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
 
 /**
  * For use without symfony-framework, this just a convenient way to get a preconfigured VOM.

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 
 class CachedResourceMetadataFactoryTest extends TestCase

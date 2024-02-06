@@ -18,7 +18,7 @@ use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\SickRoot;
 
 class ModelMetadataTest extends TestCase

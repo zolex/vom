@@ -30,9 +30,14 @@ final class ModelMetadata
     private ?Model $attribute = null;
 
     /**
-     * @var array|MethodCallMetadata[]
+     * @var array|DenormalizerMetadata[]
      */
-    private array $methodCalls = [];
+    private array $denormalizers = [];
+
+    /**
+     * @var array|NormalizerMetadata[]
+     */
+    private array $normalizers = [];
 
     public function __construct(private readonly string $class)
     {
@@ -97,18 +102,33 @@ final class ModelMetadata
     }
 
     /**
-     * @return MethodCallMetadata[]
+     * @return DenormalizerMetadata[]
      */
-    public function getMethodCalls(): iterable
+    public function getDenormalizers(): iterable
     {
-        foreach ($this->methodCalls as $methodCall) {
-            yield $methodCall;
+        foreach ($this->denormalizers as $denormalizer) {
+            yield $denormalizer;
         }
     }
 
-    public function addMethodCall(MethodCallMetadata $methodCall): void
+    public function addDenormalizer(DenormalizerMetadata $denormalizerMetadata): void
     {
-        $this->methodCalls[] = $methodCall;
+        $this->denormalizers[] = $denormalizerMetadata;
+    }
+
+    /**
+     * @return NormalizerMetadata[]
+     */
+    public function getNormalizers(): iterable
+    {
+        foreach ($this->normalizers as $normalizer) {
+            yield $normalizer;
+        }
+    }
+
+    public function addNormalizer(NormalizerMetadata $normalizerMetadata): void
+    {
+        $this->normalizers[] = $normalizerMetadata;
     }
 
     public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata

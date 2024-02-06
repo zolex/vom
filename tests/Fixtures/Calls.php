@@ -16,27 +16,44 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Calls
 {
-    private int $id;
-
-    private string $name;
+    private array $data = [];
+    private array $moreData = [];
 
     public function setData(
+        /* @type int $id */
         #[VOM\Property]
         int $id,
         #[VOM\Property]
         string $name,
     ): void {
-        $this->id = $id;
-        $this->name = $name;
+        $this->data = [
+            'id' => $id,
+            'name' => $name,
+        ];
     }
 
-    public function getId(): int
+    #[VOM\Normalizer]
+    public function getData(): array
     {
-        return $this->id;
+        return $this->data;
     }
 
-    public function getName(): string
+    public function setMoreData(
+        /* @type int $id */
+        #[VOM\Property('data2_id')]
+        int $id,
+        #[VOM\Property('data2_name')]
+        string $name,
+    ): void {
+        $this->moreData = [
+            'data2_id' => $id,
+            'data2_name' => $name,
+        ];
+    }
+
+    #[VOM\Normalizer]
+    public function getMoreData(): array
     {
-        return $this->name;
+        return $this->moreData;
     }
 }

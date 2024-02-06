@@ -79,16 +79,16 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
         $model = new $type(...$constructorArguments);
 
-        foreach ($metadata->getMethodCalls() as $methodCall) {
+        foreach ($metadata->getDenormalizers() as $denormalizer) {
             $methodArguments = [];
-            foreach ($methodCall->getArguments() as $property) {
+            foreach ($denormalizer->getArguments() as $property) {
                 $methodArguments[$property->getName()] = $this->denormalizeProperty($data, $property, $format, $context);
             }
 
             try {
-                $model->{$methodCall->getMethod()}(...$methodArguments);
+                $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
-                throw new RuntimeException(sprintf('Unable to call method %s on %s', $methodCall->getMethod(), $model::class), 0, $e);
+                throw new RuntimeException(sprintf('Unable to call method %s on %s', $denormalizer->getMethod(), $model::class), 0, $e);
             }
         }
 
@@ -195,6 +195,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                 }
             } catch (\Throwable) {
             }
+        }
+
+        foreach ($metadata->getNormalizers() as $normalizer) {
+            $data = array_merge($data, $object->{$normalizer->getMethod()}());
         }
 
         return $data;

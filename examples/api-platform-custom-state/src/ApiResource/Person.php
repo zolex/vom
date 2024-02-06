@@ -5,6 +5,7 @@ namespace App\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Tests\Fixtures\Metadata\Get;
+use App\State\PersonStateProcessor;
 use App\State\PersonStateProvider;
 use Zolex\VOM\Mapping as VOM;
 
@@ -24,6 +25,8 @@ use Zolex\VOM\Mapping as VOM;
     uriTemplate: '/people/legacy',
     normalizationContext: ['vom' => true],
     denormalizationContext: ['vom' => true],
+    provider: PersonStateProvider::class,
+    processor: PersonStateProcessor::class,
 )]
 
 #[VOM\Model]

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
-use Zolex\VOM\Symfony\PropertyInfo\PropertyInfoExtractorFactory;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableNestedCollection;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
