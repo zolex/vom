@@ -396,11 +396,13 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $data = [
             'id' => 42,
             'name' => 'Peter Enis',
+            'data2_id' => 1337,
+            'data2_name' => 'Peter Parker',
         ];
 
         $calls = self::$serializer->denormalize($data, Calls::class);
-        $this->assertEquals(42, $calls->getId());
-        $this->assertEquals('Peter Enis', $calls->getName());
+        $normalized = self::$serializer->normalize($calls);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testArrayOnRoot(): void
