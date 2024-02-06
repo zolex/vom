@@ -18,8 +18,9 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
-use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
+use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
+use Zolex\VOM\Metadata\GroupsAwareMetadataInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 
@@ -80,6 +81,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         $model = new $type(...$constructorArguments);
 
         foreach ($metadata->getDenormalizers() as $denormalizer) {
+            if (!$this->inContextGroups($denormalizer, $context)) {
+                continue;
+            }
+
             $methodArguments = [];
             foreach ($denormalizer->getArguments() as $property) {
                 $methodArguments[$property->getName()] = $this->denormalizeProperty($data, $property, $format, $context);
@@ -88,7 +93,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             try {
                 $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
-                throw new RuntimeException(sprintf('Unable to call method %s on %s', $denormalizer->getMethod(), $model::class), 0, $e);
+                throw new MappingException(sprintf('Unable to call method %s on %s', $denormalizer->getMethod(), $model::class), 0, $e);
             }
         }
 
@@ -198,19 +203,24 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         foreach ($metadata->getNormalizers() as $normalizer) {
+            if (!$this->inContextGroups($normalizer, $context)) {
+                continue;
+            }
+
+            // TODO: allow an accessor on the normalizer attribute
             $data = array_merge($data, $object->{$normalizer->getMethod()}());
         }
 
         return $data;
     }
 
-    private function inContextGroups(PropertyMetadata $property, array $context): bool
+    private function inContextGroups(GroupsAwareMetadataInterface $metadata, array $context): bool
     {
         if (!isset($context[AbstractNormalizer::GROUPS])) {
             return true;
         }
 
-        foreach ($property->getGroups() as $group) {
+        foreach ($metadata->getGroups() as $group) {
             if (\in_array($group, $context[AbstractNormalizer::GROUPS])) {
                 return true;
             }

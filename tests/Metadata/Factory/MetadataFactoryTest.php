@@ -12,7 +12,7 @@
 namespace Zolex\VOM\Test\Metadata\Factory;
 
 use PHPUnit\Framework\TestCase;
-use Zolex\VOM\Metadata\Factory\Exception\RuntimeException;
+use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
@@ -35,7 +35,7 @@ class MetadataFactoryTest extends TestCase
     {
         $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MappingException::class);
         $factory->getMetadataFor(NonInstantiable::class);
     }
 

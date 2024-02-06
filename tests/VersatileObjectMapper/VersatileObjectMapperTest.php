@@ -405,6 +405,28 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($data, $normalized);
     }
 
+    public function testDenormalizerWithGroups(): void
+    {
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Enis',
+            'data2_id' => 1337,
+            'data2_name' => 'Peter Parker',
+        ];
+
+        $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['data']]);
+        $this->assertEquals(['id' => 42, 'name' => 'Peter Enis'], $calls->getData());
+        $this->assertEquals([], $calls->getMoreData());
+
+        $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['more']]);
+        $this->assertEquals([], $calls->getData());
+        $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $calls->getMoreData());
+
+        $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => []]);
+        $this->assertEquals([], $calls->getData());
+        $this->assertEquals([], $calls->getMoreData());
+    }
+
     public function testArrayOnRoot(): void
     {
         $data = [

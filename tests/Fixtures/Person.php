@@ -68,18 +68,20 @@ class Person
         }
     }
 
-    #[Groups(['id'])]
-    #[Property('id', groups: ['standard', 'extended'])]
+    #[Groups(['id', 'standard', 'extended'])]
+    #[Property('id')]
     public int $id;
 
-    #[Property(accessor: 'name.firstname', defaultOrder: 'DESC', groups: ['standard'])]
+    #[Groups('standard')]
+    #[Property(accessor: 'name.firstname', defaultOrder: 'DESC')]
     public string $firstname;
 
-    #[Property(accessor: 'name.lastname', groups: ['standard'])]
+    #[Groups('standard')]
+    #[Property(accessor: 'name.lastname')]
     public string $lastname;
 
-    #[Groups('extended')]
-    #[Property('int_age', aliases: ['ageFrom' => 'int_age_min', 'ageTo' => 'int_age_max'], groups: ['standard'])]
+    #[Groups(['standard', 'extended'])]
+    #[Property('int_age', aliases: ['ageFrom' => 'int_age_min', 'ageTo' => 'int_age_max'])]
     public int $age;
 
     #[Groups(['standard', 'extended'])]

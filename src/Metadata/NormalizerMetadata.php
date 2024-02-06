@@ -13,8 +13,10 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-class NormalizerMetadata
+class NormalizerMetadata implements GroupsAwareMetadataInterface
 {
+    private array $groups = [];
+
     public function __construct(
         private readonly string $method,
     ) {
@@ -23,5 +25,15 @@ class NormalizerMetadata
     public function getMethod(): string
     {
         return $this->method;
+    }
+
+    public function getGroups(): array
+    {
+        return $this->groups;
+    }
+
+    public function setGroups(array $groups): void
+    {
+        $this->groups = $groups;
     }
 }
