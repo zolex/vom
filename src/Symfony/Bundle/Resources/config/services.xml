@@ -45,6 +45,10 @@
             <tag name="serializer.normalizer" priority="80" />
         </service>
 
+        <service id="zolex_vom.property_info.method_call_extractor" class="Zolex\VOM\PropertyInfo\Extractor\MethodCallExtractor">
+            <tag name="property_info.type_extractor" />
+        </service>
+
         <!-- do not add by default because it may be a security risk. see the docs -->
         <!--service id="Zolex\VOM\ApiPlatform\Serializer\GroupsContextBuilder">
             <argument type="service" id="api_platform.serializer.context_builder" />
