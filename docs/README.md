@@ -24,11 +24,14 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 - [Denormalization](#denormalization)
 - [Normalization](#normalization)
 - [Attribute Configuration](#attribute-configuration)
+  * [The Accessor](#the-accessor)
   * [Constructor Arguments](#constructor-arguments)
   * [Constructor Property Promotion](#constructor-property-promotion)
   * [Method Calls](#method-calls)
-  * [The Accessor](#the-accessor)
-  * [Nested properties](#nested-properties)
+    + [Denormalizer Methods](#denormalizer-methods)
+    + [Normalizer Methods](#normalizer-methods)
+  * [Nested Models](#nested-models)
+  * [Root flag](#root-flag)
   * [Collections](#collections)
   * [Data Types](#data-types)
     + [Booleans](#booleans)
@@ -36,10 +39,10 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
     + [DateTime](#datetime)
   * [Nesting with Accessors](#nesting-with-accessors)
 - [Context](#context)
-  * [Groups](#groups)
   * [Skip Null Values](#skip-null-values)
-  * [Root Fallback](#root-fallback)
   * [Object to Populate](#object-to-populate)
+  * [Groups](#groups)
+    + [Groups in API-Platform](#groups-in-api-platform)
 
 <!-- tocstop -->
 
@@ -155,90 +158,6 @@ As the data structures and names of all properties are identical, no additional 
 > It can make sense to have additional nested models and properties which are never touched the VOM, for example if you use some of the fed data,
 > to do further computations and add it to a model, before returning it to the client, sending it to an API or storing it in the database.
 
-### Constructor Arguments
-
-The `VOM\Property` attribute can be added on constructor arguments. VOM will pass the mapped values into the constructor. All required arguments must be property mapped and pre present in the source data. Otherwise VOM can not create an instance ob the model. Nullable arguments and those with a default value are optional in the source data.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class ConstructorArguments
-{
-    private int $id;
-    private string $name;
-    private ?bool $nullable;
-    private bool $default;
-
-    public function __construct(
-        #[VOM\Property]
-        int $id,
-        #[VOM\Property]
-        string $name,
-        #[VOM\Property]
-        ?bool $nullable,
-        #[VOM\Property]
-        bool $default = true
-    ) {
-        $this->id = $id;
-        $this->name = $name;
-        $this->nullable = $nullable;
-        $this->default = $default;
-    }
-}
-```
-
-### Constructor Property Promotion
-
-Also constructor property promotion can be handled by VOM similar to normal constructor arguments.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class PropertyPromotion
-{
-    public function __construct(
-        #[VOM\Property]
-        private int $id,
-        #[VOM\Property]
-        private string $name,
-        #[VOM\Property]
-        private ?bool $nullable,
-        #[VOM\Property]
-        private bool $default = true,
-    ) {
- }
-```
-
-### Method Calls
-
-VOM Properties can also be added to public method arguments using the same technique. VOM will extract the source data for you and call the method with the specified arguments. This is mainly useful if your model expects all or some of the data using a method call and there is no other way to inject it.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class Calls
-{
-    private int $id;
-    private string $name;
-
-    public function setData(
-        #[VOM\Property]
-        int $id,
-        #[VOM\Property]
-        string $name,
-    ): void {
-        $this->id = $id;
-        $this->name = $name;
-    }
-}
-```
-
-> [!NOTE]
-> When you are following the naming conventions of setters (e.g. `setName()`for a private `$name` property, specifying the property attributes on the setter method is not required. VOM can handle that using the attribute on the class property itself!
-
 
 ### The Accessor
 
@@ -285,6 +204,180 @@ $data = [
 ];
 
 $objectMapper->denormalize($data, RootClass::class);
+```
+
+### Constructor Arguments
+
+Similar to the `VOM\Property` attribute there is the `VOM\Argument` attribute, that can be added on constructor arguments
+_(Actually both are using the same abstract class under the hood, this differentiation is only here for better semantics)._
+VOM will pass the mapped values into the constructor. All required arguments must be property mapped and pre present in the source data.
+Otherwise, VOM can not create an instance ob the model. Nullable arguments and those with a default value are optional in the source data.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ConstructorArguments
+{
+    private int $id;
+    private string $name;
+    private ?bool $nullable;
+    private bool $default;
+
+    public function __construct(
+        #[VOM\Argument]
+        int $id,
+        #[VOM\Argument]
+        string $name,
+        #[VOM\Argument]
+        ?bool $nullable,
+        #[VOM\Argument]
+        bool $default = true
+    ) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->nullable = $nullable;
+        $this->default = $default;
+    }
+}
+```
+
+### Constructor Property Promotion
+
+Also, constructor property promotion can be handled by VOM in the same way as the normal constructor arguments described above.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class PropertyPromotion
+{
+    public function __construct(
+        #[VOM\Argument]
+        private int $id,
+        #[VOM\Argument]
+        private string $name,
+        #[VOM\Argument]
+        private ?bool $nullable,
+        #[VOM\Argument]
+        private bool $default = true,
+    ) {
+ }
+```
+
+### Method Calls
+
+#### Denormalizer Methods
+
+If your models don't follow standard getter and setter naming conventions, VOM can call custom methods with arguments. It will query the source data using the argument accessor (the same way as for VOM\Property) and call the method. It is required to add the `VOM\Denormalizer` attribute on the method to be called.
+
+> [!NOTE]
+> Only consider to use this if you do not have the option to change your models to comply with the conventions for getters and setter or for edge-cases, like you want to reuse a generic model class but with different accessors.
+
+```php
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    private GenericModel $one;
+    private GenericModel $two;
+
+    #[VOM\Denormalizer]
+    public function setOne(
+        #[VOM\Argument('ID_FOR_ONE')]
+        int $id,
+        #[VOM\Argument('NAME_FOR_ONE')]
+        string $name,
+    ): void {
+        $this->one = new GenericModel($id, $name);
+    }
+    
+    #[Groups(['group-name'])]
+    #[VOM\Denormalizer]
+    public function setOne(
+        #[VOM\Argument('ID_FOR_TWO')]
+        int $id,
+        #[VOM\Argument('NAME_FOR_TWO')]
+        string $name,
+    ): void {
+        $this->two = new GenericModel($id, $name);
+    }
+}
+```
+
+Also, it is possible to use the Groups attribute to control if the method should be called during denormalization, depending on the groups in the denormalization context.
+
+```php
+$objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-name']]);
+```
+
+#### Normalizer Methods
+
+Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization.
+These methods must not have any required arguments and always return an associative array.
+The keys in that array will be reflected as-is in the normalized output array.
+Optionally the normalizer method can define an accessor, to nest the data in the normalized output.
+The Groups attribute can be utilized in the same way.
+
+```php
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    private GenericModel $data;
+
+    #[Groups(['group-name', 'another'])]
+    #[VOM\Mormalizer(accessor: 'nested_data')]
+    public function getData(): array
+    {
+        return $this->data->toArray();
+    }
+}
+
+$objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-name']]);
+```
+
+> [!CAUTION]
+> It is possible to use the normalized data and denormalize it again to receive the exact same result, no matter how often you repeat this process.
+> If this is one of your requirements, and you are using Normalizer and Denormalizer methods, you have to careful how you store the injected data
+> and how you return it, so that the results are matching.
+
+Here is a short example. Note, that the keys and structure returned from the normalizer method match the accessors from the denormalizer arguments.
+
+```php
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    private GenericModel $data;
+
+    #[VOM\Denormalizer]
+    public function setOne(
+        #[VOM\Argument('NESTED.ID_FOR_ONE')]
+        int $id,
+        #[VOM\Argument('NESTED.NAME_FOR_ONE')]
+        string $name,
+    ): void {
+        $this->data = new GenericModel($id, $name);
+    }
+    
+    #[VOM\Mormalizer]
+    public function getData(): array
+    {
+        return [
+            'NESTED' => [
+              'ID_FOR_ONE' => $this->data->getId(),
+              'NAME_FOR_ONE' => $this->data->getName(),
+           ],
+        ];
+    }
+}
 ```
 
 
@@ -535,9 +628,10 @@ $objectMapper->denormalize($data, Flags::class);
 
 #### DateTime
 
-If VOM feeds a property that is a DateTime or DateTimeImmutable type, it will automatically convert the input value into the respective object.
+If VOM feeds a property that is a DateTime or DateTimeImmutable type, it will automatically convert the input value into the respective object. See more on the Symfony documentation
 
 ```php
+use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
@@ -546,6 +640,7 @@ class DateTimeModel
     #[VOM\Property]
     public \DateTime $createdAt;
     
+    #[Context(['datetime_format' => \DateTimeInterface::W3C])]
     #[VOM\Property]
     public \DateTimeImmutable $sometime;
 }
@@ -626,6 +721,25 @@ $objectMapper->denormalize($data, RootClass::class);
 
 VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
 
+### Skip Null Values
+
+To skip all null values, which means for denormalization not to initialize their corresponding properties in the model, and for normalization to simply not include them in the resulting data array.
+
+```php
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['skip_null_values' => true]);
+
+$someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
+```
+
+### Object to Populate
+
+If you already have an object that you want to populate, you can pass it to the denormalize method. This can be useful when you are for example reading an entity from a database and want to update values on it.
+
+```php
+$someModel = new SomeModel();
+$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['object_to_populate' => $someModel]);
+```
+
 ### Groups
 
 ```php
@@ -700,31 +814,4 @@ class MyResourceClass
 }
 ```
 
-
-### Skip Null Values
-
-To skip all null values, which means for denormalization not to initialize their corresponding properties in the model, and for normalization to simply not include them in the resulting data array.
-
-```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['skip_null_values' => true]);
-
-$someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
-```
-
-### Root Fallback
-
-Whenever a property accessor can not find anything in the source data this option allows to fall back to the root of the data structure and continue to search from there. This is only available for denormalization.
-
-```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['root_fallback' => true]);
-```
-
-### Object to Populate
-
-If you already have an object that you want to populate, you can pass it to the denormalize method. This can be useful when you are for example reading an entity from a database and want to update values on it.
-
-```php
-$someModel = new SomeModel();
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['object_to_populate' => $someModel]);
-```
 
