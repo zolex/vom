@@ -5,13 +5,11 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\ApiResource\Person;
-use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use Zolex\VOM\VersatileObjectMapper;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 class PersonStateProvider implements ProviderInterface
 {
-    public function __construct(private DenormalizerInterface $denormalizer)
+    public function __construct(private VersatileObjectMapper $serializer)
     {
     }
 
@@ -28,7 +26,7 @@ class PersonStateProvider implements ProviderInterface
             'phone' => '0123456789',
         ];
 
-        $person = $this->denormalizer->denormalize($data, Person::class);
+        $person = $this->serializer->denormalize($data, Person::class);
         $person->id = $uriVariables['id'];
 
         return $person;

@@ -5,12 +5,11 @@ namespace App\Controller;
 use App\Model\Person;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
+use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 class VomController
 {
-    public function __construct(private SerializerInterface|DenormalizerInterface $serializer)
+    public function __construct(private VersatileObjectMapper $serializer)
     {
     }
 
