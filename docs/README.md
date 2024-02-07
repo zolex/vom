@@ -2,14 +2,13 @@
 
 [![Integration](https://github.com/zolex/vom/workflows/Integration/badge.svg)](https://github.com/zolex/vom/actions)
 [![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
-
 [![Code Coverage](https://codecov.io/gh/zolex/vom/graph/badge.svg?token=RI2NX4S89I)](https://codecov.io/gh/zolex/vom)
-[![Type Coverage](https://shepherd.dev/github/zolex/vom/coverage.svg)](https://codecov.io/gh/zolex/vom)
 [![Latest Stable Version](http://poser.pugx.org/zolex/vom/v)](https://packagist.org/packages/zolex/vom)
 
-[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)
 [![License](http://poser.pugx.org/zolex/vom/license)](https://packagist.org/packages/zolex/vom)
 [![Total Downloads](http://poser.pugx.org/zolex/vom/downloads?update=2)](https://packagist.org/packages/zolex/vom)
+[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)
+
 
 ![VOM](logo.png)
 
@@ -40,7 +39,6 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Skip Null Values](#skip-null-values)
   * [Object to Populate](#object-to-populate)
   * [Groups](#groups)
-    + [Groups in API-Platform](#groups-in-api-platform)
 
 <!-- tocstop -->
 
