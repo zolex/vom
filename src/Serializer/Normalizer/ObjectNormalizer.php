@@ -12,6 +12,7 @@
 namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -139,7 +140,13 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return null;
         }
 
-        $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        try {
+            $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        } catch (\Exception $t) {
+            // re-throw with additional information
+            throw new NotNormalizableValueException(sprintf($t->getMessage().' On property: %s::%s.', $context['resource_class'], $property->getName()), 0, $t);
+        }
+
         if ($arrayAccessClass = $property->getArrayAccessType()) {
             return new $arrayAccessClass($result);
         }
