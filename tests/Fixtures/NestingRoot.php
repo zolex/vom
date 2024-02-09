@@ -11,8 +11,10 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
+use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping as VOM;
 
+#[Context(['allow_object_syntax' => true])]
 #[VOM\Model]
 class NestingRoot
 {

@@ -15,6 +15,8 @@ namespace Zolex\VOM\Metadata;
 
 class NormalizerMetadata implements GroupsAwareMetadataInterface
 {
+    use ContextAwareMetadataTrait;
+
     private array $groups = [];
 
     public function __construct(

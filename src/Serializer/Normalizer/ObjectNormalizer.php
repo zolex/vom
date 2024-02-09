@@ -22,7 +22,6 @@ use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\GroupsAwareMetadataInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
-use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
@@ -60,13 +59,9 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return null;
         }
 
-        if (\is_array($data) && !array_is_list($data)) {
-            $data = VersatileObjectMapper::toObject($data);
-        }
-
-        $context[self::CONTEXT_ROOT_DATA] ??= $data;
-
         $metadata = $this->modelMetadataFactory->getMetadataFor($type);
+        $context = array_merge($metadata->getDenormalizationContext(), $context);
+        $context[self::CONTEXT_ROOT_DATA] ??= $data;
 
         $constructorArguments = [];
         foreach ($metadata->getConstructorArguments() as $argument) {
@@ -81,6 +76,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         $model = new $type(...$constructorArguments);
 
         foreach ($metadata->getDenormalizers() as $denormalizer) {
+            $context = array_merge($denormalizer->getDenormalizationContext(), $context);
             if (!$this->inContextGroups($denormalizer, $context)) {
                 continue;
             }
@@ -125,14 +121,14 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             $data = &$context[self::CONTEXT_ROOT_DATA];
         }
 
-        $accessor = $property->getAccessor();
+        $accessor = $property->getAccessor($context);
         try {
             if ($property->isNested() && !$property->isFlag()) {
                 $value = $this->propertyAccessor->getValue($data, $accessor);
             } else {
                 $value = &$data;
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             $value = null;
         }
 
@@ -146,7 +142,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             // re-throw with additional information
             $message = sprintf(
                 'The type of the property "%s" must be "%s", "%s" given.',
-                $property->getAccessor(),
+                $property->getAccessor($context),
                 implode(', ', $e->getExpectedTypes()),
                 $e->getCurrentType()
             );
@@ -174,6 +170,8 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         if (!$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
             return null;
         }
+
+        $context = array_merge($metadata->getNormalizationContext(), $context);
 
         $data = [];
         if (!isset($context[self::CONTEXT_ROOT_DATA])) {
@@ -203,9 +201,10 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                     }
                 } elseif ($property->isNested()) {
                     try {
-                        $accessor = '['.implode('][', explode('.', $property->getAccessor())).']';
+                        $accessor = $property->getAccessor($context);
                         $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
-                    } catch (\Throwable) {
+                    } catch (\Throwable $e) {
+                        $x = 1;
                     }
                 } else {
                     $target = array_merge($target, $normalizedValue);
@@ -215,6 +214,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         foreach ($metadata->getNormalizers() as $normalizer) {
+            $context = array_merge($normalizer->getNormalizationContext(), $context);
             if (!$this->inContextGroups($normalizer, $context)) {
                 continue;
             }

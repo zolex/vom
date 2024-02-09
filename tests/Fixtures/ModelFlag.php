@@ -16,9 +16,9 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class ModelFlag
 {
-    #[VOM\Property('text')]
+    #[VOM\Property('[text]')]
     public string $label;
 
-    #[VOM\Property('value')]
+    #[VOM\Property('[value]')]
     public bool $isEnabled;
 }

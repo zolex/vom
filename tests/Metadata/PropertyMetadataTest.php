@@ -20,7 +20,7 @@ class PropertyMetadataTest extends TestCase
     public function testGetters(): void
     {
         $attribute = new Property(
-            'accessor',
+            '[accessor]',
             'field',
             true,
             ['foo' => 'bar'],
@@ -34,7 +34,7 @@ class PropertyMetadataTest extends TestCase
 
         $this->assertEquals('name', $metadata->getName());
         $this->assertEquals('vom-flag', $metadata->getType());
-        $this->assertEquals('accessor', $metadata->getAccessor());
+        $this->assertEquals('[accessor]', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
         $this->assertTrue($metadata->isNested());
         $this->assertTrue($metadata->isRoot());

@@ -19,6 +19,8 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 
 final class ModelMetadata
 {
+    use ContextAwareMetadataTrait;
+
     /**
      * @var array|PropertyMetadata[]
      */
