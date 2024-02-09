@@ -776,4 +776,34 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
 
         self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
     }
+
+    public function testToObject(): void
+    {
+        $data = [
+            [
+                'prop' => 'val',
+            ],
+            [
+                'prop' => 'val',
+                'another' => [
+                    'prop' => 'val',
+                ],
+            ],
+        ];
+
+        $expected = [
+            (object) [
+                'prop' => 'val',
+            ],
+            (object) [
+                'prop' => 'val',
+                'another' => (object) [
+                    'prop' => 'val',
+                ],
+            ],
+        ];
+
+        $obj = VersatileObjectMapper::toObject($data);
+        $this->assertEquals($expected, $obj);
+    }
 }
