@@ -7,7 +7,7 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Contact
 {
-    #[VOM\Property('email_address')]
+    #[VOM\Property('[email_address]')]
     public string $email;
 
     #[VOM\Property]

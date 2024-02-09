@@ -10,7 +10,7 @@ class Person
     #[VOM\Property]
     public string $firstname;
 
-    #[VOM\Property('surname')]
+    #[VOM\Property('[surname]')]
     public string $lastname;
 
     #[VOM\Property(accessor: false)]

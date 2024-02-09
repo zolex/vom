@@ -13,7 +13,7 @@
         "symfony/framework-bundle": "7.0.*",
         "symfony/runtime": "7.0.*",
         "symfony/yaml": "7.0.*",
-        "zolex/vom": "^0.0.8"
+        "zolex/vom": "^0.0.9"
     },
     "config": {
         "allow-plugins": {
