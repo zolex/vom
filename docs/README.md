@@ -185,14 +185,14 @@ As the data structures and names of all properties are identical, no additional 
 The first argument of the property attribute is the accessor. When not provided, it uses the property's name. It can be written in the following ways.
 
 ```php
-#[VOM\Property('source_param')]
+#[VOM\Property('[source_param]')]
 public string $value;
 ```
 
 Or to be more explicit:
 
 ```php
-#[VOM\Property(accessor: 'source_param')]
+#[VOM\Property(accessor: '[source_param]')]
 public string $value;
 ```
 
@@ -209,7 +209,7 @@ class RootClass
     #[VOM\Property]
     public string $onTheRoot;
     
-    #[VOM\Property(accessor: 'deeper.inThe.structure')]
+    #[VOM\Property('[deeper][inThe][structure]')]
     public string $fromTheDeep;
 }
 ```
@@ -307,9 +307,9 @@ class Calls
 
     #[VOM\Denormalizer]
     public function setOne(
-        #[VOM\Argument('ID_FOR_ONE')]
+        #[VOM\Argument('[ID_FOR_ONE]')]
         int $id,
-        #[VOM\Argument('NAME_FOR_ONE')]
+        #[VOM\Argument('[NAME_FOR_ONE]')]
         string $name,
     ): void {
         $this->one = new GenericModel($id, $name);
@@ -318,9 +318,9 @@ class Calls
     #[Groups(['group-name'])]
     #[VOM\Denormalizer]
     public function setOne(
-        #[VOM\Argument('ID_FOR_TWO')]
+        #[VOM\Argument('[ID_FOR_TWO]')]
         int $id,
-        #[VOM\Argument('NAME_FOR_TWO')]
+        #[VOM\Argument('[NAME_FOR_TWO]')]
         string $name,
     ): void {
         $this->two = new GenericModel($id, $name);
@@ -352,7 +352,7 @@ class Calls
     private GenericModel $data;
 
     #[Groups(['group-name', 'another'])]
-    #[VOM\Mormalizer(accessor: 'nested_data')]
+    #[VOM\Mormalizer(accessor: '[nested_data]')]
     public function getData(): array
     {
         return $this->data->toArray();
@@ -380,9 +380,9 @@ class Calls
 
     #[VOM\Denormalizer]
     public function setOne(
-        #[VOM\Argument('NESTED.ID_FOR_ONE')]
+        #[VOM\Argument('[NESTED][ID_FOR_ONE]')]
         int $id,
-        #[VOM\Argument('NESTED.NAME_FOR_ONE')]
+        #[VOM\Argument('[NESTED][NAME_FOR_ONE]')]
         string $name,
     ): void {
         $this->data = new GenericModel($id, $name);
@@ -623,7 +623,11 @@ public bool $nullableState;
 #### Flags
 
 Flags are also booleans but behave in a different way. In the normalized form, flags are strings that sit in an array.
-The presence of the flag will result in a true value. It's absence will result in an uninitialized value (or null the respective property is nullable).
+The presence of the flag will result in a true value. The flag prefixed with an "!" will result in a false  value
+A flag's absence will result in an uninitialized value (or null the respective property is nullable).
+
+> [!NOTE]
+> For flags the accessor is just the value of the flag and not symfony property access syntax.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -693,10 +697,10 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class RootClass
 {
-    #[VOM\Property('somewhere.but_not_root')]
+    #[VOM\Property('[somewhere][but_not_root]')]
     public string $rooted;
     
-    #[VOM\Property('second')]
+    #[VOM\Property('[second]')]
     public SecondDimension $nested;
 }
 
@@ -706,7 +710,7 @@ class SecondDimension
     #[VOM\Property]
     public string $value;
     
-    #[VOM\Property('third', accessor: false)]
+    #[VOM\Property('[third]', accessor: false)]
     public ThirdDimension $deeper;
 }
 
@@ -716,7 +720,7 @@ class ThirdDimension
     #[VOM\Property]
     public string $effectivelyOnSecondDimension;
     
-    #[VOM\Property('again.aNestedAccessor')]
+    #[VOM\Property('[again][aNestedAccessor]')]
     public string $effectivelyOnThirdDimension;
 }
 ```
@@ -787,4 +791,3 @@ $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['grou
 
 $someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
 ```
-

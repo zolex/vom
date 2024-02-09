@@ -81,7 +81,7 @@ class Person
     #[VOM\Property]
     public string $firstname;
     
-    #[VOM\Property('surname')]
+    #[VOM\Property('[surname]')]
     public string $lastname;
     
     #[VOM\Property(accessor: false)]
@@ -97,20 +97,20 @@ class Address
     #[VOM\Property]
     public string $street;
     
-    #[VOM\Property('zip')]
+    #[VOM\Property('[zip]')]
     public string $zipCode;
     
     #[VOM\Property]
     public string $city;
     
-    #[VOM\Property('country_name')]
+    #[VOM\Property('[country_name]')]
     public string $country; 
 }
 
 #[VOM\Model]
 class Contact
 {
-    #[VOM\Property('email_address')]
+    #[VOM\Property('[email_address]')]
     public string $email;
     
     #[VOM\Property]
