@@ -13,6 +13,7 @@ namespace Zolex\VOM\Test\Serializer;
 
 use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Address;
@@ -766,5 +767,13 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $normalized = self::$serializer->normalize($nestingRoot);
 
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testDenormalizePropertyRethrowsNotNormalizableValueException(): void
+    {
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('The type of the property "id" must be "int", "string" given.');
+
+        self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
     }
 }

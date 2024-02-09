@@ -12,6 +12,7 @@
 namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -139,7 +140,19 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return null;
         }
 
-        $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        try {
+            $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+        } catch (NotNormalizableValueException $e) {
+            // re-throw with additional information
+            $message = sprintf(
+                'The type of the property "%s" must be "%s", "%s" given.',
+                $property->getAccessor(),
+                implode(', ', $e->getExpectedTypes()),
+                $e->getCurrentType()
+            );
+            throw NotNormalizableValueException::createForUnexpectedDataType($message, $value, $e->getExpectedTypes(), $e->getPath(), true, $e->getCode(), $e);
+        }
+
         if ($arrayAccessClass = $property->getArrayAccessType()) {
             return new $arrayAccessClass($result);
         }
