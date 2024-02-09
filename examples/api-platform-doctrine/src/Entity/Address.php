@@ -18,27 +18,27 @@ class Address
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['address'])]
-    #[VOM\Property('ADDRESS_IDENT')]
+    #[VOM\Property('[ADDRESS_IDENT]')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['address'])]
-    #[VOM\Property('STREET')]
+    #[VOM\Property('[STREET]')]
     private ?string $street = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['address'])]
-    #[VOM\Property('ZIP_CODE')]
+    #[VOM\Property('[ZIP_CODE]')]
     private ?string $zipCode = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['address'])]
-    #[VOM\Property('COUNTRY_CODE')]
+    #[VOM\Property('[COUNTRY_CODE]')]
     private ?string $country = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['address'])]
-    #[VOM\Property('LOCATION')]
+    #[VOM\Property('[LOCATION]')]
     private ?string $city = null;
 
     public function getId(): ?int

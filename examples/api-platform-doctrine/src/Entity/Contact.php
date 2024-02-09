@@ -17,17 +17,17 @@ class Contact
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['contact'])]
-    #[VOM\Property('CONTACT_IDENT')]
+    #[VOM\Property('[CONTACT_IDENT]')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['contact'])]
-    #[VOM\Property('EMAIL_ADDR')]
+    #[VOM\Property('[EMAIL_ADDR]')]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['contact'])]
-    #[VOM\Property('PHONE_NUMBER')]
+    #[VOM\Property('[PHONE_NUMBER]')]
     private ?string $phone = null;
 
     public function getId(): ?int

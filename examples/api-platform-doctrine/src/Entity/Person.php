@@ -72,17 +72,17 @@ class Person
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['person'])]
-    #[VOM\Property('IDENT')]
+    #[VOM\Property('[IDENT]')]
     private ?int $id = null;
 
     #[Groups(['person'])]
     #[ORM\Column(length: 255)]
-    #[VOM\Property('FIRST_NAME')]
+    #[VOM\Property('[FIRST_NAME]')]
     private ?string $firstname = null;
 
     #[Groups(['person'])]
     #[ORM\Column(length: 255)]
-    #[VOM\Property('LAST_NAME')]
+    #[VOM\Property('[LAST_NAME]')]
     private ?string $lastname = null;
 
     #[Groups(['person', 'address'])]
