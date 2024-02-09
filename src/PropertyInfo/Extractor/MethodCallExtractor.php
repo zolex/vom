@@ -13,6 +13,7 @@ namespace Zolex\VOM\PropertyInfo\Extractor;
 
 use Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
+use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 
 class MethodCallExtractor implements PropertyTypeExtractorInterface
 {
@@ -29,22 +30,21 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
 
         foreach ($context['reflection_method']->getParameters() as $parameter) {
             if ($parameter->getName() === $property) {
-                return $this->extractFromReflectionType($parameter->getType(), $context['reflection_class']);
+                return $this->extractFromReflectionType($context['reflection_class'], $context['reflection_method'], $parameter->getType());
             }
         }
 
         return null;
     }
 
-    private function extractFromReflectionType(\ReflectionType $reflectionType, \ReflectionClass $declaringClass): array
+    private function extractFromReflectionType(\ReflectionClass $reflectionClass, \ReflectionMethod $reflectionMethod, \ReflectionType $reflectionType): array
     {
         $types = [];
         $nullable = $reflectionType->allowsNull();
 
         foreach (($reflectionType instanceof \ReflectionUnionType || $reflectionType instanceof \ReflectionIntersectionType) ? $reflectionType->getTypes() : [$reflectionType] as $type) {
-            if (!$type instanceof \ReflectionNamedType) {
-                // Nested composite types are not supported yet.
-                return [];
+            if (!$type->isBuiltin()) {
+                throw new MappingException(sprintf('Only builtin types are supported for denormalizer method call %s::%s().', $reflectionClass->getName(), $reflectionMethod->getName()));
             }
 
             $phpTypeOrClass = $type->getName();
@@ -52,29 +52,13 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
                 continue;
             }
 
-            if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass) {
-                $types[] = new Type(Type::BUILTIN_TYPE_ARRAY, $nullable, null, true);
-            } elseif ('void' === $phpTypeOrClass) {
-                $types[] = new Type(Type::BUILTIN_TYPE_NULL, $nullable);
-            } elseif ($type->isBuiltin()) {
-                $types[] = new Type($phpTypeOrClass, $nullable);
-            } else {
-                $types[] = new Type(Type::BUILTIN_TYPE_OBJECT, $nullable, $this->resolveTypeName($phpTypeOrClass, $declaringClass));
+            if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass) {
+                throw new MappingException(sprintf('Only scalars are supported for denormalizer method call %s::%s().', $reflectionClass->getName(), $reflectionMethod->getName()));
             }
+
+            $types[] = new Type($phpTypeOrClass, $nullable);
         }
 
         return $types;
-    }
-
-    private function resolveTypeName(string $name, \ReflectionClass $declaringClass): string
-    {
-        if ('self' === $lcName = strtolower($name)) {
-            return $declaringClass->name;
-        }
-        if ('parent' === $lcName && $parent = $declaringClass->getParentClass()) {
-            return $parent->name;
-        }
-
-        return $name;
     }
 }
