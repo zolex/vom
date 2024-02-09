@@ -56,6 +56,7 @@ class Calls
         ];
     }
 
+    #[Groups(['more'])]
     #[VOM\Normalizer]
     public function getMoreData(): array
     {

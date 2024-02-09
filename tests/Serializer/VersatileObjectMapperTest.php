@@ -14,12 +14,15 @@ namespace Zolex\VOM\Test\Serializer;
 use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
+use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
+use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
@@ -406,6 +409,20 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($data, $normalized);
     }
 
+    public function testMethodCallWithUnsupportedArrayThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Only scalars are supported for denormalizer method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray().');
+        self::$serializer->denormalize([], CallWithUnsupportedArray::class);
+    }
+
+    public function testMethodCallWithUnsupportedClassThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Only builtin types are supported for denormalizer method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass::setObject().');
+        self::$serializer->denormalize([], CallWithUnsupportedClass::class);
+    }
+
     public function testDenormalizerWithGroups(): void
     {
         $data = [
@@ -420,8 +437,10 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals([], $calls->getMoreData());
 
         $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['more']]);
-        $this->assertEquals([], $calls->getData());
-        $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $calls->getMoreData());
+        $normalizedData = self::$serializer->normalize($calls, null, ['groups' => ['data']]);
+        $this->assertEquals([], $normalizedData);
+        $normalizedMore = self::$serializer->normalize($calls, null, ['groups' => ['more']]);
+        $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $normalizedMore);
 
         $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => []]);
         $this->assertEquals([], $calls->getData());
