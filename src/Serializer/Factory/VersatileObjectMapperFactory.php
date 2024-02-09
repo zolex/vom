@@ -33,19 +33,16 @@ use Zolex\VOM\Serializer\VersatileObjectMapper;
  */
 class VersatileObjectMapperFactory
 {
+    private static ObjectNormalizer $objectNormalizer;
+
     public static function create(?CacheItemPoolInterface $cacheItemPool = null): VersatileObjectMapper
     {
-        $propertyInfo = PropertyInfoExtractorFactory::create();
-        $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
-        if ($cacheItemPool) {
-            $modelMetadataFactory = new CachedModelMetadataFactory($cacheItemPool, $modelMetadataFactory, true);
-        }
+        self::$objectNormalizer = self::createObjectNormalizer($cacheItemPool);
 
         $serializer = new Serializer(
             [
                 new UnwrappingDenormalizer(),
-                new ObjectNormalizer($modelMetadataFactory, $propertyAccessor),
+                self::$objectNormalizer,
                 new BooleanNormalizer(),
                 new CommonFlagNormalizer(),
                 new DateTimeNormalizer(),
@@ -57,5 +54,26 @@ class VersatileObjectMapperFactory
         );
 
         return new VersatileObjectMapper($serializer);
+    }
+
+    public static function createObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null): ObjectNormalizer
+    {
+        $propertyInfo = PropertyInfoExtractorFactory::create();
+        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+        $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
+        if ($cacheItemPool) {
+            $modelMetadataFactory = new CachedModelMetadataFactory($cacheItemPool, $modelMetadataFactory, true);
+        }
+
+        return new ObjectNormalizer($modelMetadataFactory, $propertyAccessor);
+    }
+
+    public static function getObjectNormalizer(): ObjectNormalizer
+    {
+        if (!isset(self::$objectNormalizer)) {
+            self::create();
+        }
+
+        return self::$objectNormalizer;
     }
 }
