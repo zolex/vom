@@ -9,10 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace VersatileObjectMapper;
+namespace Zolex\VOM\Test\Serializer;
 
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
-use Zolex\VOM\Test\VersatileObjectMapper\VersatileObjectMapperTest;
 
 /**
  * Same as the base test, but keeps the same VOM instance for all tests!

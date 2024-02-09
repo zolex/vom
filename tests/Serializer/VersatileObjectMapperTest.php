@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Test\VersatileObjectMapper;
+namespace Zolex\VOM\Test\Serializer;
 
 use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
