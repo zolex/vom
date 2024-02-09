@@ -142,13 +142,13 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
         try {
             $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
-        } catch (NotNormalizableValueException $t) {
+        } catch (NotNormalizableValueException $e) {
             // re-throw with additional information
             $message = sprintf(
                 'The type of the property "%s" must be "%s", "%s" given.',
                 $property->getAccessor(),
-                implode(', ', $t->getExpectedTypes()),
-                $t->getCurrentType()
+                implode(', ', $e->getExpectedTypes()),
+                $e->getCurrentType()
             );
             throw NotNormalizableValueException::createForUnexpectedDataType($message, $value, $e->getExpectedTypes(), $e->getPath(), true, $e->getCode(), $e);
         }
