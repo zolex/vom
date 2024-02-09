@@ -16,7 +16,7 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class NestingLevelOne
 {
-    #[VOM\Property('LEVEL_ONE_VALUE')]
+    #[VOM\Property('[LEVEL_ONE_VALUE]')]
     public string $value;
 
     #[VOM\Property(accessor: false, root: true)]

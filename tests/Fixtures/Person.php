@@ -69,39 +69,39 @@ class Person
     }
 
     #[Groups(['id', 'standard', 'extended'])]
-    #[Property('id')]
+    #[Property('[id]')]
     public int $id;
 
     #[Groups('standard')]
-    #[Property(accessor: 'name.firstname', defaultOrder: 'DESC')]
+    #[Property(accessor: '[name][firstname]', defaultOrder: 'DESC')]
     public string $firstname;
 
     #[Groups('standard')]
-    #[Property(accessor: 'name.lastname')]
+    #[Property(accessor: '[name][lastname]')]
     public string $lastname;
 
     #[Groups(['standard', 'extended'])]
-    #[Property('int_age', aliases: ['ageFrom' => 'int_age_min', 'ageTo' => 'int_age_max'])]
+    #[Property('[int_age]', aliases: ['ageFrom' => 'int_age_min', 'ageTo' => 'int_age_max'])]
     public int $age;
 
     #[Groups(['standard', 'extended'])]
-    #[Property('contact_email')]
+    #[Property('[contact_email]')]
     public string $email;
 
     #[Groups('extended')]
-    #[Property('bool_awesome')]
+    #[Property('[bool_awesome]')]
     public bool $isAwesome;
 
     #[Groups(['extended', 'isHilarious'])]
-    #[Property('hilarious', trueValue: 'ON', falseValue: 'OFF')]
+    #[Property('[hilarious]', trueValue: 'ON', falseValue: 'OFF')]
     public bool $isHilarious;
 
     #[Groups('extended')]
-    #[Property('delicious')]
+    #[Property('[delicious]')]
     public bool $isDelicious;
 
     #[Groups(['extended', 'isHoly'])]
-    #[Property('holy', trueValue: 'yes', falseValue: 'no')]
+    #[Property('[holy]', trueValue: 'yes', falseValue: 'no')]
     public bool $isHoly;
 
     #[Groups(['extended', 'address'])]

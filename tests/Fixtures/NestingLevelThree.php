@@ -16,9 +16,9 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class NestingLevelThree
 {
-    #[VOM\Property('NESTED.LEVEL_THREE_VALUE', root: true)]
+    #[VOM\Property('[NESTED][LEVEL_THREE_VALUE]', root: true)]
     public string $value;
 
-    #[VOM\Property('LEVEL_FOUR')]
+    #[VOM\Property('[LEVEL_FOUR]')]
     public NestingLevelFour $levelFour;
 }
