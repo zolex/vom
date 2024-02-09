@@ -18,10 +18,10 @@ class SickRoot
 {
     public int $number;
 
-    #[VOM\Property('SINGLE')]
+    #[VOM\Property('[SINGLE]')]
     public SickChild $singleChild;
 
-    #[VOM\Property('ANOTHER')]
+    #[VOM\Property('[ANOTHER]')]
     public SickChild $anotherChild;
 
     #[VOM\Property]

@@ -51,11 +51,11 @@ class Address
     private string $street;
 
     #[Groups(['address', 'address.houseno', 'extended'])]
-    #[Property('housenumber')]
+    #[Property('[housenumber]')]
     private string $houseNo;
 
     #[Groups(['address', 'address.zipcode', 'extended'])]
-    #[Property('zipcode')]
+    #[Property('[zipcode]')]
     private string $zip;
 
     #[Groups(['address', 'address.city', 'extended'])]

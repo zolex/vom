@@ -91,14 +91,8 @@ class PropertyMetadata implements GroupsAwareMetadataInterface
     public function getAccessor(array $context = []): string|false
     {
         $accessor = $this->attribute->getAccessor();
-
         if (false === $effectiveAccessor = (true === $accessor ? '['.$this->name.']' : $accessor)) {
             return false;
-        }
-
-        $context = array_merge($context, $this->getContext());
-        if (isset($context['allow_object_syntax']) && $context['allow_object_syntax'] && !str_starts_with($effectiveAccessor, '[')) {
-            return '['.implode('][', explode('.', $effectiveAccessor)).']';
         }
 
         return $effectiveAccessor;

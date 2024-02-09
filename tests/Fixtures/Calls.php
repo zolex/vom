@@ -11,7 +11,6 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
-use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping as VOM;
 
@@ -42,14 +41,13 @@ class Calls
         return $this->data;
     }
 
-    #[Context(['allow_object_syntax' => true])]
     #[Groups(['more'])]
     #[VOM\Denormalizer]
     public function setMoreData(
         /* @type int $id */
-        #[VOM\Argument('data2_id')]
+        #[VOM\Argument('[data2_id]')]
         int $id,
-        #[VOM\Argument('data2_name')]
+        #[VOM\Argument('[data2_name]')]
         string $name,
     ): void {
         $this->moreData = [

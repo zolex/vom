@@ -11,7 +11,6 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
-use Symfony\Component\Serializer\Attribute\Context;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
@@ -20,7 +19,6 @@ class NestedName
     #[VOM\Property('[nested][firstname]')]
     public string $firstname;
 
-    #[Context(['allow_object_syntax' => true])]
-    #[VOM\Property('nested.deeper.surname')]
+    #[VOM\Property('[nested][deeper][surname]')]
     public string $lastname;
 }
