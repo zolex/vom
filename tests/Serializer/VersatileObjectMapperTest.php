@@ -254,7 +254,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
                 '!flagB',
             ],
             'labeledFlagsArray' => [
-                'flagA' => (object) [
+                'flagA' => [
                     'text' => 'Fahne A',
                     'value' => true,
                 ],
@@ -263,12 +263,12 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
                     'value' => 'true',
                 ],
             ],
-            'labeledFlagsObject' => (object) [
+            'labeledFlagsObject' => [
                 'flagA' => [
                     'text' => 'Fahne A',
                     'value' => 'NO',
                 ],
-                'flagB' => (object) [
+                'flagB' => [
                     'text' => 'Fahne B',
                     'value' => 'OFF',
                 ],
@@ -472,12 +472,12 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
         ];
 
-        $instantiableNestedCollection = self::$serializer->denormalize($data, InstantiableNestedCollection::class);
+        $instantiableNestedCollection = self::$serializer->denormalize($data, InstantiableNestedCollection::class, null, ['allow_object_syntax' => true]);
         $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiableNestedCollection);
         $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->people);
         $this->assertCount(2, $instantiableNestedCollection->people);
 
-        $normalized = self::$serializer->normalize($instantiableNestedCollection);
+        $normalized = self::$serializer->normalize($instantiableNestedCollection, null, ['allow_object_syntax' => true]);
         $this->assertEquals($data, $normalized);
     }
 
@@ -559,7 +559,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
      */
     public function testCreateNestedModels(array $data, string $className, string|array $groups, object $expectedModel)
     {
-        $model = self::$serializer->denormalize($data, $className, null, ['groups' => $groups]);
+        $model = self::$serializer->denormalize($data, $className, null, ['groups' => $groups, 'allow_object_syntax' => true]);
         $this->assertEquals($expectedModel, $model);
     }
 
@@ -737,8 +737,8 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $sickSack->sickSuck = $sickSuck;
         $root->sickSack = $sickSack;
 
-        $array1 = self::$serializer->normalize($root);
-        $model1 = self::$serializer->denormalize($array1, SickRoot::class);
+        $array1 = self::$serializer->normalize($root, null, ['allow_object_syntax' => true]);
+        $model1 = self::$serializer->denormalize($array1, SickRoot::class, null, ['allow_object_syntax' => true]);
 
         $this->assertEquals($root, $model1);
     }
@@ -772,8 +772,8 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
     public function testDenormalizePropertyRethrowsNotNormalizableValueException(): void
     {
         $this->expectException(NotNormalizableValueException::class);
-        $this->expectExceptionMessage('The type of the property "id" must be "int", "string" given.');
+        $this->expectExceptionMessage('The type of the property "[id]" must be "int", "string" given.');
 
-        self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
+        self::$serializer->denormalize(['id' => 'just a random string'], Person::class, null, ['allow_object_syntax' => true]);
     }
 }
