@@ -142,9 +142,15 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
         try {
             $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
-        } catch (\Exception $t) {
+        } catch (NotNormalizableValueException $t) {
             // re-throw with additional information
-            throw new NotNormalizableValueException(sprintf($t->getMessage().' On property: %s::%s.', $context['resource_class'], $property->getName()), 0, $t);
+            $message = sprintf(
+                'The type of the property "%s" must be "%s", "%s" given.',
+                $property->getAccessor(),
+                implode(', ', $t->getExpectedTypes()),
+                $t->getCurrentType()
+            );
+            throw NotNormalizableValueException::createForUnexpectedDataType($message, $value, $e->getExpectedTypes(), $e->getPath(), true, $e->getCode(), $e);
         }
 
         if ($arrayAccessClass = $property->getArrayAccessType()) {
