@@ -9,11 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace VersatileObjectMapper;
+namespace Zolex\VOM\Test\Serializer;
 
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
-use Zolex\VOM\Test\VersatileObjectMapper\VersatileObjectMapperTest;
 
 class SingleCachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {

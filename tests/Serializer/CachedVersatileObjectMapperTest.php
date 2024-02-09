@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Test\VersatileObjectMapper;
+namespace Zolex\VOM\Test\Serializer;
 
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
