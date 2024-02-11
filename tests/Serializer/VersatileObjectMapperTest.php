@@ -36,6 +36,7 @@ use Zolex\VOM\Test\Fixtures\SickChild;
 use Zolex\VOM\Test\Fixtures\SickRoot;
 use Zolex\VOM\Test\Fixtures\SickSack;
 use Zolex\VOM\Test\Fixtures\SickSuck;
+use Zolex\VOM\Test\Fixtures\Thing;
 
 /**
  * Base test with a fresh instance of the VOM for each test.
@@ -468,22 +469,26 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $data = [
             'people' => [
                 [
+                    'type' => 'person',
                     'id' => 1,
                     'name' => [
                         'firstname' => 'Andreas',
                         'lastname' => 'Linden',
                     ],
                     'address' => [
+                        'type' => 'address',
                         'street' => 'Elmstreet',
                         'housenumber' => '123',
                     ],
                 ], [
+                    'type' => 'person',
                     'id' => 2,
                     'name' => [
                         'firstname' => 'Peter',
                         'lastname' => 'Enis',
                     ],
                     'address' => [
+                        'type' => 'address',
                         'zipcode' => '54321',
                         'country' => 'DE',
                     ],
@@ -794,6 +799,24 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->expectExceptionMessage('The type of the property "[id]" must be "int", "string" given.');
 
         self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
+    }
+
+    public function testDenormalizeWithClassDiscriminator(): void
+    {
+        $data = [
+            'type' => 'person',
+            'id' => 666,
+            'name' => [
+                'firstname' => 'Peter',
+                'lastname' => 'Enis',
+            ],
+        ];
+
+        $thing = self::$serializer->denormalize($data, Thing::class);
+        $this->assertInstanceOf(Person::class, $thing);
+
+        $normalized = self::$serializer->normalize($thing);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testToObject(): void

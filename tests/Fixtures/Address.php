@@ -16,7 +16,7 @@ use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 
 #[Model]
-class Address
+class Address extends Thing
 {
     public function __construct(
         ?string $street = null,

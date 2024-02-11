@@ -35,14 +35,14 @@ final class BooleanNormalizer implements NormalizerInterface, DenormalizerInterf
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        if (isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()) {
-            if (null !== $trueValue = $context[ObjectNormalizer::CONTEXT_PROPERTY]->getTrueValue()) {
+        if (isset($context[ObjectNormalizer::VOM_PROPERTY])
+            && $context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::VOM_PROPERTY]->isBool()) {
+            if (null !== $trueValue = $context[ObjectNormalizer::VOM_PROPERTY]->getTrueValue()) {
                 return $data === $trueValue;
             }
 
-            if (null !== $falseValue = $context[ObjectNormalizer::CONTEXT_PROPERTY]->getFalseValue()) {
+            if (null !== $falseValue = $context[ObjectNormalizer::VOM_PROPERTY]->getFalseValue()) {
                 return $data === $falseValue;
             }
 
@@ -61,28 +61,28 @@ final class BooleanNormalizer implements NormalizerInterface, DenormalizerInterf
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
         return \is_bool($data)
-            && isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()
-            && !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag();
+            && isset($context[ObjectNormalizer::VOM_PROPERTY])
+            && $context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::VOM_PROPERTY]->isBool()
+            && !$context[ObjectNormalizer::VOM_PROPERTY]->isFlag();
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
         if (!\is_bool($object)
-            || !isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-            || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isBool()
-            || $context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag()) {
+            || !isset($context[ObjectNormalizer::VOM_PROPERTY])
+            || !$context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata
+            || !$context[ObjectNormalizer::VOM_PROPERTY]->isBool()
+            || $context[ObjectNormalizer::VOM_PROPERTY]->isFlag()) {
             return null;
         }
 
         if (true === $object) {
-            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getTrueValue() ?? true;
+            return $context[ObjectNormalizer::VOM_PROPERTY]->getTrueValue() ?? true;
         }
 
         if (false === $object) {
-            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getFalseValue() ?? false;
+            return $context[ObjectNormalizer::VOM_PROPERTY]->getFalseValue() ?? false;
         }
 
         return null;
