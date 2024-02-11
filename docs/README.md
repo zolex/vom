@@ -231,8 +231,8 @@ $objectMapper->denormalize($data, RootClass::class);
 
 Similar to the `VOM\Property` attribute there is the `VOM\Argument` attribute, that can be added on constructor arguments
 _(Actually both are using the same abstract class under the hood, this differentiation is only here for better semantics)._
-VOM will pass the mapped values into the constructor. All required arguments must be property mapped and pre present in the source data.
-Otherwise, VOM can not create an instance ob the model. Nullable arguments and those with a default value are optional in the source data.
+VOM will pass the mapped values into the constructor. All required arguments must be property mapped and be present in the source data.
+Otherwise, VOM can not create an instance of the model. Nullable arguments and those with a default value are optional in the source data.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -262,6 +262,10 @@ class ConstructorArguments
     }
 }
 ```
+
+> [!NOTE]
+> When using the [`object_to_populate` context](#object-to-populate), the constructor arguments and constructor property promotion will be skipped.
+
 
 ### Constructor Property Promotion
 
