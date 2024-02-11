@@ -28,7 +28,7 @@
         "symfony/twig-bundle": "7.0.*",
         "symfony/validator": "7.0.*",
         "symfony/yaml": "7.0.*",
-        "zolex/vom": "^0.0.9"
+        "zolex/vom": "^0.0.10"
     },
     "config": {
         "allow-plugins": {
