@@ -848,4 +848,22 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $obj = VersatileObjectMapper::toObject($data);
         $this->assertEquals($expected, $obj);
     }
+
+    public function testObjectToPopulate(): void
+    {
+        $person = new Person();
+        $person->id = 666;
+
+        $data = [
+            'name' => [
+                'firstname' => 'Peter',
+                'lastname' => 'Parker',
+            ],
+        ];
+
+        $person2 = self::$serializer->denormalize($data, Person::class, null, ['object_to_populate' => $person]);
+        $this->assertSame($person, $person2);
+        $this->assertEquals('Peter', $person2->firstname);
+        $this->assertEquals('Parker', $person2->lastname);
+    }
 }

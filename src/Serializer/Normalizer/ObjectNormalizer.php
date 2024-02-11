@@ -19,6 +19,7 @@ use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
 use Zolex\VOM\Metadata\Factory\Exception\MappingException;
@@ -27,6 +28,7 @@ use Zolex\VOM\Metadata\PropertyMetadata;
 
 final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
+    use ObjectToPopulateTrait;
     use SerializerAwareTrait;
 
     public const VOM_PROPERTY = 'vom_property_metadata';
@@ -124,7 +126,17 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     protected function createInstance(array &$data, string $class, array &$context, ?string $format): object
     {
-        if ($class !== $mappedClass = $this->getMappedClass($data, $class, $context)) {
+        if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
+            return $object;
+        } elseif (!$mapping = $this->classDiscriminatorResolver?->getMappingForClass($class)) {
+            $mappedClass = $class;
+        } elseif (null === $type = $data[$mapping->getTypeProperty()] ?? null) {
+            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('Type property "%s" not found for the abstract object "%s".', $mapping->getTypeProperty(), $class), null, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), false);
+        } elseif (null === $mappedClass = $mapping->getClassForType($type)) {
+            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type "%s" is not a valid value.', $type), $type, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), true);
+        }
+
+        if ($class !== $mappedClass) {
             return $this->createInstance($data, $mappedClass, $context, $format);
         }
 
@@ -140,27 +152,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         return new $class(...$constructorArguments);
-    }
-
-    private function getMappedClass(array $data, string $class, array $context): string
-    {
-        if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
-            return $object::class;
-        }
-
-        if (!$mapping = $this->classDiscriminatorResolver?->getMappingForClass($class)) {
-            return $class;
-        }
-
-        if (null === $type = $data[$mapping->getTypeProperty()] ?? null) {
-            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('Type property "%s" not found for the abstract object "%s".', $mapping->getTypeProperty(), $class), null, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), false);
-        }
-
-        if (null === $mappedClass = $mapping->getClassForType($type)) {
-            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type "%s" is not a valid value.', $type), $type, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), true);
-        }
-
-        return $mappedClass;
     }
 
     private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
