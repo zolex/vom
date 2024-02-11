@@ -41,21 +41,19 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     public function getMetadataFor(string|\ReflectionClass $class, ?ModelMetadata $modelMetadata = null): ?ModelMetadata
     {
         if (\is_string($class)) {
-            if (!class_exists($class)) {
-                return null;
+            if (\array_key_exists($class, $this->localCache)) {
+                return $this->localCache[$class];
             }
 
-            $class = new \ReflectionClass(trim($class, '?'));
+            try {
+                $class = new \ReflectionClass(trim($class, '?'));
+            } catch (\ReflectionException) {
+                return null;
+            }
         }
 
         if (null === $modelMetadata) {
-            if (\array_key_exists($class->getName(), $this->localCache)) {
-                return $this->localCache[$class->getName()];
-            }
-
             $modelMetadata = new ModelMetadata($class->getName());
-            $this->localCache[$class->getName()] = &$modelMetadata;
-
             foreach ($this->loadAttributes($class) as $attribute) {
                 if ($attribute instanceof Model) {
                     $modelMetadata->setAttribute($attribute);
@@ -63,7 +61,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 }
             }
 
-            if (!$modelMetadata->getAttribute()) {
+            if (!$modelMetadata->hasAttribute()) {
                 unset($this->localCache[$class->getName()]);
 
                 return null;
@@ -131,7 +129,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             $this->getMetadataFor($parentClass, $modelMetadata);
         }
 
-        return $modelMetadata;
+        return $this->localCache[$class->getName()] = $modelMetadata;
     }
 
     private function createPropertyMetadata(
