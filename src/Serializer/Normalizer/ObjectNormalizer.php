@@ -108,6 +108,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 continue;
             }
 
+            $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
             $value = $this->denormalizeProperty($type, $data, $property, $format, $context);
             try {
                 $this->propertyAccessor->setValue($model, $property->getName(), $value);
@@ -120,7 +121,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
-        $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
         $context[self::CONTEXT_PROPERTY] = &$property;
         if ($property->isRoot()) {
             $data = &$context[self::CONTEXT_ROOT_DATA];
@@ -223,8 +223,8 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         foreach ($metadata->getNormalizers() as $normalizer) {
-            $context = $this->getAttributeNormalizationContext($object, $normalizer->getAttribute(), $context);
-            if ($allowedAttributes && !\in_array($normalizer->getAttribute(), $allowedAttributes)) {
+            $attribute = $normalizer->getAttribute();
+            if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
                 continue;
             }
 
