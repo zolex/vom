@@ -22,7 +22,7 @@ use Zolex\VOM\Mapping as VOM;
 abstract class Thing
 {
     #[VOM\Property]
-    protected string $type;
+    private string $type;
 
     public function setType(string $type): void
     {
