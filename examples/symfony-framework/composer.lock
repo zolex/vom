@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8ccf026c5207ff672deb06df801c5010",
+    "content-hash": "a7ebd8e93df318bb34d4b0d06038f3a4",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -2975,16 +2975,16 @@
         },
         {
             "name": "zolex/vom",
-            "version": "0.0.9",
+            "version": "0.0.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zolex/vom.git",
-                "reference": "80519bbc792fc5bfb8f0290e595b22923245697b"
+                "reference": "3129d23053585f0cee6c926ba3fec198e4e5f630"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zolex/vom/zipball/80519bbc792fc5bfb8f0290e595b22923245697b",
-                "reference": "80519bbc792fc5bfb8f0290e595b22923245697b",
+                "url": "https://api.github.com/repos/zolex/vom/zipball/3129d23053585f0cee6c926ba3fec198e4e5f630",
+                "reference": "3129d23053585f0cee6c926ba3fec198e4e5f630",
                 "shasum": ""
             },
             "require": {
@@ -3021,9 +3021,9 @@
             "description": "Versatile Object Mapper",
             "support": {
                 "issues": "https://github.com/zolex/vom/issues",
-                "source": "https://github.com/zolex/vom/tree/0.0.9"
+                "source": "https://github.com/zolex/vom/tree/0.0.10"
             },
-            "time": "2024-02-09T13:09:25+00:00"
+            "time": "2024-02-11T15:03:34+00:00"
         }
     ],
     "packages-dev": [],
