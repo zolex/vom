@@ -17,11 +17,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 
-#[Model(
-    presets: [
-        'preset-name' => ['group-a', 'group-b'],
-    ],
-)]
+#[Model]
 class Person extends Thing
 {
     public function __construct(

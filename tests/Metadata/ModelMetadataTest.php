@@ -25,10 +25,7 @@ class ModelMetadataTest extends TestCase
 {
     public function testGetters(): void
     {
-        $model = new Model(
-            presets: ['preset_a' => ['foo'], 'preset_b' => ['bar']],
-            searchable: ['searchable'],
-        );
+        $model = new Model();
 
         $metadata = new ModelMetadata('class');
         $metadata->setAttribute($model);

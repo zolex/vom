@@ -16,22 +16,7 @@ namespace Zolex\VOM\Mapping;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final class Model
 {
-    private array $searchable;
-
-    public function __construct(
-        private array $presets = [],
-        array|string $searchable = [],
-    ) {
-        $this->searchable = \is_string($searchable) ? [$searchable => 'GET'] : $searchable;
-    }
-
-    public function getSearchable(): array
+    public function __construct()
     {
-        return $this->searchable;
-    }
-
-    public function getPreset(string $name): ?array
-    {
-        return $this->presets[$name] ?? null;
     }
 }

@@ -48,11 +48,6 @@ final class ModelMetadata
         return $this->class;
     }
 
-    public function getPreset(string $name): ?array
-    {
-        return $this->attribute?->getPreset($name) ?? null;
-    }
-
     public function setAttribute(Model $attribute): void
     {
         $this->attribute = $attribute;
