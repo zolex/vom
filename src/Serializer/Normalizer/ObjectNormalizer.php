@@ -13,6 +13,7 @@ namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -20,10 +21,9 @@ use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
 use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
-use Zolex\VOM\Metadata\GroupsAwareMetadataInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
-final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
+final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
     use SerializerAwareTrait;
 
@@ -31,9 +31,12 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
     public const CONTEXT_ROOT_DATA = '__root_data';
 
     public function __construct(
+        ClassMetadataFactoryInterface $classMetadataFactory,
         private readonly ModelMetadataFactoryInterface $modelMetadataFactory,
         private readonly PropertyAccessorInterface $propertyAccessor,
+        array $defaultContext = [],
     ) {
+        parent::__construct($classMetadataFactory, null, $defaultContext);
     }
 
     public function getSupportedTypes(?string $format): array
@@ -60,12 +63,11 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         $metadata = $this->modelMetadataFactory->getMetadataFor($type);
-        $context = array_merge($metadata->getDenormalizationContext(), $context);
         $context[self::CONTEXT_ROOT_DATA] ??= $data;
 
         $constructorArguments = [];
         foreach ($metadata->getConstructorArguments() as $argument) {
-            $value = $this->denormalizeProperty($data, $argument, $format, $context);
+            $value = $this->denormalizeProperty($type, $data, $argument, $format, $context);
             if (null === $value && $argument->hasDefaultValue()) {
                 $value = $argument->getDefaultValue();
             }
@@ -75,15 +77,18 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
 
         $model = new $type(...$constructorArguments);
 
+        $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
+
         foreach ($metadata->getDenormalizers() as $denormalizer) {
-            $context = array_merge($denormalizer->getDenormalizationContext(), $context);
-            if (!$this->inContextGroups($denormalizer, $context)) {
+            $attribute = $denormalizer->getAttribute();
+            if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
                 continue;
             }
 
+            $context = $this->getAttributeDenormalizationContext($type, $attribute, $context);
             $methodArguments = [];
             foreach ($denormalizer->getArguments() as $property) {
-                $methodArguments[$property->getName()] = $this->denormalizeProperty($data, $property, $format, $context);
+                $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
             }
 
             try {
@@ -99,11 +104,11 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                 continue;
             }
 
-            if (!$this->inContextGroups($property, $context)) {
+            if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                 continue;
             }
 
-            $value = $this->denormalizeProperty($data, $property, $format, $context);
+            $value = $this->denormalizeProperty($type, $data, $property, $format, $context);
             try {
                 $this->propertyAccessor->setValue($model, $property->getName(), $value);
             } catch (\Throwable) {
@@ -113,15 +118,15 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         return $model;
     }
 
-    private function denormalizeProperty(mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
+    private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
-        $context = array_merge($property->getDenormalizationContext(), $property->getContext(), $context);
+        $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
         $context[self::CONTEXT_PROPERTY] = &$property;
         if ($property->isRoot()) {
             $data = &$context[self::CONTEXT_ROOT_DATA];
         }
 
-        $accessor = $property->getAccessor($context);
+        $accessor = $property->getAccessor();
         try {
             if ($property->isNested() && !$property->isFlag()) {
                 $value = $this->propertyAccessor->getValue($data, $accessor);
@@ -143,7 +148,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                 // re-throw with additional information
                 $message = sprintf(
                     'The type of the property "%s" must be "%s", "%s" given.',
-                    $property->getAccessor($context),
+                    $property->getAccessor(),
                     implode(', ', $e->getExpectedTypes()),
                     $e->getCurrentType()
                 );
@@ -175,21 +180,21 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
             return null;
         }
 
-        $context = array_merge($metadata->getNormalizationContext(), $context);
-
         $data = [];
         if (!isset($context[self::CONTEXT_ROOT_DATA])) {
             $context[self::CONTEXT_ROOT_DATA] = &$data;
         }
 
+        $allowedAttributes = $this->getAllowedAttributes($object::class, $context, true);
         foreach ($metadata->getProperties() as $property) {
             try {
-                if (!$this->inContextGroups($property, $context)) {
+                if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                     continue;
                 }
 
-                $context = array_merge($property->getNormalizationContext(), $context);
+                $context = $this->getAttributeNormalizationContext($object, $property->getName(), $context);
                 $context[self::CONTEXT_PROPERTY] = &$property;
+
                 $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
                 $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
 
@@ -205,7 +210,7 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
                     }
                 } elseif ($property->isNested()) {
                     try {
-                        $accessor = $property->getAccessor($context);
+                        $accessor = $property->getAccessor();
                         $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
                     } catch (\Throwable $e) {
                         $x = 1;
@@ -218,8 +223,8 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         foreach ($metadata->getNormalizers() as $normalizer) {
-            $context = array_merge($normalizer->getNormalizationContext(), $context);
-            if (!$this->inContextGroups($normalizer, $context)) {
+            $context = $this->getAttributeNormalizationContext($object, $normalizer->getAttribute(), $context);
+            if ($allowedAttributes && !\in_array($normalizer->getAttribute(), $allowedAttributes)) {
                 continue;
             }
 
@@ -228,20 +233,5 @@ final class ObjectNormalizer implements NormalizerInterface, DenormalizerInterfa
         }
 
         return $data;
-    }
-
-    private function inContextGroups(GroupsAwareMetadataInterface $metadata, array $context): bool
-    {
-        if (!isset($context[AbstractNormalizer::GROUPS])) {
-            return true;
-        }
-
-        foreach ($metadata->getGroups() as $group) {
-            if (\in_array($group, $context[AbstractNormalizer::GROUPS])) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

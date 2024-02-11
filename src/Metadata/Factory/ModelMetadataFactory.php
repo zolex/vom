@@ -15,8 +15,6 @@ namespace Zolex\VOM\Metadata\Factory;
 
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
-use Symfony\Component\Serializer\Attribute\Context;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping\AbstractProperty;
 use Zolex\VOM\Mapping\Argument;
 use Zolex\VOM\Mapping\Denormalizer;
@@ -59,10 +57,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 $modelMetadata->setAttribute($attribute);
                 continue;
             }
-
-            if ($attribute instanceof Context) {
-                $modelMetadata->setContext($attribute);
-            }
         }
 
         if (!$modelMetadata->getAttribute()) {
@@ -84,19 +78,9 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 continue;
             }
 
-            $groups = [];
-            $context = null;
             $normalizer = null;
             $denormalizer = null;
             foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
-                if ($attribute instanceof Groups) {
-                    $groups = $attribute->getGroups();
-                    continue;
-                }
-                if ($attribute instanceof Context) {
-                    $context = $attribute;
-                    continue;
-                }
                 if ($attribute instanceof Normalizer) {
                     $normalizer = new NormalizerMetadata($reflectionMethod->getName());
                     continue;
@@ -117,25 +101,14 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     }
 
                     $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments);
-                    if (null !== $context) {
-                        $denormalizer->setContext($context);
-                    }
                 }
             }
 
             if (null !== $normalizer) {
-                $normalizer->setGroups($groups);
-                if (null !== $context) {
-                    $normalizer->setContext($context);
-                }
                 $modelMetadata->addNormalizer($normalizer);
             }
 
             if (null !== $denormalizer) {
-                $denormalizer->setGroups($groups);
-                if (null !== $context) {
-                    $denormalizer->setContext($context);
-                }
                 $modelMetadata->addDenormalizer($denormalizer);
             }
         }
@@ -157,8 +130,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         ?\ReflectionClass $reflectionClass = null,
         ?\ReflectionMethod $reflectionMethod = null,
     ): ?PropertyMetadata {
-        $groups = [];
-        $contextAttribute = null;
         $propertyAttribute = null;
         foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
             if ($attribute instanceof AbstractProperty) {
@@ -168,14 +139,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 }
                 $propertyAttribute = $attribute;
                 continue;
-            }
-
-            if ($attribute instanceof Groups) {
-                $groups = $attribute->getGroups();
-            }
-
-            if ($attribute instanceof Context) {
-                $contextAttribute = $attribute;
             }
         }
 
@@ -190,10 +153,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             'reflection_method' => $reflectionMethod,
         ]);
         [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $types);
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute, $groups);
-        if (null !== $contextAttribute) {
-            $propertyMetadata->setContext($contextAttribute);
-        }
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {
