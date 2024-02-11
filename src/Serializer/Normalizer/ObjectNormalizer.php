@@ -64,7 +64,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     {
         return [
             'object' => true,
-            'native-array' => true,
         ];
     }
 
@@ -104,7 +103,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             try {
                 $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
-                throw new MappingException(sprintf('Unable to call method %s on %s', $denormalizer->getMethod(), $model::class), 0, $e);
+                throw new MappingException(sprintf('Unable to denormalize: %s', $e->getMessage()), 0, $e);
             }
         }
 
@@ -211,7 +210,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        if (!$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
+        if (!\is_object($object) || !$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
             return null;
         }
 
@@ -280,7 +279,11 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 continue;
             }
 
-            $data = array_merge($data, $object->{$normalizer->getMethod()}());
+            try {
+                $data = array_merge($data, $object->{$normalizer->getMethod()}());
+            } catch (\Throwable $e) {
+                throw new MappingException(sprintf('Unable to normalize: %s', $e->getMessage()), 0, $e);
+            }
         }
 
         return $data;

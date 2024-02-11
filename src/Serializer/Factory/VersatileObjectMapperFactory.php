@@ -25,6 +25,7 @@ use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
@@ -37,6 +38,7 @@ use Zolex\VOM\Serializer\VersatileObjectMapper;
 class VersatileObjectMapperFactory
 {
     private static ObjectNormalizer $objectNormalizer;
+    private static ModelMetadataFactoryInterface $metadataFactory;
 
     public static function create(?CacheItemPoolInterface $cacheItemPool = null): VersatileObjectMapper
     {
@@ -63,15 +65,15 @@ class VersatileObjectMapperFactory
     {
         $propertyInfo = PropertyInfoExtractorFactory::create();
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        $modelMetadataFactory = new ModelMetadataFactory($propertyInfo);
+        self::$metadataFactory = new ModelMetadataFactory($propertyInfo);
         if ($cacheItemPool) {
-            $modelMetadataFactory = new CachedModelMetadataFactory($cacheItemPool, $modelMetadataFactory, true);
+            self::$metadataFactory = new CachedModelMetadataFactory($cacheItemPool, self::$metadataFactory);
         }
 
         $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $classDiscriminatorResolver = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
 
-        return new ObjectNormalizer($modelMetadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver);
+        return new ObjectNormalizer(self::$metadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver);
     }
 
     public static function getObjectNormalizer(): ObjectNormalizer
@@ -81,5 +83,14 @@ class VersatileObjectMapperFactory
         }
 
         return self::$objectNormalizer;
+    }
+
+    public static function getMetadataFactory(): ModelMetadataFactoryInterface
+    {
+        if (!isset(self::$objectNormalizer)) {
+            self::create();
+        }
+
+        return self::$metadataFactory;
     }
 }
