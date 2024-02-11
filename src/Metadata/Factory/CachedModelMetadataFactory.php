@@ -25,7 +25,6 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
     public function __construct(
         private readonly CacheItemPoolInterface $cacheItemPool,
         private readonly ModelMetadataFactoryInterface $decorated,
-        private readonly bool $cachePoolEnabled,
     ) {
     }
 
@@ -36,19 +35,16 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
             return $this->localCache[$cacheKey];
         }
 
-        if ($this->cachePoolEnabled) {
-            try {
-                $cacheItem = $this->cacheItemPool->getItem($cacheKey);
-                if ($cacheItem->isHit()) {
-                    return $this->localCache[$cacheKey] = $cacheItem->get();
-                }
-            } catch (CacheException) {
-                $x = 1;
+        try {
+            $cacheItem = $this->cacheItemPool->getItem($cacheKey);
+            if ($cacheItem->isHit()) {
+                return $this->localCache[$cacheKey] = $cacheItem->get();
             }
+        } catch (CacheException) {
         }
 
         $this->localCache[$cacheKey] = $this->decorated->getMetadataFor($class);
-        if ($this->cachePoolEnabled && isset($cacheItem)) {
+        if (isset($cacheItem)) {
             $cacheItem->set($this->localCache[$cacheKey]);
             $this->cacheItemPool->save($cacheItem);
         }

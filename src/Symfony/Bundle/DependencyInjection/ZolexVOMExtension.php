@@ -39,5 +39,8 @@ class ZolexVOMExtension extends Extension implements CompilerPassInterface
 
     public function process(ContainerBuilder $container): void
     {
+        if ($container->getParameter('kernel.debug')) {
+            $container->removeDefinition('zolex_vom.metadata.model_metadata_factory.cached');
+        }
     }
 }
