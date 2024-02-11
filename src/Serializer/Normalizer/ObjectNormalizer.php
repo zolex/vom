@@ -107,11 +107,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         foreach ($metadata->getProperties() as $property) {
-            if ($metadata->hasConstructorArgument($property->getName())) {
-                // skip, because they have already been injected in the constructor
-                continue;
-            }
-
             if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                 continue;
             }
