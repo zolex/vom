@@ -13,36 +13,18 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-class DenormalizerMetadata implements GroupsAwareMetadataInterface
+class DenormalizerMetadata extends AbstractMethodMetadata
 {
-    use ContextAwareMetadataTrait;
-
-    private array $groups = [];
-
     public function __construct(
-        private readonly string $method,
+        string $method,
         /** @var array|PropertyMetadata[] */
         private readonly array $arguments,
     ) {
-    }
-
-    public function getMethod(): string
-    {
-        return $this->method;
+        parent::__construct($method);
     }
 
     public function getArguments(): array
     {
         return $this->arguments;
-    }
-
-    public function getGroups(): array
-    {
-        return $this->groups;
-    }
-
-    public function setGroups(array $groups): void
-    {
-        $this->groups = $groups;
     }
 }

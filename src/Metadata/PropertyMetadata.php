@@ -18,10 +18,8 @@ use Zolex\VOM\Mapping\AbstractProperty;
 use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
 use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
-class PropertyMetadata implements GroupsAwareMetadataInterface
+class PropertyMetadata
 {
-    use ContextAwareMetadataTrait;
-
     private readonly mixed $defaultValue;
 
     public function __construct(
@@ -30,7 +28,6 @@ class PropertyMetadata implements GroupsAwareMetadataInterface
         private string $type,
         private ?string $arrayAccessType,
         private readonly AbstractProperty $attribute,
-        private readonly array $groups = ['default'],
     ) {
     }
 
@@ -73,11 +70,6 @@ class PropertyMetadata implements GroupsAwareMetadataInterface
         return null;
     }
 
-    public function getGroups(): array
-    {
-        return $this->groups;
-    }
-
     public function isBool(): bool
     {
         return 'bool' === $this->type;
@@ -88,7 +80,7 @@ class PropertyMetadata implements GroupsAwareMetadataInterface
         return $this->attribute->isFlag();
     }
 
-    public function getAccessor(array $context = []): string|false
+    public function getAccessor(): string|false
     {
         $accessor = $this->attribute->getAccessor();
         if (false === $effectiveAccessor = (true === $accessor ? '['.$this->name.']' : $accessor)) {
