@@ -59,17 +59,6 @@ class PropertyMetadata
         return $this->type;
     }
 
-    public function getBuiltinType(): ?string
-    {
-        foreach ($this->types as $type) {
-            if ($type = $type->getBuiltinType()) {
-                return $type;
-            }
-        }
-
-        return null;
-    }
-
     public function isBool(): bool
     {
         return 'bool' === $this->type;
@@ -103,17 +92,6 @@ class PropertyMetadata
     public function isNested(): bool
     {
         return $this->attribute->isNested();
-    }
-
-    public function isCollection(): bool
-    {
-        foreach ($this->types as $type) {
-            if ($type->isCollection()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public function isRoot(): bool
