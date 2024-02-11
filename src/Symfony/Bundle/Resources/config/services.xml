@@ -3,10 +3,6 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services
         https://symfony.com/schema/dic/services/services-1.0.xsd">
-    <parameters>
-        <parameter key="zolex_vom.serializer.groups_query_param">groups</parameter>
-        <parameter key="zolex_vom.metadata.cache">false</parameter>
-    </parameters>
     <services>
         <service id="zolex_vom.metadata.model_metadata_factory" class="Zolex\VOM\Metadata\Factory\ModelMetadataFactory">
             <argument type="service" id="property_info" />
@@ -19,7 +15,6 @@
                  decoration-priority="-10" public="false" decoration-on-invalid="ignore">
             <argument type="service" id="zolex_vom.cache.metadata.model" />
             <argument type="service" id="zolex_vom.metadata.model_metadata_factory.cached.inner" />
-            <argument>%zolex_vom.metadata.cache%</argument>
         </service>
 
         <service id="zolex_vom.cache.metadata.model" parent="cache.system" public="false">
@@ -32,7 +27,7 @@
         <service id="Zolex\VOM\Serializer\VersatileObjectMapper" alias="zolex_vom.serializer.versatile_object_mapper" />
 
         <service id="zolex_vom.serializer.normalizer.object_normalizer" class="Zolex\VOM\Serializer\Normalizer\ObjectNormalizer">
-            <argument type="service" id="zolex_vom.metadata.model_metadata_factory.cached" />
+            <argument type="service" id="zolex_vom.metadata.model_metadata_factory" />
             <argument type="service" id="property_accessor" />
             <argument type="service" id="serializer.mapping.class_metadata_factory" />
             <argument type="service" id="serializer.mapping.class_discriminator_resolver" />

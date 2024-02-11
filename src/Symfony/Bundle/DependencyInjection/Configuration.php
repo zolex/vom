@@ -28,16 +28,6 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('zolex_vom');
         $rootNode = $treeBuilder->getRootNode();
 
-        $rootNode
-            ->children()
-                ->arrayNode('metadata')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                    ->booleanNode('cache')->defaultTrue()->end()
-                    ->end()
-                ->end()
-            ->end();
-
         return $treeBuilder;
     }
 }
