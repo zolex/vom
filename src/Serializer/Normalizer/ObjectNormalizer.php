@@ -11,8 +11,10 @@
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
+use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorResolverInterface;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -27,16 +29,33 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 {
     use SerializerAwareTrait;
 
-    public const CONTEXT_PROPERTY = '__vom_property';
-    public const CONTEXT_ROOT_DATA = '__root_data';
+    public const VOM_PROPERTY = 'vom_property_metadata';
+    public const ROOT_DATA = 'vom_root_data';
+
+    /**
+     * Flag to control whether fields with the value `null` should be output
+     * when normalizing or omitted.
+     */
+    public const SKIP_NULL_VALUES = 'skip_null_values';
+
+    /**
+     * Flag to control whether uninitialized PHP>=7.4 typed class properties
+     * should be excluded when normalizing.
+     */
+    public const SKIP_UNINITIALIZED_VALUES = 'skip_uninitialized_values';
+
+    private readonly \Closure $objectClassResolver;
 
     public function __construct(
-        ClassMetadataFactoryInterface $classMetadataFactory,
         private readonly ModelMetadataFactoryInterface $modelMetadataFactory,
         private readonly PropertyAccessorInterface $propertyAccessor,
+        ClassMetadataFactoryInterface $classMetadataFactory,
+        private readonly ClassDiscriminatorResolverInterface $classDiscriminatorResolver,
         array $defaultContext = [],
     ) {
         parent::__construct($classMetadataFactory, null, $defaultContext);
+
+        $this->objectClassResolver = ($objectClassResolver ?? 'get_class')(...);
     }
 
     public function getSupportedTypes(?string $format): array
@@ -62,23 +81,12 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return null;
         }
 
-        $metadata = $this->modelMetadataFactory->getMetadataFor($type);
-        $context[self::CONTEXT_ROOT_DATA] ??= $data;
+        $context[self::ROOT_DATA] ??= $data;
 
-        $constructorArguments = [];
-        foreach ($metadata->getConstructorArguments() as $argument) {
-            $value = $this->denormalizeProperty($type, $data, $argument, $format, $context);
-            if (null === $value && $argument->hasDefaultValue()) {
-                $value = $argument->getDefaultValue();
-            }
-
-            $constructorArguments[$argument->getName()] = $value;
-        }
-
-        $model = new $type(...$constructorArguments);
+        $model = $this->createInstance($data, $type, $context, $format);
+        $metadata = $this->modelMetadataFactory->getMetadataFor($model::class);
 
         $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
-
         foreach ($metadata->getDenormalizers() as $denormalizer) {
             $attribute = $denormalizer->getAttribute();
             if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
@@ -119,11 +127,52 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         return $model;
     }
 
+    protected function createInstance(array &$data, string $class, array &$context, ?string $format): object
+    {
+        if ($class !== $mappedClass = $this->getMappedClass($data, $class, $context)) {
+            return $this->createInstance($data, $mappedClass, $context, $format);
+        }
+
+        $constructorArguments = [];
+        $metadata = $this->modelMetadataFactory->getMetadataFor($class);
+        foreach ($metadata->getConstructorArguments() as $argument) {
+            $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+            if (null === $value && $argument->hasDefaultValue()) {
+                $value = $argument->getDefaultValue();
+            }
+
+            $constructorArguments[$argument->getName()] = $value;
+        }
+
+        return new $class(...$constructorArguments);
+    }
+
+    private function getMappedClass(array $data, string $class, array $context): string
+    {
+        if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
+            return $object::class;
+        }
+
+        if (!$mapping = $this->classDiscriminatorResolver?->getMappingForClass($class)) {
+            return $class;
+        }
+
+        if (null === $type = $data[$mapping->getTypeProperty()] ?? null) {
+            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('Type property "%s" not found for the abstract object "%s".', $mapping->getTypeProperty(), $class), null, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), false);
+        }
+
+        if (null === $mappedClass = $mapping->getClassForType($type)) {
+            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type "%s" is not a valid value.', $type), $type, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), true);
+        }
+
+        return $mappedClass;
+    }
+
     private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
-        $context[self::CONTEXT_PROPERTY] = &$property;
+        $context[self::VOM_PROPERTY] = &$property;
         if ($property->isRoot()) {
-            $data = &$context[self::CONTEXT_ROOT_DATA];
+            $data = &$context[self::ROOT_DATA];
         }
 
         $accessor = $property->getAccessor();
@@ -142,7 +191,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         try {
-            $result = $this->serializer->denormalize($value, $property->getType(), $format, $context);
+            $result = $this->serializer->denormalize($value, $property->getType(), $format, $this->createChildContext($context, $property->getName(), $format));
         } catch (NotNormalizableValueException $e) {
             if ($e->canUseMessageForUser() && $e->getExpectedTypes()) {
                 // re-throw with additional information
@@ -181,8 +230,12 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         $data = [];
-        if (!isset($context[self::CONTEXT_ROOT_DATA])) {
-            $context[self::CONTEXT_ROOT_DATA] = &$data;
+        if (!isset($context[self::ROOT_DATA])) {
+            $context[self::ROOT_DATA] = &$data;
+        }
+
+        if ($this->isCircularReference($object, $context)) {
+            return $this->handleCircularReference($object, $format, $context);
         }
 
         $allowedAttributes = $this->getAllowedAttributes($object::class, $context, true);
@@ -193,13 +246,27 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 }
 
                 $context = $this->getAttributeNormalizationContext($object, $property->getName(), $context);
-                $context[self::CONTEXT_PROPERTY] = &$property;
+                $context[self::VOM_PROPERTY] = &$property;
 
-                $accessedValue = $this->propertyAccessor->getValue($object, $property->getName());
-                $normalizedValue = $this->serializer->normalize($accessedValue, $format, $context);
+                try {
+                    $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($object)?->getTypeProperty()
+                        ? $this->classDiscriminatorResolver?->getTypeForMappedObject($object)
+                        : $this->propertyAccessor->getValue($object, $property->getName());
+                } catch (UninitializedPropertyException|\Error $e) {
+                    if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
+                        continue;
+                    }
+                    throw $e;
+                }
+
+                $normalizedValue = $this->serializer->normalize($attributeValue, $format, $context);
+
+                if (null === $normalizedValue && ($context[self::SKIP_NULL_VALUES] ?? $this->defaultContext[self::SKIP_NULL_VALUES] ?? false)) {
+                    continue;
+                }
 
                 if ($property->isRoot()) {
-                    $target = &$context[self::CONTEXT_ROOT_DATA];
+                    $target = &$context[self::ROOT_DATA];
                 } else {
                     $target = &$data;
                 }
@@ -212,8 +279,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     try {
                         $accessor = $property->getAccessor();
                         $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
-                    } catch (\Throwable $e) {
-                        $x = 1;
+                    } catch (\Throwable) {
                     }
                 } else {
                     $target = array_merge($target, $normalizedValue);
@@ -228,10 +294,20 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 continue;
             }
 
-            // TODO: allow an accessor on the normalizer attribute
             $data = array_merge($data, $object->{$normalizer->getMethod()}());
         }
 
         return $data;
+    }
+
+    /**
+     * This error may occur when specific object normalizer implementation gets attribute value
+     * by accessing a public uninitialized property or by calling a method accessing such property.
+     */
+    private function isUninitializedValueError(\Error|UninitializedPropertyException $e): bool
+    {
+        return $e instanceof UninitializedPropertyException
+            || str_starts_with($e->getMessage(), 'Typed property')
+            && str_ends_with($e->getMessage(), 'must not be accessed before initialization');
     }
 }

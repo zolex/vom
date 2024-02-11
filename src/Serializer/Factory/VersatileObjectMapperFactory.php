@@ -14,6 +14,7 @@ namespace Zolex\VOM\Serializer\Factory;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
@@ -68,8 +69,9 @@ class VersatileObjectMapperFactory
         }
 
         $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+        $classDiscriminatorResolver = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
 
-        return new ObjectNormalizer($classMetadataFactory, $modelMetadataFactory, $propertyAccessor);
+        return new ObjectNormalizer($modelMetadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver);
     }
 
     public static function getObjectNormalizer(): ObjectNormalizer

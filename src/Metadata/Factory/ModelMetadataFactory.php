@@ -38,42 +38,47 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
-    public function getMetadataFor(string $class): ?ModelMetadata
+    public function getMetadataFor(string|\ReflectionClass $class, ?ModelMetadata $modelMetadata = null): ?ModelMetadata
     {
-        if (\array_key_exists($class, $this->localCache)) {
-            return $this->localCache[$class];
-        }
-
-        if (!class_exists($class)) {
-            return null;
-        }
-
-        $modelMetadata = new ModelMetadata($class);
-        $this->localCache[$class] = &$modelMetadata;
-
-        $reflectionClass = new \ReflectionClass(trim($class, '?'));
-        foreach ($this->loadAttributes($reflectionClass) as $attribute) {
-            if ($attribute instanceof Model) {
-                $modelMetadata->setAttribute($attribute);
-                continue;
+        if (\is_string($class)) {
+            if (!class_exists($class)) {
+                return null;
             }
+
+            $class = new \ReflectionClass(trim($class, '?'));
         }
 
-        if (!$modelMetadata->getAttribute()) {
-            unset($this->localCache[$class]);
+        if (null === $modelMetadata) {
+            if (\array_key_exists($class->getName(), $this->localCache)) {
+                return $this->localCache[$class->getName()];
+            }
 
-            return null;
-        }
+            $modelMetadata = new ModelMetadata($class->getName());
+            $this->localCache[$class->getName()] = &$modelMetadata;
 
-        if ($constructor = $reflectionClass->getConstructor()) {
-            foreach ($constructor->getParameters() as $reflectionParameter) {
-                if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $constructor)) {
-                    $modelMetadata->addConstructorArgument($propertyMetadata);
+            foreach ($this->loadAttributes($class) as $attribute) {
+                if ($attribute instanceof Model) {
+                    $modelMetadata->setAttribute($attribute);
+                    continue;
+                }
+            }
+
+            if (!$modelMetadata->getAttribute()) {
+                unset($this->localCache[$class->getName()]);
+
+                return null;
+            }
+
+            if ($constructor = $class->getConstructor()) {
+                foreach ($constructor->getParameters() as $reflectionParameter) {
+                    if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $constructor)) {
+                        $modelMetadata->addConstructorArgument($propertyMetadata);
+                    }
                 }
             }
         }
 
-        foreach ($reflectionClass->getMethods() as $reflectionMethod) {
+        foreach ($class->getMethods() as $reflectionMethod) {
             if ('__construct' === $reflectionMethod->getName()) {
                 continue;
             }
@@ -88,16 +93,16 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 if ($attribute instanceof Denormalizer) {
                     $methodArguments = [];
                     foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                        if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
+                        if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $reflectionMethod)) {
                             if (!$reflectionMethod->isPublic()) {
-                                throw new MappingException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $reflectionClass->getName(), $reflectionMethod->getName()));
+                                throw new MappingException(sprintf('Can not use Property attributes on private method %s::%s() because VOM would not be able to call it.', $class->getName(), $reflectionMethod->getName()));
                             }
                             $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
                         }
                     }
 
                     if (!\count($methodArguments)) {
-                        throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+                        throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $class->getName(), $reflectionMethod->getName()));
                     }
 
                     $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments);
@@ -113,13 +118,17 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
-        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+        foreach ($class->getProperties() as $reflectionProperty) {
             if ($modelMetadata->hasConstructorArgument($reflectionProperty->getName())) {
                 continue;
             }
             if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty)) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
+        }
+
+        if ($parentClass = $class->getParentClass()) {
+            $this->getMetadataFor($parentClass, $modelMetadata);
         }
 
         return $modelMetadata;

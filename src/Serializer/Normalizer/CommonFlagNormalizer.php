@@ -33,8 +33,8 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        if (!isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-        || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata) {
+        if (!isset($context[ObjectNormalizer::VOM_PROPERTY])
+        || !$context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata) {
             return null;
         }
 
@@ -42,11 +42,11 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
             $data = (array) $data;
         }
 
-        if (\in_array($context[ObjectNormalizer::CONTEXT_PROPERTY]->getName(), $data, true)) {
+        if (\in_array($context[ObjectNormalizer::VOM_PROPERTY]->getName(), $data, true)) {
             return true;
         }
 
-        if (\in_array('!'.$context[ObjectNormalizer::CONTEXT_PROPERTY]->getName(), $data, true)) {
+        if (\in_array('!'.$context[ObjectNormalizer::VOM_PROPERTY]->getName(), $data, true)) {
             return false;
         }
 
@@ -56,26 +56,26 @@ final class CommonFlagNormalizer implements NormalizerInterface, DenormalizerInt
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
         return \is_bool($data)
-            && isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            && $context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag();
+            && isset($context[ObjectNormalizer::VOM_PROPERTY])
+            && $context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata
+            && $context[ObjectNormalizer::VOM_PROPERTY]->isFlag();
     }
 
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
         if (!\is_bool($object)
-            || !isset($context[ObjectNormalizer::CONTEXT_PROPERTY])
-            || !$context[ObjectNormalizer::CONTEXT_PROPERTY] instanceof PropertyMetadata
-            || !$context[ObjectNormalizer::CONTEXT_PROPERTY]->isFlag()) {
+            || !isset($context[ObjectNormalizer::VOM_PROPERTY])
+            || !$context[ObjectNormalizer::VOM_PROPERTY] instanceof PropertyMetadata
+            || !$context[ObjectNormalizer::VOM_PROPERTY]->isFlag()) {
             return null;
         }
 
         if (true === $object) {
-            return $context[ObjectNormalizer::CONTEXT_PROPERTY]->getName();
+            return $context[ObjectNormalizer::VOM_PROPERTY]->getName();
         }
 
         if (false === $object) {
-            return '!'.$context[ObjectNormalizer::CONTEXT_PROPERTY]->getName();
+            return '!'.$context[ObjectNormalizer::VOM_PROPERTY]->getName();
         }
 
         return null;

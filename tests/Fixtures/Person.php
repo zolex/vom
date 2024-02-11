@@ -22,7 +22,7 @@ use Zolex\VOM\Mapping\Property;
         'preset-name' => ['group-a', 'group-b'],
     ],
 )]
-class Person
+class Person extends Thing
 {
     public function __construct(
         ?int $id = null,
