@@ -58,6 +58,11 @@ final class ModelMetadata
         return $this->attribute;
     }
 
+    public function hasAttribute(): bool
+    {
+        return null !== $this->attribute;
+    }
+
     public function hasProperty(string $name): bool
     {
         return isset($this->properties[$name]);
