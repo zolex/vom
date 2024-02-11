@@ -742,17 +742,85 @@ $data = [
 $objectMapper->denormalize($data, RootClass::class);
 ```
 
+## Serializing Interfaces and Abstract Classes
+
+When dealing with objects that are fairly similar or share properties, you can use interfaces or abstract classes.
+VOM allows to serialize and deserialize such objects using discriminator class mapping.
+The discriminator is the property used to differentiate between the possible classes.
+
+> [!NOTE]
+> Additionally to the Symfony `DiscriminatorMap` attribute, you must provide the `VOM\Model` attribute on
+> the abstract class or interface and also the `VOM\Property` attribute on the discriminator.
+
+```php
+use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+#[DiscriminatorMap(typeProperty: 'whichThing', mapping: [
+    'one-thing' => OneThing::class,
+    'another-thing' => AnotherThing::class,
+])]
+abstract class Thing
+{
+    #[VOM\Property]
+    public string $whichThing;
+    // ...
+}
+```
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class OneThing extends Thing
+{
+    // ...
+}
+```
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class AnotherThing extends Thing
+{
+    // ...
+}
+```
+
+Now you can denormalize using the abstract class (or interface) and VOM will create the proper model depending on the discriminator.
+
+```php
+$data = ['whichThing' => 'one-thing'];
+$thing = $objectMapper->denormalize($data, Thing::class);
+// $thing is an instance of `OneThing`
+
+$data = ['whichThing' => 'another-thing'];
+$thing = $objectMapper->denormalize($data, Thing::class);
+// $thing is an instance of `AnotherThing`
+```
+
+According to the above example, VOM will now add the `whichThing` property with the respective value during normalization:
+
+```php
+$thing = new OneThing();
+$data = $objectMapper->normalize($oneThing);
+// $data['whichThing'] will be 'one-thing'
+```
+
+
+
+
 ## Context
 
 VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
 
 ### Skip Null Values
 
-To skip all null values, which means for denormalization not to initialize their corresponding properties in the model, and for normalization to simply not include them in the resulting data array.
+During normalization values that are null can be skipped, so they won't be included in the normalized data.
 
 ```php
-$someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['skip_null_values' => true]);
-
 $someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
 ```
 
