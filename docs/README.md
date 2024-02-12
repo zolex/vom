@@ -27,19 +27,19 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Method Calls](#method-calls)
     + [Denormalizer Methods](#denormalizer-methods)
     + [Normalizer Methods](#normalizer-methods)
-  * [Nested Models](#nested-models)
+  * [Disable Nesting](#disable-nesting)
   * [Root flag](#root-flag)
   * [Collections](#collections)
   * [Data Types](#data-types)
     + [Booleans](#booleans)
     + [Flags](#flags)
     + [DateTime](#datetime)
-  * [Nesting with Accessors](#nesting-with-accessors)
-- [Serializing Interfaces and Abstract Classes](#serializing-interfaces-and-abstract-classes)
+- [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
   * [Skip Null Values](#skip-null-values)
   * [Object to Populate](#object-to-populate)
   * [Groups](#groups)
+  * [Circular References](#circular-references)
 
 <!-- tocstop -->
 
@@ -322,7 +322,7 @@ class Calls
     
     #[Groups(['group-name'])]
     #[VOM\Denormalizer]
-    public function setOne(
+    public function setTwo(
         #[VOM\Argument('[ID_FOR_TWO]')]
         int $id,
         #[VOM\Argument('[NAME_FOR_TWO]')]
@@ -357,7 +357,7 @@ class Calls
     private GenericModel $data;
 
     #[Groups(['group-name', 'another'])]
-    #[VOM\Mormalizer(accessor: '[nested_data]')]
+    #[VOM\Mormalizer]
     public function getData(): array
     {
         return $this->data->toArray();
@@ -406,12 +406,11 @@ class Calls
 }
 ```
 
+### Disable Nesting
 
-### Nested Models
+The data structures can be as deeply nested as you want. By default, nesting is enabled. That is when no accessor is given or the accessor is symfony property access syntax.
 
-The data structures can be as deeply nested as you want. By default, every property has the accessor argument set to true, which enables nesting. When the accessor is a string as described above, the nesting is also evaluated as true.
-
-If a property is another `VOM\Model` or any type of collection that contains models, and it has `accessor: false` configured, VOM will look for the nested model's properties on the same nesting level as the property itself. 
+If a property is another `VOM\Model` or any type of collection that contains models, and it has `accessor: false` configured, VOM will look for the nested model's properties on the same level as the property itself. 
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -692,62 +691,7 @@ For normalization purpose, the `dateTimeFormat` argument can be specified on the
 public \DateTime $createdAt;
 ```
 
-### Nesting with Accessors
-
-Combining the nested flag and the accessor gives you full control over your desired data transformation. Here is a slightly advanced example:
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class RootClass
-{
-    #[VOM\Property('[somewhere][but_not_root]')]
-    public string $rooted;
-    
-    #[VOM\Property('[second]')]
-    public SecondDimension $nested;
-}
-
-#[VOM\Model]
-class SecondDimension
-{
-    #[VOM\Property]
-    public string $value;
-    
-    #[VOM\Property('[third]', accessor: false)]
-    public ThirdDimension $deeper;
-}
-
-#[VOM\Model]
-class ThirdDimension
-{
-    #[VOM\Property]
-    public string $effectivelyOnSecondDimension;
-    
-    #[VOM\Property('[again][aNestedAccessor]')]
-    public string $effectivelyOnThirdDimension;
-}
-```
-
-```php
-$data = [
-    'somewhere' => [
-        'but_not_root' => 'I live somewhere but not on the root',
-    ],
-    'second' [
-        'value' => 'I am matching the target data structure'
-        'effectivelyOnSecondDimension' => 'also on second dimension because third dimension is nested:false',
-        'again' => [
-            'aNestedAccessor' => 'I am nested again even if my parent is not',        
-        ]
-    ],
-];
-
-$objectMapper->denormalize($data, RootClass::class);
-```
-
-## Serializing Interfaces and Abstract Classes
+## Interfaces and Abstract Classes
 
 When dealing with objects that are fairly similar or share properties, you can use interfaces or abstract classes.
 VOM allows to serialize and deserialize such objects using discriminator class mapping.
@@ -815,8 +759,6 @@ $data = $objectMapper->normalize($oneThing);
 ```
 
 
-
-
 ## Context
 
 VOM's `normalize()` and `denormalize()` methods accept several useful properties in the context argument, sticking to existing standards, so that it integrates seamlessly with Symfony and API-Platform where applicable.
@@ -863,4 +805,111 @@ To only process properties with specific groups you can pass the groups in the c
 $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['groups' => ['group_a']]);
 
 $someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_a', 'group_b']]);
+```
+
+### Circular References
+
+Sometimes your models reference each other in a way called circular reference. 
+One way to deal with that is configuring the groups context, so it won't normalize these circular references.
+
+If VOM finds a circular reference, by default it will simply omit it in the normalized data to avoid an endless loop.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Person
+{
+    #[VOM\Property]
+    public int $id;
+    
+    #[VOM\Property]
+    public string $name;
+    
+    #[VOM\Property]
+    public Address $address;
+}
+```
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Address
+{
+    #[VOM\Property]
+    public int $id;
+    
+    #[VOM\Property]
+    public string $street;
+    
+    #[VOM\Property]
+    public Person $person;
+}
+```
+
+```php
+$person = new Person();
+$person->id = 3;
+$person->name = 'Peter Parker';
+$person->address = new Address();
+$person->address->id = 6;
+$person->address->street = 'Examplestreet 123';
+$person->address->person = $person;
+```
+
+Normalizing the above structure results in the following array:
+
+```php
+$objectMapper->normalize($person);
+// results in the following array
+[
+    'id' => 3,
+    'name' => 'Peter Parker',
+    'address' => [
+        'id' => 6,
+        'street' => 'Examplestreet 123'
+    ]
+]
+```
+
+You can increase the circular reference limit to allow embedding circular references until the specified limit is reached (default is 1).
+
+```php
+$objectMapper->normalize($person, null, ['circular_reference_limit' => 2]);
+// results in the following array
+[
+    'id' => 3,
+    'name' => 'Peter Parker',
+    'address' => [
+        'id' => 6,
+        'street' => 'Examplestreet 123'
+        'person' => [
+            'id' => 3,
+            'name' => 'Peter Parker',
+            'address' => [
+                'id' => 6,
+                'street' => 'Examplestreet 123'   
+            ]
+        ]
+    ]
+]
+```
+
+You can define a custom circular reference handler to return a value that you want to replace the circular reference with.
+
+```php
+$objectMapper->normalize($person, null, ['circular_reference_handler' => function($object) {
+    return sprintf('/%s/%d', get_class($object), $object->id);
+}]);
+// results in the following array
+[
+    'id' => 3,
+    'name' => 'Peter Parker',
+    'address' => [
+        'id' => 6,
+        'street' => 'Examplestreet 123'
+        'person' => '/Person/3'
+    ]
+]
 ```
