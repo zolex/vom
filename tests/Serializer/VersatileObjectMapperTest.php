@@ -23,6 +23,7 @@ use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
+use Zolex\VOM\Test\Fixtures\CircularReference;
 use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
@@ -855,7 +856,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $person->id = 666;
 
         $data = [
-            'name' => [
+               'name' => [
                 'firstname' => 'Peter',
                 'lastname' => 'Parker',
             ],
@@ -865,5 +866,61 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertSame($person, $person2);
         $this->assertEquals('Peter', $person2->firstname);
         $this->assertEquals('Parker', $person2->lastname);
+    }
+
+    public function testDefaultCircularReferenceHandler()
+    {
+        $ref1 = new CircularReference();
+        $ref1->id = 1;
+
+        $ref2 = new CircularReference();
+        $ref2->id = 2;
+
+        $ref1->reference = $ref2;
+        $ref2->reference = $ref1;
+
+        $expected = [
+            'id' => 1,
+            'reference' => [
+                'id' => 2,
+            ],
+        ];
+
+        $normalized = self::$serializer->normalize($ref1);
+        $this->assertEquals($expected, $normalized);
+    }
+
+    public function testCustomCircularReferenceHandler()
+    {
+        $ref1 = new CircularReference();
+        $ref1->id = 1;
+
+        $ref2 = new CircularReference();
+        $ref2->id = 2;
+
+        $ref1->reference = $ref2;
+        $ref2->reference = $ref1;
+
+        $expected = [
+            'id' => 1,
+            'reference' => [
+                'id' => 2,
+                'reference' => [
+                    'id' => 1,
+                    'reference' => [
+                        'id' => 2,
+                        'reference' => '/ref/1',
+                    ],
+                ],
+            ],
+        ];
+
+        $normalized = self::$serializer->normalize($ref1, null, [
+            'circular_reference_limit' => 2,
+            'circular_reference_handler' => function ($ref) {
+                return sprintf('/ref/%d', $ref->id);
+            },
+        ]);
+        $this->assertEquals($expected, $normalized);
     }
 }
