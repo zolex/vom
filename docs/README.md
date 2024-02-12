@@ -18,8 +18,10 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 - [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
-- [Denormalization](#denormalization)
-- [Normalization](#normalization)
+  * [Deserialization](#deserialization)
+  * [Denormalization](#denormalization)
+  * [Serialization](#serialization)
+  * [Normalization](#normalization)
 - [Attribute Configuration](#attribute-configuration)
   * [The Accessor](#the-accessor)
   * [Constructor Arguments](#constructor-arguments)
@@ -101,39 +103,50 @@ Without symfony framework, you can construct the mapper yourself or simply use t
 $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
 ```
 
-
 > [!TIP]
-> The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available such as PHPStan an Doctrine. You can write a custom extractor to give VOM additional information on your model's properties.
+> The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available in Symfony, such as PHPStan and Doctrine. You can also write a custom extractor to give VOM additional information on your model's properties.
 
-## Denormalization
+### Deserialization
+
+The object mapper can process several kinds of serialized data, such as JSON or XML. To create a model instance from the input data, simply call the `deserialize()` method on the mapper.
+
+```php
+$person = $objectMapper->deserialize($jsonString, Person::class);
+```
+
+
+### Denormalization
+
+If your data is already an array or object, you can call the `denormalize()` method on the mapper to create a model instance from it. 
 
 The object mapper can process any kind of PHP data structure as input. This includes arrays, plain old PHP objects, class instances and any combination and nesting of all these.
 So the input data might be an indexed array, an associative array an stdClass, other class instances with private properties and their own getters and setters as well as several collections.
-To create a model instance from the input data, simply call the `denormalize()` method on the mapper.
-
-A very common use-case is to deserialize json for example with `json_decode()` or using symfony's serializer and pass the result to the `denormalize()` method.
-
-> [!NOTE]
-> Right now VOM implements only the symfony normalizer and denormalizer interfaces. Until release of version `0.1.0` it will also implement the serializer and normalizer-aware interfaces, so you won't even need to deserialize input before passing it to VOM!  
 
 ```php
 $person = $objectMapper->denormalize($data, Person::class);
 ```
 
-## Normalization
+### Serialization
 
-Normalization creates a plain old PHP array from your model instance. Because VOM implements the symfony normalizer interface, the `normalize()` method must return an array.
+To create a string representation of a model, such as JSON, you can call the `serialize()` method on the object mapper.
+
+```php
+$jsonString = $objectMapper->serialize($personModel, 'json'); // json is the default
+```
+
+### Normalization
+
+If you need a native php array representation of your model you can call the `normalize()` method.
+
+```php
+$array = $objectMapper->normalize($personModel);
+```
+
 If you need it converted to an object, use the `toObject()` method and pass it the denormalization result (this is not just casting, but deeply converting the whole data structure, just leaving indexed, sequential arrays intact).
 
 ```php
-$person = new Person();
-// ...
-$array = $objectMapper->normalize($person);
 $object = \Zolex\VOM\Serializer\VersatileObjectMapper::toObject($array);
 ```
-
-Note that in the current version it can not convert back data structures to their original, that contain or solely exist of other classes like entities or models. It will instead output normal arrays or objects.
-
 
 ## Attribute Configuration
 
@@ -344,8 +357,6 @@ $objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-nam
 Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization.
 These methods must not have any required arguments and always return an associative array.
 The keys in that array will be reflected as-is in the normalized output array.
-Optionally the normalizer method can define an accessor, to nest the data in the normalized output.
-The Groups attribute can be utilized in the same way.
 
 ```php
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -356,20 +367,17 @@ class Calls
 {
     private GenericModel $data;
 
-    #[Groups(['group-name', 'another'])]
     #[VOM\Mormalizer]
     public function getData(): array
     {
         return $this->data->toArray();
     }
 }
-
-$objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-name']]);
 ```
 
 > [!CAUTION]
-> It is possible to use the normalized data and denormalize it again to receive the exact same result, no matter how often you repeat this process.
-> If this is one of your requirements, and you are using Normalizer and Denormalizer methods, you have to careful how you store the injected data
+> It is possible to normalize data and denormalize a model while maintaining the exact same results, no matter how often you repeat this process.
+> If this is one of your requirements, and you are using Normalizer and Denormalizer methods, you have to be careful how you store the injected data
 > and how you return it, so that the results are matching.
 
 Here is a short example. Note, that the keys and structure returned from the normalizer method match the accessors from the denormalizer arguments.
@@ -384,7 +392,7 @@ class Calls
     private GenericModel $data;
 
     #[VOM\Denormalizer]
-    public function setOne(
+    public function setData(
         #[VOM\Argument('[NESTED][ID_FOR_ONE]')]
         int $id,
         #[VOM\Argument('[NESTED][NAME_FOR_ONE]')]
@@ -410,7 +418,7 @@ class Calls
 
 The data structures can be as deeply nested as you want. By default, nesting is enabled. That is when no accessor is given or the accessor is symfony property access syntax.
 
-If a property is another `VOM\Model` or any type of collection that contains models, and it has `accessor: false` configured, VOM will look for the nested model's properties on the same level as the property itself. 
+If a property is another `VOM\Model` (or any type of collection that contains models) and it has `accessor: false` configured, VOM will look for the nested model's properties on the same level as the property itself. 
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -436,13 +444,13 @@ class NestedClass
 ```php
 $data = [
     'rooted' => 'I live on the root',
-    'value' => 'I am on the input data root too'
+    'value' => 'I am on the data root too'
 ];
 
 $objectMapper->denormalize($data, RootClass::class);
 ```
 
-VOM only disables nesting for properties, which explicitly have the accessor set to false. So other models that are nested within this one will not be flattened. This allows mapping between nested and _partially_ flattened data structures.
+VOM only disables nesting for properties, which explicitly have the accessor set to false. So other models that are deeper nested will not be flattened. This allows mapping between nested and _partially_ flattened data structures.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -540,7 +548,8 @@ $objectMapper->denormalize($data, RootClass::class);
 
 ### Collections
 
-VOM can process several types of list, like arrays or doctrine collections, basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
+VOM can process several types of lists, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
+To tell VOM what types sit in a list you have to add PhpDoc tags and use the array syntax as shown in the following example.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
