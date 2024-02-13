@@ -20,8 +20,6 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Serializer\SerializerInterface;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\PropertyInfo\Extractor\MethodCallExtractor;
-use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
-use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Symfony\Bundle\ZolexVOMBundle;
@@ -34,8 +32,6 @@ class ZolexVOMTestKernel extends Kernel implements CompilerPassInterface
         'zolex_vom.metadata.model_metadata_factory' => ModelMetadataFactoryInterface::class,
         'zolex_vom.serializer.versatile_object_mapper' => VersatileObjectMapper::class,
         'zolex_vom.serializer.normalizer.object_normalizer' => ObjectNormalizer::class,
-        'zolex_vom.serializer.normalizer.boolean_normalizer' => BooleanNormalizer::class,
-        'zolex_vom.serializer.normalizer.common_flag_normalizer' => CommonFlagNormalizer::class,
         'zolex_vom.property_info.method_call_extractor' => MethodCallExtractor::class,
         'serializer' => SerializerInterface::class,
     ];

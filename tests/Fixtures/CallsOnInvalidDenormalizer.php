@@ -14,11 +14,10 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class InstantiableNestedCollection
+class CallsOnInvalidDenormalizer
 {
-    /**
-     * @var \ArrayObject<Person>
-     */
-    #[VOM\Property]
-    public \ArrayAccess $people;
+    #[VOM\Denormalizer]
+    public function bla(): void
+    {
+    }
 }

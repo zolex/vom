@@ -15,22 +15,29 @@ use PHPUnit;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
+use Zolex\VOM\Metadata\ModelMetadata;
+use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
+use Zolex\VOM\Test\Fixtures\CallsOnInvalidDenormalizer;
+use Zolex\VOM\Test\Fixtures\CallsOnInvalidNormalizer;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CircularReference;
-use Zolex\VOM\Test\Fixtures\CommonFlags;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
-use Zolex\VOM\Test\Fixtures\FlagParent;
+use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableNestedCollection;
+use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
+use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestedName;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
+use Zolex\VOM\Test\Fixtures\NonInstantiable;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\SickChild;
@@ -193,110 +200,6 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
     }
 
-    /**
-     * @dataProvider provideCommonFlags
-     */
-    public function testCommonFlags($data, $expected)
-    {
-        /* @var CommonFlags $commonFlags */
-        $commonFlags = self::$serializer->denormalize($data, CommonFlags::class);
-
-        // when the nullable flagC is not passed, it should stay null!
-        if (!\in_array('flagC', $data) && !\in_array('!flagC', $data)) {
-            $this->assertNull($commonFlags->flagC);
-        }
-
-        $normalized = self::$serializer->normalize($commonFlags, 'json');
-        $this->assertIsArray($normalized);
-        $this->assertCount(\count($expected), $normalized);
-        $this->assertTrue(array_is_list($normalized));
-        foreach ($expected as $expectedFlag) {
-            $this->assertTrue(\in_array($expectedFlag, $normalized));
-        }
-    }
-
-    public function provideCommonFlags(): iterable
-    {
-        // flagD has a default value true, so it will
-        // always be there unless explicitly passed as !flagD
-
-        yield [
-            ['flagA', '!flagB'],
-            ['flagA', '!flagB', 'flagD'],
-        ];
-
-        yield [
-            ['!flagA', 'flagB', 'flagC'],
-            ['!flagA', 'flagB', 'flagC', 'flagD'],
-        ];
-
-        yield [
-            ['flagC'],
-            ['flagC', 'flagD'],
-        ];
-
-        yield [
-            ['!flagC', 'flagA'],
-            ['!flagC', 'flagD', 'flagA'],
-        ];
-
-        yield [
-            ['!flagC', '!flagD'],
-            ['!flagC', '!flagD'],
-        ];
-
-        yield [
-            [],
-            ['flagD'],
-        ];
-    }
-
-    public function testComplexFlags()
-    {
-        $data = [
-            'commonFlags' => [
-                'flagA',
-                '!flagB',
-            ],
-            'labeledFlagsArray' => [
-                'flagA' => [
-                    'text' => 'Fahne A',
-                    'value' => true,
-                ],
-                'flagB' => [
-                    'text' => 'Fahne B',
-                    'value' => 'true',
-                ],
-            ],
-            'labeledFlagsObject' => [
-                'flagA' => [
-                    'text' => 'Fahne A',
-                    'value' => 'NO',
-                ],
-                'flagB' => [
-                    'text' => 'Fahne B',
-                    'value' => 'OFF',
-                ],
-            ],
-        ];
-
-        $model = self::$serializer->denormalize($data, FlagParent::class);
-
-        $this->assertTrue($model->commonFlags->flagA);
-        $this->assertFalse($model->commonFlags->flagB);
-        $this->assertNull($model->commonFlags->flagC);
-
-        $this->assertTrue($model->labeledFlagsArray->flagA->isEnabled);
-        $this->assertTrue($model->labeledFlagsArray->flagB->isEnabled);
-        $this->assertNull($model->labeledFlagsArray->flagC);
-        $this->assertFalse(isset($model->labeledFlagsArray->flagD));
-
-        $this->assertFalse($model->labeledFlagsObject->flagA->isEnabled);
-        $this->assertFalse($model->labeledFlagsObject->flagB->isEnabled);
-        $this->assertNull($model->labeledFlagsObject->flagC);
-        $this->assertFalse(isset($model->labeledFlagsObject->flagD));
-    }
-
     public function testAccessor(): void
     {
         $data = [
@@ -409,6 +312,20 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $calls = self::$serializer->denormalize($data, Calls::class);
         $normalized = self::$serializer->normalize($calls);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testMethodCallsOnInvalidDenormalizer(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Denormalizer on "Zolex\VOM\Test\Fixtures\CallsOnInvalidDenormalizer::bla()" cannot be added.');
+        self::$serializer->denormalize([], CallsOnInvalidDenormalizer::class);
+    }
+
+    public function testMethodCallsOnInvalidNormalizer(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Normalizer on "Zolex\VOM\Test\Fixtures\CallsOnInvalidNormalizer::blubb()" cannot be added.');
+        self::$serializer->normalize(new CallsOnInvalidNormalizer());
     }
 
     public function testMethodCallWithUnsupportedArrayThrowsException(): void
@@ -797,7 +714,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
     public function testDenormalizePropertyRethrowsNotNormalizableValueException(): void
     {
         $this->expectException(NotNormalizableValueException::class);
-        $this->expectExceptionMessage('The type of the property "[id]" must be "int", "string" given.');
+        $this->expectExceptionMessage('The type of the "id" attribute for class "Zolex\VOM\Test\Fixtures\Person" must be one of "int" ("string" given).');
 
         self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
     }
@@ -922,5 +839,41 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             },
         ]);
         $this->assertEquals($expected, $normalized);
+    }
+
+    public function testDenormalizeMultiTypeProps(): void
+    {
+        $model = self::$serializer->denormalize(['value' => 42], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);
+        $this->assertEquals(42, $model->value);
+
+        $model = self::$serializer->denormalize(['value' => 13.37], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);
+        $this->assertEquals(13.37, $model->value);
+    }
+
+    public function testInstantiableNestedObject(): void
+    {
+        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+
+        $metadata = $factory->getMetadataFor(Instantiable::class);
+        $this->assertInstanceOf(ModelMetadata::class, $metadata);
+    }
+
+    public function testNonInstantiableNestedObject(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Can not create model metadata for "Zolex\VOM\Test\Fixtures\SomeInterface" because is is a non-instantiable type. Consider to add at least one instantiable type.');
+        self::$serializer->denormalize(['property' => []], NonInstantiable::class);
+    }
+
+    public function testInstantiableNestedObjectWithPhpDoc(): void
+    {
+        $instantiable = self::$serializer->denormalize([], InstantiableWithDocTag::class);
+        $this->assertInstanceOf(InstantiableWithDocTag::class, $instantiable);
+    }
+
+    public function testInstantiableNestedCollection(): void
+    {
+        $instantiable = self::$serializer->denormalize([], InstantiableNestedCollection::class);
+        $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiable);
     }
 }

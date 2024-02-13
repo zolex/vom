@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Zolex\VOM\Metadata\Factory;
 
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
-use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\AbstractProperty;
 use Zolex\VOM\Mapping\Argument;
 use Zolex\VOM\Mapping\Denormalizer;
@@ -53,7 +52,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         if (null === $modelMetadata) {
-            $modelMetadata = new ModelMetadata($class->getName());
+            $modelMetadata = new ModelMetadata($class->getName(), $class->isInstantiable());
             foreach ($this->loadAttributes($class) as $attribute) {
                 if ($attribute instanceof Model) {
                     $modelMetadata->setAttribute($attribute);
@@ -85,10 +84,20 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             $denormalizer = null;
             foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
                 if ($attribute instanceof Normalizer) {
-                    $normalizer = new NormalizerMetadata($reflectionMethod->getName());
+                    if (preg_match('/^(get|has|is)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+                        $virtualPropertyName = lcfirst($matches[2]);
+                    } else {
+                        throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $class->getName(), $reflectionMethod->getName()));
+                    }
+                    $normalizer = new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName);
                     continue;
                 }
                 if ($attribute instanceof Denormalizer) {
+                    if (preg_match('/^(set)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+                        $virtualPropertyName = lcfirst($matches[2]);
+                    } else {
+                        throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set".', $class->getName(), $reflectionMethod->getName()));
+                    }
                     $methodArguments = [];
                     foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
                         if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $reflectionMethod)) {
@@ -103,7 +112,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                         throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $class->getName(), $reflectionMethod->getName()));
                     }
 
-                    $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments);
+                    $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $methodArguments);
                 }
             }
 
@@ -159,8 +168,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             'reflection_class' => $reflectionClass,
             'reflection_method' => $reflectionMethod,
         ]);
-        [$type, $arrayAccessType] = $this->extractPropertyType($class, $property, $types);
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $type, $arrayAccessType, $propertyAttribute);
+        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\Throwable) {
@@ -174,66 +182,5 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         foreach ($reflector->getAttributes() as $attribute) {
             yield $attribute->newInstance();
         }
-    }
-
-    /**
-     * @param Type[] $types
-     */
-    private function extractPropertyType(string $parentClass, string $property, iterable $types): array
-    {
-        $hasClass = $hasArrayAccess = $isCollection = false;
-        $instantiableClass = null;
-        $arrayAccessType = null;
-        foreach ($types as $type) {
-            if ($type->isCollection()) {
-                $isCollection = true;
-                [$collectionType] = $this->extractPropertyType($parentClass, $property, $type->getCollectionValueTypes());
-                if ($collectionType) {
-                    $hasClass = true;
-                    $instantiableClass = $collectionType;
-                }
-            } elseif ($class = $type->getClassName()) {
-                if (\in_array(\ArrayAccess::class, class_implements($class))) {
-                    $hasArrayAccess = true;
-                    try {
-                        $reflection = new \ReflectionClass($class);
-                        if ($reflection->isInstantiable()) {
-                            $arrayAccessType = $class;
-                            continue;
-                        }
-                    } catch (\ReflectionException) {
-                    }
-                }
-
-                $hasClass = true;
-                try {
-                    $reflection = new \ReflectionClass($class);
-                    if ($reflection->isInstantiable()) {
-                        $instantiableClass = $class;
-                    }
-                } catch (\ReflectionException) {
-                }
-            }
-        }
-
-        if ($hasClass) {
-            if (null === $instantiableClass) {
-                throw new MappingException(sprintf('Could not find a class that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable type.', $parentClass, $property, $class));
-            }
-
-            if ($hasArrayAccess && null === $arrayAccessType) {
-                throw new MappingException(sprintf('Could not find an ArrayAccess that can be instantiated for %s::$%s, found %s. Consider adding a PhpDoc Tag with an instantiable ArrayAccess type like ArrayObject.', $parentClass, $property, $class));
-            }
-
-            return [$instantiableClass.($hasArrayAccess || $isCollection ? '[]' : ''), $arrayAccessType];
-        }
-
-        foreach ($types as $type) {
-            if ($builtinType = $type->getBuiltinType()) {
-                return [$builtinType, null];
-            }
-        }
-
-        return [null, null];
     }
 }

@@ -21,28 +21,28 @@ class DenormalizerMetadataTest extends TestCase
     public function testGetGetMethodAndAttribute(): void
     {
         $args = [
-            new PropertyMetadata('id', 'int', null, new Property()),
-            new PropertyMetadata('name', 'string', null, new Property()),
+            new PropertyMetadata('id', [], new Property()),
+            new PropertyMetadata('name', [], new Property()),
         ];
 
-        $metadata = new DenormalizerMetadata('getData', $args);
+        $metadata = new DenormalizerMetadata('getData', 'data', $args);
 
         $this->assertEquals('getData', $metadata->getMethod());
-        $this->assertEquals('data', $metadata->getAttribute());
+        $this->assertEquals('data', $metadata->getPropertyName());
         $this->assertEquals($args, $metadata->getArguments());
     }
 
     public function testGetGetMethodAndAttributeWithNonCompliantName(): void
     {
         $args = [
-            new PropertyMetadata('id', 'int', null, new Property()),
-            new PropertyMetadata('name', 'string', null, new Property()),
+            new PropertyMetadata('id', [], new Property()),
+            new PropertyMetadata('name', [], new Property()),
         ];
 
-        $metadata = new DenormalizerMetadata('somethingElse', $args);
+        $metadata = new DenormalizerMetadata('somethingElse', 'somethingElse', $args);
 
         $this->assertEquals('somethingElse', $metadata->getMethod());
-        $this->assertEquals('somethingElse', $metadata->getAttribute());
+        $this->assertEquals('somethingElse', $metadata->getPropertyName());
         $this->assertEquals($args, $metadata->getArguments());
     }
 }

@@ -18,17 +18,17 @@ class NormalizerMetadataTest extends TestCase
 {
     public function testGetGetMethodAndAttribute(): void
     {
-        $metadata = new NormalizerMetadata('getName');
+        $metadata = new NormalizerMetadata('getName', 'name');
 
         $this->assertEquals('getName', $metadata->getMethod());
-        $this->assertEquals('name', $metadata->getAttribute());
+        $this->assertEquals('name', $metadata->getPropertyName());
     }
 
     public function testGetGetMethodAndAttributeWithNonCompliantName(): void
     {
-        $metadata = new NormalizerMetadata('somethingElse');
+        $metadata = new NormalizerMetadata('somethingElse', 'somethingElse');
 
         $this->assertEquals('somethingElse', $metadata->getMethod());
-        $this->assertEquals('somethingElse', $metadata->getAttribute());
+        $this->assertEquals('somethingElse', $metadata->getPropertyName());
     }
 }

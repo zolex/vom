@@ -14,11 +14,10 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class InstantiableNestedCollection
+class CallsOnInvalidNormalizer
 {
-    /**
-     * @var \ArrayObject<Person>
-     */
-    #[VOM\Property]
-    public \ArrayAccess $people;
+    #[VOM\Normalizer]
+    public function blubb(): void
+    {
+    }
 }

@@ -34,14 +34,6 @@
             <tag name="serializer.normalizer" priority="100" />
         </service>
 
-        <service id="zolex_vom.serializer.normalizer.boolean_normalizer" class="Zolex\VOM\Serializer\Normalizer\BooleanNormalizer">
-            <tag name="serializer.normalizer" priority="90" />
-        </service>
-
-        <service id="zolex_vom.serializer.normalizer.common_flag_normalizer" class="Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer">
-            <tag name="serializer.normalizer" priority="80" />
-        </service>
-
         <service id="zolex_vom.property_info.method_call_extractor" class="Zolex\VOM\PropertyInfo\Extractor\MethodCallExtractor">
             <tag name="property_info.type_extractor" />
         </service>

@@ -15,6 +15,7 @@ abstract class AbstractMethodMetadata
 {
     public function __construct(
         private readonly string $method,
+        private readonly string $virtualPropertyName,
     ) {
     }
 
@@ -23,13 +24,8 @@ abstract class AbstractMethodMetadata
         return $this->method;
     }
 
-    public function getAttribute(): string
+    public function getPropertyName(): string
     {
-        $accessorOrMutator = preg_match('/^(get|is|has|set)(.+)$/i', $this->method, $matches);
-        if ($accessorOrMutator) {
-            return lcfirst($matches[2]);
-        }
-
-        return $this->method;
+        return $this->virtualPropertyName;
     }
 }

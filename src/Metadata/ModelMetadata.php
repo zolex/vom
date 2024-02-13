@@ -39,13 +39,18 @@ final class ModelMetadata
      */
     private array $normalizers = [];
 
-    public function __construct(private readonly string $class)
+    public function __construct(private readonly string $class, private bool $isInstantiable = true)
     {
     }
 
     public function getClass(): string
     {
         return $this->class;
+    }
+
+    public function isInstantiable(): bool
+    {
+        return $this->isInstantiable;
     }
 
     public function setAttribute(Model $attribute): void
@@ -142,7 +147,7 @@ final class ModelMetadata
                 throw new RuntimeException(sprintf('Could not find metadata path "%s" in "%s"', $query, $this->class));
             }
 
-            if ($modelMetadata = $factory->getMetadataFor($property->getType())) {
+            if (($class = $property->getClass()) && ($modelMetadata = $factory->getMetadataFor($class))) {
                 $metadata = &$modelMetadata;
             }
         }

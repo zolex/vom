@@ -24,16 +24,14 @@ class PropertyMetadataTest extends TestCase
             'field',
             true,
             ['foo' => 'bar'],
-            true,
             'foo',
             'bar',
             'desc',
             \DateTime::W3C,
         );
-        $metadata = new PropertyMetadata('name', 'int', null, $attribute);
+        $metadata = new PropertyMetadata('name', [], $attribute);
 
         $this->assertEquals('name', $metadata->getName());
-        $this->assertEquals('vom-flag', $metadata->getType());
         $this->assertEquals('[accessor]', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
         $this->assertTrue($metadata->isNested());

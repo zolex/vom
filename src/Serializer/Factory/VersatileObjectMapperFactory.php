@@ -27,8 +27,6 @@ use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
-use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
-use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 
@@ -48,8 +46,6 @@ class VersatileObjectMapperFactory
             [
                 new UnwrappingDenormalizer(),
                 self::$objectNormalizer,
-                new BooleanNormalizer(),
-                new CommonFlagNormalizer(),
                 new DateTimeNormalizer(),
                 new JsonSerializableNormalizer(),
                 new ArrayDenormalizer(),
