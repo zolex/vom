@@ -29,6 +29,7 @@ use Zolex\VOM\Test\Fixtures\CallsOnInvalidNormalizer;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CircularReference;
+use Zolex\VOM\Test\Fixtures\CollectionOfCollections;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\Instantiable;
@@ -255,6 +256,30 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             $this->assertEquals($item['nested']['firstname'], $nestedNames[$index]->firstname);
             $this->assertEquals($item['nested']['deeper']['surname'], $nestedNames[$index]->lastname);
         }
+    }
+
+    public function testArrayOfArrays(): void
+    {
+        $data = [
+            'array' => [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+            'collection' => [
+                [
+                    ['dateTime' => '2011-05-15 10:11:12'],
+                    ['dateTime' => '2012-06-16 10:11:12'],
+                ],
+                [
+                    ['dateTime' => '2013-07-15 10:11:12'],
+                    ['dateTime' => '2014-08-15 10:11:12'],
+                ],
+            ],
+        ];
+
+        $collection = self::$serializer->denormalize($data, CollectionOfCollections::class);
+        $normalized = self::$serializer->normalize($collection);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testConstruct(): void
