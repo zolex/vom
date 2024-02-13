@@ -6,4 +6,5 @@ The CLI commands of the individual examples have to be executed from within thei
 
 * [without framework](./without-framework)
 * [symfony](./symfony-framework)
-* [api-platform](./api-platform)
+* [api-platform standard (with doctrine)](./api-platform-doctrine)
+* [api-platform with custom state](./api-platform-custom-state)
