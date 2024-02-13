@@ -29,7 +29,7 @@ class ModelMetadataTest extends TestCase
 
         $metadata = new ModelMetadata('class');
         $metadata->setAttribute($model);
-        $prop = new PropertyMetadata('name', 'string', null, new Property());
+        $prop = new PropertyMetadata('name', [], new Property());
         $metadata->addProperty($prop);
         $properties = $metadata->getProperties();
 

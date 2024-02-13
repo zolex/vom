@@ -20,7 +20,6 @@ abstract class AbstractProperty
         private ?string $field = null,
         private bool $root = false,
         private array $aliases = [],
-        private bool $flag = false,
         private bool|string|int|null $trueValue = null,
         private bool|string|int|null $falseValue = null,
         private ?string $defaultOrder = null,
@@ -36,11 +35,6 @@ abstract class AbstractProperty
     public function isRoot(): bool
     {
         return $this->root;
-    }
-
-    public function isFlag(): bool
-    {
-        return $this->flag;
     }
 
     public function getAccessor(): string|bool

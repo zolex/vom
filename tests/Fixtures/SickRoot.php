@@ -28,7 +28,7 @@ class SickRoot
     public SickSack $sickSack;
 
     /**
-     * @var array|SickChild[]
+     * @var SickChild[]
      */
     #[VOM\Property()]
     public array $tooManyChildren;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the VOM package.
  *
@@ -14,17 +16,8 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class CommonFlags
+class MultiTypeProps
 {
-    #[VOM\Property(flag: true)]
-    public bool $flagA;
-
-    #[VOM\Property(flag: true)]
-    public bool $flagB;
-
-    #[VOM\Property(flag: true)]
-    public ?bool $flagC = null;
-
-    #[VOM\Property(flag: true)]
-    public bool $flagD = true;
+    #[VOM\Property]
+    public int|float|null $value;
 }

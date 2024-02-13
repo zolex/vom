@@ -23,7 +23,6 @@ class PropertyTest extends TestCase
             field: 'bar',
             root: true,
             aliases: ['foo' => 'bar'],
-            flag: true,
             trueValue: 'foo',
             falseValue: 'bar',
             defaultOrder: 'DESC',
@@ -35,7 +34,6 @@ class PropertyTest extends TestCase
         $this->assertTrue($prop->isNested());
         $this->assertTrue($prop->isRoot());
         $this->assertEquals(['foo' => 'bar'], $prop->getAliases());
-        $this->assertTrue($prop->isFlag());
         $this->assertEquals('foo', $prop->getTrueValue());
         $this->assertEquals('bar', $prop->getFalseValue());
         $this->assertEquals('DESC', $prop->getDefaultOrder());

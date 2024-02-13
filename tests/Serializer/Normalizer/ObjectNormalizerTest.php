@@ -56,7 +56,7 @@ class ObjectNormalizerTest extends TestCase
     {
         $metadataFactory = VersatileObjectMapperFactory::getMetadataFactory();
         $metadata = $metadataFactory->getMetadataFor(DateAndTime::class);
-        $metadata->addDenormalizer(new DenormalizerMetadata('nonExistentDenormalizerMethod', []));
+        $metadata->addDenormalizer(new DenormalizerMetadata('nonExistentDenormalizerMethod', 'virtualName', []));
 
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('Unable to denormalize: Call to undefined method Zolex\VOM\Test\Fixtures\DateAndTime::nonExistentDenormalizerMethod()');
@@ -67,7 +67,7 @@ class ObjectNormalizerTest extends TestCase
     {
         $metadataFactory = VersatileObjectMapperFactory::getMetadataFactory();
         $metadata = $metadataFactory->getMetadataFor(DateAndTime::class);
-        $metadata->addNormalizer(new NormalizerMetadata('nonExistentNormalizerMethod'));
+        $metadata->addNormalizer(new NormalizerMetadata('nonExistentNormalizerMethod', 'virtualName'));
 
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('Unable to normalize: Call to undefined method Zolex\VOM\Test\Fixtures\DateAndTime::nonExistentNormalizerMethod()');

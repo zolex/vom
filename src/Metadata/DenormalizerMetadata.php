@@ -17,10 +17,11 @@ class DenormalizerMetadata extends AbstractMethodMetadata
 {
     public function __construct(
         string $method,
+        string $virtualPropertyName,
         /** @var array|PropertyMetadata[] */
         private readonly array $arguments,
     ) {
-        parent::__construct($method);
+        parent::__construct($method, $virtualPropertyName);
     }
 
     public function getArguments(): array

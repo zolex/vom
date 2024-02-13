@@ -15,8 +15,6 @@ namespace Zolex\VOM\Metadata;
 
 use Symfony\Component\PropertyInfo\Type;
 use Zolex\VOM\Mapping\AbstractProperty;
-use Zolex\VOM\Serializer\Normalizer\BooleanNormalizer;
-use Zolex\VOM\Serializer\Normalizer\CommonFlagNormalizer;
 
 class PropertyMetadata
 {
@@ -25,10 +23,20 @@ class PropertyMetadata
     public function __construct(
         private readonly string $name,
         /* @var array|Type[] */
-        private string $type,
-        private ?string $arrayAccessType,
+        private array $types,
         private readonly AbstractProperty $attribute,
     ) {
+    }
+
+    public function getClass(): ?string
+    {
+        foreach ($this->types as $type) {
+            if ($class = $type->getClassName()) {
+                return $class;
+            }
+        }
+
+        return null;
     }
 
     public function getName(): string
@@ -41,32 +49,12 @@ class PropertyMetadata
         return $this->attribute->getField() ?? (($accessor = $this->getAccessor()) ? $accessor : null);
     }
 
-    public function getArrayAccessType(): ?string
+    /**
+     * @return array|Type[]
+     */
+    public function getTypes(): array
     {
-        return $this->arrayAccessType;
-    }
-
-    public function getType(): ?string
-    {
-        if ($this->isFlag()) {
-            return CommonFlagNormalizer::TYPE;
-        }
-
-        if ($this->isBool()) {
-            return BooleanNormalizer::TYPE;
-        }
-
-        return $this->type;
-    }
-
-    public function isBool(): bool
-    {
-        return 'bool' === $this->type;
-    }
-
-    public function isFlag(): bool
-    {
-        return $this->attribute->isFlag();
+        return $this->types;
     }
 
     public function getAccessor(): string|false

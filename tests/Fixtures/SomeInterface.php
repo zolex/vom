@@ -11,6 +11,9 @@
 
 namespace Zolex\VOM\Test\Fixtures;
 
+use Zolex\VOM\Mapping\Model;
+
+#[Model]
 interface SomeInterface
 {
 }

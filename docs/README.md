@@ -34,7 +34,6 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Collections](#collections)
   * [Data Types](#data-types)
     + [Booleans](#booleans)
-    + [Flags](#flags)
     + [DateTime](#datetime)
 - [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
@@ -630,38 +629,6 @@ For normalization purpose you can explicitly tell VOM which value you want to us
 ```php
 #[VOM\Property(trueValue: 'ON', falseValue: 'OFF')]
 public bool $nullableState;
-```
-
-
-#### Flags
-
-Flags are also booleans but behave in a different way. In the normalized form, flags are strings that sit in an array.
-The presence of the flag will result in a true value. The flag prefixed with an "!" will result in a false  value
-A flag's absence will result in an uninitialized value (or null the respective property is nullable).
-
-> [!NOTE]
-> For flags the accessor is just the value of the flag and not symfony property access syntax.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class Flags
-{
-    #[VOM\Property('is_great', flag: true)]
-    public bool $great;
-      
-    #[VOM\Property('is_weak', flag: true)]
-    public bool $weak;
-    
-    #[VOM\Property('is_funny', flag: true)]
-    public ?bool $awesome;
-}
-```
-
-```php
-$data = ['is_great', '!is_weak'];
-$objectMapper->denormalize($data, Flags::class);
 ```
 
 #### DateTime
