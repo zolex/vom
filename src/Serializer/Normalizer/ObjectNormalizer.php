@@ -15,6 +15,7 @@ use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\ExtraAttributesException;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\LogicException;
@@ -37,6 +38,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 {
     use ObjectToPopulateTrait;
     use SerializerAwareTrait;
+
+    public const TRUE_VALUES = [true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'];
+    public const FALSE_VALUES = [false, 0, '0', 'FALSE', 'false', 'F', 'f', 'OFF', 'off', 'NO', 'no', 'N', 'n'];
 
     public const ROOT_DATA = 'vom_root_data';
 
@@ -190,12 +194,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     /**
      * Validates the submitted data and denormalizes it.
      *
-     * @param Type[] $types
-     *
-     * @throws NotNormalizableValueException
-     * @throws ExtraAttributesException
-     * @throws MissingConstructorArgumentsException
-     * @throws LogicException
+     * @throws ExceptionInterface
      */
     private function validateAndDenormalize(string $currentClass, PropertyMetadata $property, mixed $data, ?string $format, array $context): mixed
     {
@@ -215,9 +214,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $collectionValueType = $type->isCollection() ? $type->getCollectionValueTypes()[0] ?? null : null;
 
             // This try-catch should cover all NotNormalizableValueException (and all return branches after the first
-            // exception) so we could try denormalizing all types of an union type. If the target type is not an union
-            // type, we will just re-throw the catched exception.
-            // In the case of no denormalization succeeds with an union type, it will fall back to the default exception
+            // exception) so we could try denormalizing all types of a union type. If the target type is not a union
+            // type, we will just re-throw the caught exception.
+            // In the case of no denormalization succeeds with a union type, it will fall back to the default exception
             // with the acceptable types list.
             try {
                 if (null !== $collectionValueType && Type::BUILTIN_TYPE_OBJECT === $collectionValueType->getBuiltinType()) {
@@ -264,8 +263,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     $childContext = $this->createChildContext($context, $attribute, $format);
                     if ($this->serializer->supportsDenormalization($data, $class, $format, $childContext)) {
                         $denormalized = $this->serializer->denormalize($data, $class, $format, $childContext);
-
-                        if ($type->isCollection() && ($collectionClass = $type->getClassName())) {
+                        // Wrap collections in the proper collection class (e.g. ArrayObject or Doctrine Collection)
+                        // TODO: how to deal with the case when only in interface or abstract class is provided?
+                        if ($type->isCollection() && ($collectionClass = $type->getClassName()) && \is_array($denormalized)) {
                             $denormalized = new $collectionClass($denormalized);
                         }
 
@@ -282,11 +282,11 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                         return $data === $falseValue;
                     }
 
-                    if (\in_array($data, [true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'], true)) {
+                    if (\in_array($data, self::TRUE_VALUES, true)) {
                         return true;
                     }
 
-                    if (\in_array($data, [false, 0, '0', 'FALSE', 'false', 'F', 'f', 'OFF', 'off', 'NO', 'no', 'N', 'n'], true)) {
+                    if (\in_array($data, self::FALSE_VALUES, true)) {
                         return false;
                     }
                 }
@@ -393,12 +393,14 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     throw $e;
                 }
 
-                foreach ($property->getTypes() as $type) {
-                    if (Type::BUILTIN_TYPE_BOOL === $type->getBuiltinType()) {
-                        if (\in_array($attributeValue, [true, $property->getTrueValue() ?? true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'], true)) {
-                            $attributeValue = $property->getTrueValue() ?? true;
-                        } elseif (\in_array($attributeValue, [false, $property->getFalseValue() ?? false, 0, '0', 'FALSE', 'false', 'F', 'f', 'OFF', 'off', 'NO', 'no', 'N', 'n'], true)) {
-                            $attributeValue = $property->getFalseValue() ?? false;
+                if (null !== $attributeValue) {
+                    foreach ($property->getTypes() as $type) {
+                        if (Type::BUILTIN_TYPE_BOOL === $type->getBuiltinType()) {
+                            if ($attributeValue === $property->getTrueValue() || \in_array($attributeValue, self::TRUE_VALUES, true)) {
+                                $attributeValue = $property->getTrueValue() ?? true;
+                            } elseif ($attributeValue === $property->getFalseValue() || \in_array($attributeValue, self::FALSE_VALUES, true)) {
+                                $attributeValue = $property->getFalseValue() ?? false;
+                            }
                         }
                     }
                 }
