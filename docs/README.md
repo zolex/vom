@@ -547,8 +547,8 @@ $objectMapper->denormalize($data, RootClass::class);
 
 ### Collections
 
-VOM can process several types of lists, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
-To tell VOM what types sit in a list you have to add PhpDoc tags and use the array syntax as shown in the following example.
+VOM can process several types of collections, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
+To tell VOM what types sit in a collection you have to add PhpDoc tags and use the [phpdoc array or collection syntax](https://symfony.com/doc/current/components/property_info.html#type-iscollection) as shown in the following example.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -556,11 +556,15 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class RootClass
 {
-    /**
-     * @var NestedClass[] 
-     */
+    // for a native array, use the array syntax
+    /** @var NestedClass[] */
     #[VOM\Property]
     public array $valueCollection;
+    
+    // for ArrayAccess (including Doctrine Collections), use the collection syntax
+    /** @var ArrayObject<NestedClass> */
+    #[VOM\Property]
+    public ArrayAccess $valueCollection;
 }
 
 #[VOM\Model]
@@ -571,7 +575,7 @@ class NestedClass
 }
 ```
 
-If you want to pass the `denormalize()` method a collection, it is required to also pass the array notation of the model class (using the square brackets `[]`).
+If you want to pass the `denormalize()` method an array, it is required to also pass the array syntax for the model.
 
 ```php
 $data = [
@@ -581,9 +585,6 @@ $data = [
         ],
         [
             'value' => 'I am another value'
-        ],
-        [
-            'value' => 'Yet another value'
         ]
     ]
 ];
@@ -592,7 +593,57 @@ $person = $objectMapper->denormalize($collectionOfPeople, RootClass::class.'[]')
 $person = $objectMapper->denormalize($collectionOfPeople, 'RootClass[]');
 ```
 
+### Collection of Collections
 
+It is also possible to define properties that are collections which contain further levels of collections.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class CollectionOfCollections
+{
+    // an array of arrays
+    /** @var array[] */
+    #[VOM\Property]
+    public array $array;
+
+    // a collection of an array of DateAndTime models
+    /** @var \ArrayObject<DateAndTime[]> */
+    #[VOM\Property]
+    public \ArrayAccess $collection;
+}
+
+#[VOM\Model]
+class DateAndTime
+{
+    #[VOM\Property]
+    public \DateTime $dateTime;
+}
+```
+
+With the above configuration you can pass VOM the following data structure for denormalization.
+
+```php
+$data = [
+    'array' => [
+        [1, 2, 3],
+        [4, 5, 6],
+    ],
+    'collection' => [
+        [
+            ['dateTime' => '2011-05-15 10:11:12'],
+            ['dateTime' => '2012-06-16 10:11:12'],
+        ],
+        [
+            ['dateTime' => '2013-07-15 10:11:12'],
+            ['dateTime' => '2014-08-15 10:11:12'],
+        ],
+    ],
+];
+
+$collection = self::$serializer->denormalize($data, CollectionOfCollections::class);
+```
 
 ### Data Types
 
