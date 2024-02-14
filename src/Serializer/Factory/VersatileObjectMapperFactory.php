@@ -35,8 +35,14 @@ use Zolex\VOM\Serializer\VersatileObjectMapper;
  */
 class VersatileObjectMapperFactory
 {
-    private static ObjectNormalizer $objectNormalizer;
-    private static ModelMetadataFactoryInterface $metadataFactory;
+    private static ?ObjectNormalizer $objectNormalizer = null;
+    private static ?ModelMetadataFactoryInterface $metadataFactory = null;
+
+    public static function destroy()
+    {
+        self::$metadataFactory = null;
+        self::$objectNormalizer = null;
+    }
 
     public static function create(?CacheItemPoolInterface $cacheItemPool = null): VersatileObjectMapper
     {
@@ -72,19 +78,19 @@ class VersatileObjectMapperFactory
         return new ObjectNormalizer(self::$metadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver);
     }
 
-    public static function getObjectNormalizer(): ObjectNormalizer
+    public static function getObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null): ObjectNormalizer
     {
-        if (!isset(self::$objectNormalizer)) {
-            self::create();
+        if (!self::$objectNormalizer) {
+            self::create($cacheItemPool);
         }
 
         return self::$objectNormalizer;
     }
 
-    public static function getMetadataFactory(): ModelMetadataFactoryInterface
+    public static function getMetadataFactory(?CacheItemPoolInterface $cacheItemPool = null): ModelMetadataFactoryInterface
     {
-        if (!isset(self::$objectNormalizer)) {
-            self::create();
+        if (!self::$objectNormalizer) {
+            self::create($cacheItemPool);
         }
 
         return self::$metadataFactory;
