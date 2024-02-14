@@ -20,7 +20,7 @@ use Zolex\VOM\Mapping\Denormalizer;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
-use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;

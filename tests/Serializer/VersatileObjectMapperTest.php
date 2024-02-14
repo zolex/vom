@@ -12,8 +12,10 @@
 namespace Zolex\VOM\Test\Serializer;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
+use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
-use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
@@ -35,10 +37,11 @@ use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
+use Zolex\VOM\Test\Fixtures\FirstAndLastname;
+use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
-use Zolex\VOM\Test\Fixtures\NestedName;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\NonInstantiable;
 use Zolex\VOM\Test\Fixtures\Person;
@@ -72,10 +75,41 @@ class VersatileObjectMapperTest extends TestCase
             ],
         ];
 
-        /* @var NestedName $nestedName */
-        $nestedName = self::$serializer->denormalize($data, NestedName::class);
+        /* @var FirstAndLastname $nestedName */
+        $nestedName = self::$serializer->denormalize($data, FirstAndLastname::class);
         $this->assertEquals($data['nested']['firstname'], $nestedName->firstname);
         $this->assertEquals($data['nested']['deeper']['surname'], $nestedName->lastname);
+    }
+
+    public function testObjectAccessorThrowsExceptionForNormalization(): void
+    {
+        $data = [
+            'nested' => (object) [
+                'firstname' => 'Andreas',
+                'deeper' => (object) [
+                    'surname' => 'Linden',
+                ],
+            ],
+        ];
+
+        /* @var FirstAndLastnameObject $nestedName */
+        $names = self::$serializer->denormalize($data, FirstAndLastnameObject::class);
+
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Normalization is only supported with array-access syntax. Accessor "[nested].firstname" on class "Zolex\VOM\Test\Fixtures\FirstAndLastnameObject" uses object syntax and therefore can not be normalized.');
+        self::$serializer->normalize($names);
+    }
+
+    public function testNonObjectAccessorNotFound(): void
+    {
+        $data = [
+            'nested' => (object) [
+                'firstname' => 'Andreas',
+            ],
+        ];
+
+        $this->expectException(NoSuchPropertyException::class);
+        self::$serializer->denormalize($data, FirstAndLastnameObject::class);
     }
 
     /**
@@ -179,7 +213,7 @@ class VersatileObjectMapperTest extends TestCase
         ];
     }
 
-    public function testDefaultCircularReferenceHandler(): void
+    public function testCircularReferenceRethrowsException(): void
     {
         $ref1 = new CircularReference();
         $ref1->id = 1;
@@ -197,7 +231,31 @@ class VersatileObjectMapperTest extends TestCase
             ],
         ];
 
+        $this->expectException(CircularReferenceException::class);
+        $this->expectExceptionMessage('Consider adding "circular_reference_handler" or "skip_circular_reference" to the context.');
         $normalized = self::$serializer->normalize($ref1);
+        $this->assertEquals($expected, $normalized);
+    }
+
+    public function testIngoreCircularReferenceException(): void
+    {
+        $ref1 = new CircularReference();
+        $ref1->id = 1;
+
+        $ref2 = new CircularReference();
+        $ref2->id = 2;
+
+        $ref1->reference = $ref2;
+        $ref2->reference = $ref1;
+
+        $expected = [
+            'id' => 1,
+            'reference' => [
+                'id' => 2,
+            ],
+        ];
+
+        $normalized = self::$serializer->normalize($ref1, null, ['skip_circular_reference' => true]);
         $this->assertEquals($expected, $normalized);
     }
 
@@ -296,8 +354,8 @@ class VersatileObjectMapperTest extends TestCase
             ],
         ];
 
-        /* @var array|NestedName[] $nestedName */
-        $nestedNames = self::$serializer->denormalize($data, NestedName::class.'[]');
+        /* @var array|FirstAndLastname[] $nestedName */
+        $nestedNames = self::$serializer->denormalize($data, FirstAndLastname::class.'[]');
 
         $this->assertIsArray($nestedNames);
         $this->assertCount(3, $nestedNames);
@@ -525,7 +583,7 @@ class VersatileObjectMapperTest extends TestCase
 
     public function testNonInstantiableNestedObject(): void
     {
-        $this->expectException(MappingException::class);
+        $this->expectException(NotNormalizableValueException::class);
         $this->expectExceptionMessage('Can not create model metadata for "Zolex\VOM\Test\Fixtures\SomeInterface" because is is a non-instantiable type. Consider to add at least one instantiable type.');
         self::$serializer->denormalize(['property' => []], NonInstantiable::class);
     }

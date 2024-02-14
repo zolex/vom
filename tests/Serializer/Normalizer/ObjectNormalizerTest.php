@@ -14,7 +14,7 @@ namespace Zolex\VOM\Test\Serializer\Normalizer;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
-use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
