@@ -25,7 +25,7 @@ class Calls
     public function setData(
         /* @type int $id */
         #[VOM\Argument]
-        int $id,
+        int|string|null $id,
         #[VOM\Argument]
         string $name,
     ): void {
