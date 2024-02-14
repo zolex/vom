@@ -14,7 +14,7 @@ namespace Zolex\VOM\Test\Serializer;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 
 /**
- * Same as the base test, but keeps the same VOM instance for all tests!
+ * Test VOM while keeping a single instance for all tests!
  */
 class SingleVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
@@ -25,6 +25,5 @@ class SingleVersatileObjectMapperTest extends VersatileObjectMapperTest
 
     protected function setUp(): void
     {
-        // do not reinitialize before each test
     }
 }

@@ -15,17 +15,12 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 
 /**
- * Same as the test with cached metadata factory, but keeps the same instance for all tests!
+ * Test VOM with a fresh cache-enabled instance for each test.
  */
 class CachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
-    public static function setUpBeforeClass(): void
-    {
-        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
-    }
-
     protected function setUp(): void
     {
-        // do not reinitialize before each test
+        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
     }
 }

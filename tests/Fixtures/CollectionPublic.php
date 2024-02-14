@@ -14,11 +14,11 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class InstantiableNestedCollection
+class CollectionPublic
 {
     /**
      * @var \ArrayObject<Person>
      */
     #[VOM\Property]
-    public \ArrayAccess $people;
+    public \ArrayObject $people;
 }

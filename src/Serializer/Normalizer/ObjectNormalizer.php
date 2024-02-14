@@ -11,6 +11,8 @@
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
+use Symfony\Component\PropertyAccess\Exception\InvalidArgumentException as PropertyAccessInvalidArgumentException;
+use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Type;
@@ -124,10 +126,24 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
             $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
             $value = $this->denormalizeProperty($type, $data, $property, $format, $context);
+
+            if (null === $value && !$property->isNullable()) {
+                continue;
+            }
+
             try {
                 $this->propertyAccessor->setValue($model, $property->getName(), $value);
-            } catch (\Throwable $e) {
-                $x = 1;
+            } catch (NoSuchPropertyException) {
+                // this may happen for private properties without mutator
+                // for example doctrine entity ID, so just ignore this case.
+            } catch (PropertyAccessInvalidArgumentException $e) {
+                if (preg_match('/^Expected argument of type "([^"]+)", "array" given at property path "([^"]+)".$/', $e->getMessage(), $matches)) {
+                    if (\ArrayAccess::class === $matches[1] || (($implements = class_implements($matches[1])) && \in_array(\ArrayAccess::class, $implements))) {
+                        throw new MappingException(sprintf('The property %s::$%s seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
+                    }
+                }
+
+                throw $e;
             }
         }
 
@@ -262,14 +278,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
                     $childContext = $this->createChildContext($context, $attribute, $format);
                     if ($this->serializer->supportsDenormalization($data, $class, $format, $childContext)) {
-                        $denormalized = $this->serializer->denormalize($data, $class, $format, $childContext);
-                        // Wrap collections in the proper collection class (e.g. ArrayObject or Doctrine Collection)
-                        // TODO: how to deal with the case when only in interface or abstract class is provided?
-                        if ($type->isCollection() && ($collectionClass = $type->getClassName()) && \is_array($denormalized)) {
-                            $denormalized = new $collectionClass($denormalized);
-                        }
-
-                        return $denormalized;
+                        return $this->serializer->denormalize($data, $class, $format, $childContext);
                     }
                 }
 

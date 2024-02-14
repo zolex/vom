@@ -14,6 +14,9 @@ namespace Zolex\VOM\Test\Serializer;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 
+/**
+ * Test VOM while keeping a single cache-enabled instance for all tests!
+ */
 class SingleCachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     public static function setUpBeforeClass(): void
@@ -23,6 +26,5 @@ class SingleCachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 
     protected function setUp(): void
     {
-        // do not reinitialize before each test
     }
 }
