@@ -19,6 +19,7 @@ use Zolex\VOM\Mapping\AbstractProperty;
 class PropertyMetadata
 {
     private readonly mixed $defaultValue;
+    private bool $nullable = false;
 
     public function __construct(
         private readonly string $name,
@@ -26,6 +27,17 @@ class PropertyMetadata
         private array $types,
         private readonly AbstractProperty $attribute,
     ) {
+        foreach ($this->types as $type) {
+            if ($type->isNullable()) {
+                $this->nullable = true;
+                break;
+            }
+        }
+    }
+
+    public function isNullable(): bool
+    {
+        return $this->nullable;
     }
 
     public function getClass(): ?string

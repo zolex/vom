@@ -11,8 +11,7 @@
 
 namespace Zolex\VOM\Test\Serializer;
 
-use PHPUnit;
-use Prophecy\PhpUnit\ProphecyTrait;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Metadata\Factory\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
@@ -30,10 +29,13 @@ use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CircularReference;
 use Zolex\VOM\Test\Fixtures\CollectionOfCollections;
+use Zolex\VOM\Test\Fixtures\CollectionPublic;
+use Zolex\VOM\Test\Fixtures\CollectionWithAdderRemover;
+use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
+use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\Instantiable;
-use Zolex\VOM\Test\Fixtures\InstantiableNestedCollection;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestedName;
@@ -48,12 +50,10 @@ use Zolex\VOM\Test\Fixtures\SickSuck;
 use Zolex\VOM\Test\Fixtures\Thing;
 
 /**
- * Base test with a fresh instance of the VOM for each test.
+ * Test VOM with a fresh instance for each test.
  */
-class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
+class VersatileObjectMapperTest extends TestCase
 {
-    use ProphecyTrait;
-
     protected static VersatileObjectMapper $serializer;
 
     protected function setUp(): void
@@ -61,29 +61,41 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         self::$serializer = VersatileObjectMapperFactory::create();
     }
 
-    public function testDecoratedMethods(): void
+    public function testAccessor(): void
     {
-        $serialized = self::$serializer->serialize([2], 'json', [1]);
-        $this->assertEquals('[2]', $serialized);
-        $deserialized = self::$serializer->deserialize('[]', DateAndTime::class, 'json');
-        $this->assertEquals(new DateAndTime(), $deserialized);
+        $data = [
+            'nested' => [
+                'firstname' => 'Andreas',
+                'deeper' => [
+                    'surname' => 'Linden',
+                ],
+            ],
+        ];
 
-        $supportedTypes = self::$serializer->getSupportedTypes('json');
-        $this->assertEquals(['*' => false], $supportedTypes);
-
-        $supportsNormalization = self::$serializer->supportsNormalization(new DateAndTime());
-        $this->assertTrue($supportsNormalization);
-        $normalized = self::$serializer->normalize(new \DateTime('2010-01-01 00:00:00'), 'json');
-        $this->assertEquals('2010-01-01T00:00:00+00:00', $normalized);
-
-        $supportsDenormalization = self::$serializer->supportsDenormalization(['dateTime' => '2010-01-01 10:10:10'], DateAndTime::class);
-        $this->assertTrue($supportsDenormalization);
-
-        $denormalized = self::$serializer->denormalize([2], DateAndTime::class);
-        $this->assertEquals(new DateAndTime(), $denormalized);
+        /* @var NestedName $nestedName */
+        $nestedName = self::$serializer->denormalize($data, NestedName::class);
+        $this->assertEquals($data['nested']['firstname'], $nestedName->firstname);
+        $this->assertEquals($data['nested']['deeper']['surname'], $nestedName->lastname);
     }
 
-    public function testBooleansUninitialized(): void
+    /**
+     * @dataProvider provideBooleans
+     */
+    public function testBooleans($data, $expected): void
+    {
+        /* @var Booleans $booleans */
+        $booleans = self::$serializer->denormalize($data, Booleans::class);
+        $normalized = self::$serializer->normalize($booleans);
+        $this->assertEquals($expected, $normalized);
+    }
+
+    public function testInvalidTypeThrowsException(): void
+    {
+        $this->expectException(NotNormalizableValueException::class);
+        self::$serializer->denormalize(['bool' => new \stdClass()], Booleans::class);
+    }
+
+    public function testNullableBooleans(): void
     {
         $data = [];
 
@@ -98,7 +110,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertNull($normalized['nullableBool']);
     }
 
-    public function testNullableBooleanExplicitlyNull()
+    public function testNullableBooleanExplicitlyNull(): void
     {
         $data = [
             'nullableBool' => null,
@@ -108,17 +120,6 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $booleans = self::$serializer->denormalize($data, Booleans::class);
         $this->assertFalse(isset($booleans->bool));
         $this->assertNull($booleans->nullableBool);
-    }
-
-    /**
-     * @dataProvider provideBooleans
-     */
-    public function testBooleans($data, $expected): void
-    {
-        /* @var Booleans $booleans */
-        $booleans = self::$serializer->denormalize($data, Booleans::class);
-        $normalized = self::$serializer->normalize($booleans);
-        $this->assertEquals($expected, $normalized);
     }
 
     public function provideBooleans(): iterable
@@ -178,44 +179,92 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         ];
     }
 
-    public function testDateAndTime(): void
+    public function testDefaultCircularReferenceHandler(): void
     {
-        $data = [];
+        $ref1 = new CircularReference();
+        $ref1->id = 1;
 
-        /* @var DateAndTime $dateAndTime */
-        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
-        $this->assertFalse(isset($dateAndTime->dateTime));
-        $this->assertFalse(isset($dateAndTime->dateTimeImmutable));
+        $ref2 = new CircularReference();
+        $ref2->id = 2;
 
-        $data = [
-            'dateTime' => '2024-02-03 13:05:00',
-            'dateTimeImmutable' => '1985-01-20 12:34:56',
+        $ref1->reference = $ref2;
+        $ref2->reference = $ref1;
+
+        $expected = [
+            'id' => 1,
+            'reference' => [
+                'id' => 2,
+            ],
         ];
 
-        /* @var DateAndTime $dateAndTime */
-        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
-        $this->assertTrue(isset($dateAndTime->dateTime));
-        $this->assertTrue(isset($dateAndTime->dateTimeImmutable));
-
-        $this->assertEquals($data['dateTime'], $dateAndTime->dateTime->format('Y-m-d H:i:s'));
-        $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
+        $normalized = self::$serializer->normalize($ref1);
+        $this->assertEquals($expected, $normalized);
     }
 
-    public function testAccessor(): void
+    public function testCustomCircularReferenceHandler(): void
     {
-        $data = [
-            'nested' => [
-                'firstname' => 'Andreas',
-                'deeper' => [
-                    'surname' => 'Linden',
+        $ref1 = new CircularReference();
+        $ref1->id = 1;
+
+        $ref2 = new CircularReference();
+        $ref2->id = 2;
+
+        $ref1->reference = $ref2;
+        $ref2->reference = $ref1;
+
+        $expected = [
+            'id' => 1,
+            'reference' => [
+                'id' => 2,
+                'reference' => [
+                    'id' => 1,
+                    'reference' => [
+                        'id' => 2,
+                        'reference' => '/ref/1',
+                    ],
                 ],
             ],
         ];
 
-        /* @var NestedName $nestedName */
-        $nestedName = self::$serializer->denormalize($data, NestedName::class);
-        $this->assertEquals($data['nested']['firstname'], $nestedName->firstname);
-        $this->assertEquals($data['nested']['deeper']['surname'], $nestedName->lastname);
+        $normalized = self::$serializer->normalize($ref1, null, [
+            'circular_reference_limit' => 2,
+            'circular_reference_handler' => function ($ref) {
+                return sprintf('/ref/%d', $ref->id);
+            },
+        ]);
+        $this->assertEquals($expected, $normalized);
+    }
+
+    public function testDenormalizePersonWithClassDiscriminator(): void
+    {
+        $data = [
+            'type' => 'person',
+            'id' => 666,
+            'name' => [
+                'firstname' => 'Peter',
+                'lastname' => 'Enis',
+            ],
+        ];
+
+        $thing = self::$serializer->denormalize($data, Thing::class);
+        $this->assertInstanceOf(Person::class, $thing);
+
+        $normalized = self::$serializer->normalize($thing);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testDenormalizeAddressWithClassDiscriminator(): void
+    {
+        $data = [
+            'type' => 'address',
+            'street' => 'Examplestreet',
+        ];
+
+        $thing = self::$serializer->denormalize($data, Thing::class);
+        $this->assertInstanceOf(Address::class, $thing);
+
+        $normalized = self::$serializer->normalize($thing);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testArrayOfModels(): void
@@ -280,6 +329,211 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $collection = self::$serializer->denormalize($data, CollectionOfCollections::class);
         $normalized = self::$serializer->normalize($collection);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testArrayOnRoot(): void
+    {
+        $data = [
+            ['dateTime' => '2024-01-01 00:00:00'],
+            ['dateTime' => '2024-01-02 00:00:00'],
+            ['dateTime' => '2024-01-03 00:00:00'],
+        ];
+
+        /** @var DateAndTime[] $arrayOfDateAndTime */
+        $arrayOfDateAndTime = self::$serializer->denormalize($data, DateAndTime::class.'[]');
+        $this->assertCount(3, $arrayOfDateAndTime);
+        $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
+    }
+
+    public function testPublicCollectionThrowsException(): void
+    {
+        $data = [
+            'people' => [
+                [
+                    'type' => 'person',
+                    'id' => 1,
+                    'name' => [
+                        'firstname' => 'Andreas',
+                    ],
+                    'address' => [
+                        'type' => 'address',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('The property Zolex\VOM\Test\Fixtures\CollectionPublic::$people seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.');
+        self::$serializer->denormalize($data, CollectionPublic::class);
+    }
+
+    public function testArrayAccessCollectionWithMutator(): void
+    {
+        $data = [
+            'people' => [
+                [
+                    'type' => 'person',
+                    'id' => 1,
+                    'name' => [
+                        'firstname' => 'Andreas',
+                        'lastname' => 'Linden',
+                    ],
+                    'address' => [
+                        'type' => 'address',
+                        'street' => 'Elmstreet',
+                        'housenumber' => '123',
+                    ],
+                ], [
+                    'type' => 'person',
+                    'id' => 2,
+                    'name' => [
+                        'firstname' => 'Peter',
+                        'lastname' => 'Enis',
+                    ],
+                    'address' => [
+                        'type' => 'address',
+                        'zipcode' => '54321',
+                        'country' => 'DE',
+                    ],
+                ],
+            ],
+        ];
+
+        $instantiableNestedCollection = self::$serializer->denormalize($data, CollectionWithMutator::class);
+        $this->assertInstanceOf(CollectionWithMutator::class, $instantiableNestedCollection);
+        $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->getPeople());
+        $this->assertCount(2, $instantiableNestedCollection->getPeople());
+
+        $normalized = self::$serializer->normalize($instantiableNestedCollection);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testArrayAccessCollectionWithAdderRemover(): void
+    {
+        $data = [
+            'people' => [
+                [
+                    'type' => 'person',
+                    'id' => 1,
+                    'name' => [
+                        'firstname' => 'Andreas',
+                        'lastname' => 'Linden',
+                    ],
+                    'address' => [
+                        'type' => 'address',
+                        'street' => 'Elmstreet',
+                        'housenumber' => '123',
+                    ],
+                ], [
+                    'type' => 'person',
+                    'id' => 2,
+                    'name' => [
+                        'firstname' => 'Peter',
+                        'lastname' => 'Enis',
+                    ],
+                    'address' => [
+                        'type' => 'address',
+                        'zipcode' => '54321',
+                        'country' => 'DE',
+                    ],
+                ],
+            ],
+        ];
+
+        $instantiableNestedCollection = self::$serializer->denormalize($data, CollectionWithAdderRemover::class);
+        $this->assertInstanceOf(CollectionWithAdderRemover::class, $instantiableNestedCollection);
+        $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->getPeople());
+        $this->assertCount(2, $instantiableNestedCollection->getPeople());
+
+        $normalized = self::$serializer->normalize($instantiableNestedCollection);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testDateAndTime(): void
+    {
+        $data = [];
+
+        /* @var DateAndTime $dateAndTime */
+        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
+        $this->assertFalse(isset($dateAndTime->dateTime));
+        $this->assertFalse(isset($dateAndTime->dateTimeImmutable));
+
+        $data = [
+            'dateTime' => '2024-02-03 13:05:00',
+            'dateTimeImmutable' => '1985-01-20 12:34:56',
+        ];
+
+        /* @var DateAndTime $dateAndTime */
+        $dateAndTime = self::$serializer->denormalize($data, DateAndTime::class);
+        $this->assertTrue(isset($dateAndTime->dateTime));
+        $this->assertTrue(isset($dateAndTime->dateTimeImmutable));
+
+        $this->assertEquals($data['dateTime'], $dateAndTime->dateTime->format('Y-m-d H:i:s'));
+        $this->assertEquals($data['dateTimeImmutable'], $dateAndTime->dateTimeImmutable->format('Y-m-d H:i:s'));
+    }
+
+    public function testDecoratedMethods(): void
+    {
+        $serialized = self::$serializer->serialize([2], 'json', [1]);
+        $this->assertEquals('[2]', $serialized);
+        $deserialized = self::$serializer->deserialize('[]', DateAndTime::class, 'json');
+        $this->assertEquals(new DateAndTime(), $deserialized);
+
+        $supportedTypes = self::$serializer->getSupportedTypes('json');
+        $this->assertEquals(['*' => false], $supportedTypes);
+
+        $supportsNormalization = self::$serializer->supportsNormalization(new DateAndTime());
+        $this->assertTrue($supportsNormalization);
+        $normalized = self::$serializer->normalize(new \DateTime('2010-01-01 00:00:00'), 'json');
+        $this->assertEquals('2010-01-01T00:00:00+00:00', $normalized);
+
+        $supportsDenormalization = self::$serializer->supportsDenormalization(['dateTime' => '2010-01-01 10:10:10'], DateAndTime::class);
+        $this->assertTrue($supportsDenormalization);
+
+        $denormalized = self::$serializer->denormalize([2], DateAndTime::class);
+        $this->assertEquals(new DateAndTime(), $denormalized);
+    }
+
+    public function testDoctrineCollection(): void
+    {
+        $data = [
+            'name' => 'Peter Parker',
+            'addresses' => [
+                [
+                    'street' => 'Examplestreet',
+                ],
+            ],
+        ];
+
+        $person = self::$serializer->denormalize($data, DoctrinePerson::class);
+        $normalized = self::$serializer->normalize($person);
+        $this->assertArrayHasKey('name', $normalized);
+        $this->assertEquals($data['name'], $normalized['name']);
+        $this->assertArrayHasKey('addresses', $normalized);
+        $this->assertEquals($data['addresses'], $normalized['addresses']);
+    }
+
+    public function testInstantiableNestedObject(): void
+    {
+        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+
+        $metadata = $factory->getMetadataFor(Instantiable::class);
+        $this->assertInstanceOf(ModelMetadata::class, $metadata);
+    }
+
+    public function testNonInstantiableNestedObject(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Can not create model metadata for "Zolex\VOM\Test\Fixtures\SomeInterface" because is is a non-instantiable type. Consider to add at least one instantiable type.');
+        self::$serializer->denormalize(['property' => []], NonInstantiable::class);
+    }
+
+    public function testInstantiableNestedObjectWithPhpDoc(): void
+    {
+        $instantiable = self::$serializer->denormalize([], InstantiableWithDocTag::class);
+        $this->assertInstanceOf(InstantiableWithDocTag::class, $instantiable);
     }
 
     public function testConstruct(): void
@@ -391,63 +645,6 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $calls->getMoreData());
     }
 
-    public function testArrayOnRoot(): void
-    {
-        $data = [
-            ['dateTime' => '2024-01-01 00:00:00'],
-            ['dateTime' => '2024-01-02 00:00:00'],
-            ['dateTime' => '2024-01-03 00:00:00'],
-        ];
-
-        /** @var DateAndTime[] $arrayOfDateAndTime */
-        $arrayOfDateAndTime = self::$serializer->denormalize($data, DateAndTime::class.'[]');
-        $this->assertCount(3, $arrayOfDateAndTime);
-        $this->assertEquals('2024-01-01 00:00:00', $arrayOfDateAndTime[0]->dateTime->format('Y-m-d H:i:s'));
-        $this->assertEquals('2024-01-02 00:00:00', $arrayOfDateAndTime[1]->dateTime->format('Y-m-d H:i:s'));
-        $this->assertEquals('2024-01-03 00:00:00', $arrayOfDateAndTime[2]->dateTime->format('Y-m-d H:i:s'));
-    }
-
-    public function testArrayAccessCollection(): void
-    {
-        $data = [
-            'people' => [
-                [
-                    'type' => 'person',
-                    'id' => 1,
-                    'name' => [
-                        'firstname' => 'Andreas',
-                        'lastname' => 'Linden',
-                    ],
-                    'address' => [
-                        'type' => 'address',
-                        'street' => 'Elmstreet',
-                        'housenumber' => '123',
-                    ],
-                ], [
-                    'type' => 'person',
-                    'id' => 2,
-                    'name' => [
-                        'firstname' => 'Peter',
-                        'lastname' => 'Enis',
-                    ],
-                    'address' => [
-                        'type' => 'address',
-                        'zipcode' => '54321',
-                        'country' => 'DE',
-                    ],
-                ],
-            ],
-        ];
-
-        $instantiableNestedCollection = self::$serializer->denormalize($data, InstantiableNestedCollection::class);
-        $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiableNestedCollection);
-        $this->assertInstanceOf(\ArrayObject::class, $instantiableNestedCollection->people);
-        $this->assertCount(2, $instantiableNestedCollection->people);
-
-        $normalized = self::$serializer->normalize($instantiableNestedCollection);
-        $this->assertEquals($data, $normalized);
-    }
-
     public function testRecursiveStructures(): void
     {
         $data = [
@@ -542,7 +739,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['id'],
-            new Person(id: 42),
+            Person::create(id: 42),
         ];
 
         yield [
@@ -560,7 +757,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['standard'],
-            new Person(id: 42, firstname: 'The', lastname: 'Dude', age: 38, email: 'some@mail.to'),
+            Person::create(id: 42, firstname: 'The', lastname: 'Dude', age: 38, email: 'some@mail.to'),
         ];
 
         yield [
@@ -583,13 +780,13 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['extended'],
-            new Person(
+            Person::create(
                 id: 42,
                 age: 42,
                 email: 'some@mail.to',
                 isAwesome: true,
                 isHilarious: false,
-                address: new Address(
+                address: Address::create(
                     street: 'Fireroad',
                     houseNo: 666,
                     zip: 56070,
@@ -617,7 +814,7 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['id', 'isHoly', 'isHilarious'],
-            new Person(
+            Person::create(
                 id: 43,
                 isHilarious: true,
             ),
@@ -636,9 +833,9 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['id', 'address'],
-            new Person(
+            Person::create(
                 id: 44,
-                address: new Address(
+                address: Address::create(
                     street: 'Fireroad',
                     houseNo: '213456',
                     zip: '98765',
@@ -657,13 +854,10 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
             ],
             Person::class,
             ['address'],
-            new Person(
-                address: new Address(
+            Person::create(
+                address: Address::create(
                     street: 'Elmstreet',
                     houseNo: '666',
-                    zip: null,
-                    city: null,
-                    country: null
                 ),
             ),
         ];
@@ -736,30 +930,21 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($data, $normalized);
     }
 
-    public function testDenormalizePropertyRethrowsNotNormalizableValueException(): void
+    public function testObjectToPopulate(): void
     {
-        $this->expectException(NotNormalizableValueException::class);
-        $this->expectExceptionMessage('The type of the "id" attribute for class "Zolex\VOM\Test\Fixtures\Person" must be one of "int" ("string" given).');
+        $person = Person::create(id: 666);
 
-        self::$serializer->denormalize(['id' => 'just a random string'], Person::class);
-    }
-
-    public function testDenormalizeWithClassDiscriminator(): void
-    {
         $data = [
-            'type' => 'person',
-            'id' => 666,
             'name' => [
                 'firstname' => 'Peter',
-                'lastname' => 'Enis',
+                'lastname' => 'Parker',
             ],
         ];
 
-        $thing = self::$serializer->denormalize($data, Thing::class);
-        $this->assertInstanceOf(Person::class, $thing);
-
-        $normalized = self::$serializer->normalize($thing);
-        $this->assertEquals($data, $normalized);
+        $person2 = self::$serializer->denormalize($data, Person::class, null, ['object_to_populate' => $person]);
+        $this->assertSame($person, $person2);
+        $this->assertEquals('Peter', $person2->firstname);
+        $this->assertEquals('Parker', $person2->lastname);
     }
 
     public function testToObject(): void
@@ -792,113 +977,12 @@ class VersatileObjectMapperTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $obj);
     }
 
-    public function testObjectToPopulate(): void
-    {
-        $person = new Person();
-        $person->id = 666;
-
-        $data = [
-               'name' => [
-                'firstname' => 'Peter',
-                'lastname' => 'Parker',
-            ],
-        ];
-
-        $person2 = self::$serializer->denormalize($data, Person::class, null, ['object_to_populate' => $person]);
-        $this->assertSame($person, $person2);
-        $this->assertEquals('Peter', $person2->firstname);
-        $this->assertEquals('Parker', $person2->lastname);
-    }
-
-    public function testDefaultCircularReferenceHandler()
-    {
-        $ref1 = new CircularReference();
-        $ref1->id = 1;
-
-        $ref2 = new CircularReference();
-        $ref2->id = 2;
-
-        $ref1->reference = $ref2;
-        $ref2->reference = $ref1;
-
-        $expected = [
-            'id' => 1,
-            'reference' => [
-                'id' => 2,
-            ],
-        ];
-
-        $normalized = self::$serializer->normalize($ref1);
-        $this->assertEquals($expected, $normalized);
-    }
-
-    public function testCustomCircularReferenceHandler()
-    {
-        $ref1 = new CircularReference();
-        $ref1->id = 1;
-
-        $ref2 = new CircularReference();
-        $ref2->id = 2;
-
-        $ref1->reference = $ref2;
-        $ref2->reference = $ref1;
-
-        $expected = [
-            'id' => 1,
-            'reference' => [
-                'id' => 2,
-                'reference' => [
-                    'id' => 1,
-                    'reference' => [
-                        'id' => 2,
-                        'reference' => '/ref/1',
-                    ],
-                ],
-            ],
-        ];
-
-        $normalized = self::$serializer->normalize($ref1, null, [
-            'circular_reference_limit' => 2,
-            'circular_reference_handler' => function ($ref) {
-                return sprintf('/ref/%d', $ref->id);
-            },
-        ]);
-        $this->assertEquals($expected, $normalized);
-    }
-
-    public function testDenormalizeMultiTypeProps(): void
+    public function testDenormalizeUnionType(): void
     {
         $model = self::$serializer->denormalize(['value' => 42], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);
         $this->assertEquals(42, $model->value);
 
         $model = self::$serializer->denormalize(['value' => 13.37], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);
         $this->assertEquals(13.37, $model->value);
-    }
-
-    public function testInstantiableNestedObject(): void
-    {
-        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
-
-        $metadata = $factory->getMetadataFor(Instantiable::class);
-        $this->assertInstanceOf(ModelMetadata::class, $metadata);
-    }
-
-    public function testNonInstantiableNestedObject(): void
-    {
-        $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Can not create model metadata for "Zolex\VOM\Test\Fixtures\SomeInterface" because is is a non-instantiable type. Consider to add at least one instantiable type.');
-        self::$serializer->denormalize(['property' => []], NonInstantiable::class);
-    }
-
-    public function testInstantiableNestedObjectWithPhpDoc(): void
-    {
-        $instantiable = self::$serializer->denormalize([], InstantiableWithDocTag::class);
-        $this->assertInstanceOf(InstantiableWithDocTag::class, $instantiable);
-    }
-
-    public function testInstantiableNestedCollection(): void
-    {
-        $instantiable = self::$serializer->denormalize([], InstantiableNestedCollection::class);
-        $this->assertInstanceOf(InstantiableNestedCollection::class, $instantiable);
     }
 }

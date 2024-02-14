@@ -32,12 +32,20 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Disable Nesting](#disable-nesting)
   * [Root flag](#root-flag)
   * [Collections](#collections)
+    + [Native Array Collections](#native-array-collections)
+    + [ArrayAccess Collections](#arrayaccess-collections)
+    + [Doctrine Collections](#doctrine-collections)
+    + [Denormalize a Collection](#denormalize-a-collection)
+  * [Collection of Collections](#collection-of-collections)
   * [Data Types](#data-types)
+    + [Strict Types](#strict-types)
+    + [Union Types](#union-types)
     + [Booleans](#booleans)
     + [DateTime](#datetime)
 - [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
   * [Skip Null Values](#skip-null-values)
+  * [Disable Type Enforcement](#disable-type-enforcement)
   * [Object to Populate](#object-to-populate)
   * [Groups](#groups)
   * [Circular References](#circular-references)
@@ -550,6 +558,8 @@ $objectMapper->denormalize($data, RootClass::class);
 VOM can process several types of collections, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
 To tell VOM what types sit in a collection you have to add PhpDoc tags and use the [phpdoc array or collection syntax](https://symfony.com/doc/current/components/property_info.html#type-iscollection) as shown in the following example.
 
+#### Native Array Collections
+
 ```php
 use Zolex\VOM\Mapping as VOM;
 
@@ -557,23 +567,140 @@ use Zolex\VOM\Mapping as VOM;
 class RootClass
 {
     // for a native array, use the array syntax
-    /** @var NestedClass[] */
+    /** @var Thing[] */
     #[VOM\Property]
     public array $valueCollection;
-    
-    // for ArrayAccess (including Doctrine Collections), use the collection syntax
-    /** @var ArrayObject<NestedClass> */
-    #[VOM\Property]
-    public ArrayAccess $valueCollection;
 }
 
 #[VOM\Model]
-class NestedClass
+class Thing
 {
     #[VOM\Property]
     public string $value;
 }
 ```
+
+#### ArrayAccess Collections
+
+For all collections that implement `ArrayAccess` the model preferably should have adder and remover methods and the collection should be initialized in the constructor.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class RootClass
+{    
+    // for ArrayAccess, use the collection syntax
+    /** @var ArrayObject<Thing> */
+    #[VOM\Property]
+    private ArrayAccess $things;
+    
+    public function __construct()
+    {
+        $this->things = new ArrayObject();
+    }
+    
+    public function addThing(Thing $thing): void
+    {
+        $this->things->append($thing);
+    }
+    
+    public function removeThing(Thing $thing): void
+    {
+        // remove it from the ArrayAccess
+    }
+}
+```
+
+If you don't need to add or remove single collection items, and in your use-case it is acceptable to overwrite potentially existing items,
+a simpler option is to create a mutator method that accepts an array.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class RootClass
+{    
+    /** @var ArrayObject<Thing> */
+    #[VOM\Property]
+    private ArrayAccess $things;
+    
+    public function setThings(array $things): void
+    {
+        $this->things = new ArrayObject($things);
+    }
+}
+```
+
+#### Doctrine Collections
+
+If you are working with symfony and create doctrine entities using the maker-bundle, all of this will be generated automatically. The following example is only here to show the extra `VOM\Model` and `VOM\Property` attributes you have to add.
+You don't even need to add the `@var` PhpDoc for the collection value type because VOM can determine it by looking at the doctrine entity associations.
+
+```php
+use Doctrine\ORM\Mapping as ORM;
+use Zolex\VOM\Mapping as VOM;
+
+#[ORM\Entity()]
+#[VOM\Model]
+class DoctrineAddress
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    #[VOM\Property]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    #[VOM\Property]
+    private ?string $street = null;
+}
+```
+
+```php
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Zolex\VOM\Mapping as VOM;
+
+#[ORM\Entity]
+#[VOM\Model]
+class DoctrinePerson
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    #[VOM\Property]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    #[VOM\Property]
+    private ?string $name = null;
+
+    #[ORM\OneToMany(targetEntity: DoctrineAddress::class)]
+    #[VOM\Property]
+    private Collection $addresses;
+
+    public function __construct()
+    {
+        $this->addresses = new ArrayCollection();
+    }
+
+    public function addAddress(DoctrineAddress $address): void
+    {
+        if (!$this->addresses->contains($address)) {
+            $this->addresses->add($address);
+        }
+    }
+
+    public function removeAddress(DoctrineAddress $address): void
+    {
+        $this->addresses->removeElement($address);
+    }
+}
+```
+
+#### Denormalize a Collection
 
 If you want to pass the `denormalize()` method an array, it is required to also pass the array syntax for the model.
 
@@ -646,6 +773,19 @@ $collection = self::$serializer->denormalize($data, CollectionOfCollections::cla
 ```
 
 ### Data Types
+
+#### Strict Types
+
+By default, VOM will throw an exception if you are trying to denormalize a value that does not match the expected type. It is possible to [disable strict type checking](#disable-type-enforcement) using the context.
+
+#### Union Types
+
+By utilizing union types, you can work with strict typing and still allow several types to be denormalized.
+
+```php
+#[VOM\Property]
+public int|float|null $value;
+```
 
 #### Booleans
 
@@ -796,6 +936,14 @@ During normalization values that are null can be skipped, so they won't be inclu
 
 ```php
 $someArray = $objectMapper->normalize($someModel, context: ['skip_null_values' => true]);
+```
+
+### Disable Type Enforcement
+
+Not recommended, but sometimes necessary, you can disable type enforcement/strict typing during denormalization.
+
+```php
+$someArray = $objectMapper->normalize($someModel, context: ['disable_type_enforcement' => true]);
 ```
 
 ### Object to Populate

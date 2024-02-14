@@ -20,49 +20,7 @@ use Zolex\VOM\Mapping\Property;
 #[Model]
 class Person extends Thing
 {
-    public function __construct(
-        ?int $id = null,
-        ?string $firstname = null,
-        ?string $lastname = null,
-        ?int $age = null,
-        ?string $email = null,
-        ?bool $isAwesome = null,
-        ?bool $isHilarious = null,
-        ?bool $isDelicious = null,
-        ?bool $isHoly = null,
-        ?Address $address = null,
-    ) {
-        if (null !== $id) {
-            $this->id = $id;
-        }
-        if (null !== $firstname) {
-            $this->firstname = $firstname;
-        }
-        if (null !== $lastname) {
-            $this->lastname = $lastname;
-        }
-        if (null !== $age) {
-            $this->age = $age;
-        }
-        if (null !== $email) {
-            $this->email = $email;
-        }
-        if (null !== $isAwesome) {
-            $this->isAwesome = $isAwesome;
-        }
-        if (null !== $isHilarious) {
-            $this->isHilarious = $isHilarious;
-        }
-        if (null !== $isDelicious) {
-            $this->isDelicious = $isDelicious;
-        }
-        if (null !== $isHoly) {
-            $this->isHoly = $isHoly;
-        }
-        if (null !== $address) {
-            $this->address = $address;
-        }
-    }
+    use GenericFactoryTrait;
 
     #[Groups(['id', 'standard', 'extended'])]
     #[Property('[id]')]

@@ -14,18 +14,21 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class CollectionOfCollections
+class CollectionWithMutator
 {
-    /** @var array[] */
+    /**
+     * @var \ArrayObject<Person>
+     */
     #[VOM\Property]
-    public array $array;
+    private \ArrayAccess $people;
 
-    /** @var \ArrayObject<DateAndTime[]> */
-    #[VOM\Property]
-    public \ArrayAccess $collection;
-
-    public function setCollection(array $dateAndTime): void
+    public function getPeople(): \ArrayAccess
     {
-        $this->collection = new \ArrayObject($dateAndTime);
+        return $this->people;
+    }
+
+    public function setPeople(array $people): void
+    {
+        $this->people = new \ArrayObject($people);
     }
 }

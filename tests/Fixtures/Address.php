@@ -18,33 +18,7 @@ use Zolex\VOM\Mapping\Property;
 #[Model]
 class Address extends Thing
 {
-    public function __construct(
-        ?string $street = null,
-        ?string $houseNo = null,
-        ?string $zip = null,
-        ?string $city = null,
-        ?string $country = null,
-    ) {
-        if (null !== $street) {
-            $this->street = $street;
-        }
-
-        if (null !== $houseNo) {
-            $this->houseNo = $houseNo;
-        }
-
-        if (null !== $zip) {
-            $this->zip = $zip;
-        }
-
-        if (null !== $city) {
-            $this->city = $city;
-        }
-
-        if (null !== $country) {
-            $this->country = $country;
-        }
-    }
+    use GenericFactoryTrait;
 
     #[Groups(['address', 'address.street', 'extended'])]
     #[Property()]
@@ -71,7 +45,7 @@ class Address extends Thing
         return $this->street;
     }
 
-    public function setStreet(?string $street): void
+    public function setStreet(string $street): void
     {
         $this->street = $street;
     }
@@ -81,7 +55,7 @@ class Address extends Thing
         return $this->houseNo;
     }
 
-    public function setHouseNo(?string $houseNo): void
+    public function setHouseNo(string $houseNo): void
     {
         $this->houseNo = $houseNo;
     }
@@ -91,7 +65,7 @@ class Address extends Thing
         return $this->zip;
     }
 
-    public function setZip(?string $zip): void
+    public function setZip(string $zip): void
     {
         $this->zip = $zip;
     }
@@ -101,7 +75,7 @@ class Address extends Thing
         return $this->city;
     }
 
-    public function setCity(?string $city): void
+    public function setCity(string $city): void
     {
         $this->city = $city;
     }
@@ -111,7 +85,7 @@ class Address extends Thing
         return $this->country;
     }
 
-    public function setCountry(?string $country): void
+    public function setCountry(string $country): void
     {
         $this->country = $country;
     }
