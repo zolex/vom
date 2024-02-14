@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Metadata\Factory\Exception;
+namespace Zolex\VOM\Test\Serializer\Normalizer\Exception;
 
 use Zolex\VOM\Exception\ExceptionInterface;
-use Zolex\VOM\Metadata\Exception\RuntimeException as MetadataRuntimeException;
+use Zolex\VOM\Exception\RuntimeException;
 
-class MappingException extends MetadataRuntimeException implements ExceptionInterface
+class IgnoreCircularReferenceException extends RuntimeException implements ExceptionInterface
 {
 }

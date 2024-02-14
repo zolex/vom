@@ -13,7 +13,7 @@ namespace Zolex\VOM\PropertyInfo\Extractor;
 
 use Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
-use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MappingException;
 
 class MethodCallExtractor implements PropertyTypeExtractorInterface
 {

@@ -985,9 +985,7 @@ $someArray = $objectMapper->normalize($someModel, context: ['groups' => ['group_
 ### Circular References
 
 Sometimes your models reference each other in a way called circular reference. 
-One way to deal with that is configuring the groups context, so it won't normalize these circular references.
-
-If VOM finds a circular reference, by default it will simply omit it in the normalized data to avoid an endless loop.
+One way to deal with that is configuring the groups context.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -1033,10 +1031,12 @@ $person->address->street = 'Examplestreet 123';
 $person->address->person = $person;
 ```
 
-Normalizing the above structure results in the following array:
+If VOM finds a circular reference, by default it will throw an exception to let you know what is happening.
+
+To ignore any circular references you can set the `skip_circular_reference` context:
 
 ```php
-$objectMapper->normalize($person);
+$objectMapper->normalize($person, null ['skip_circular_reference' => true]);
 // results in the following array
 [
     'id' => 3,
@@ -1044,6 +1044,24 @@ $objectMapper->normalize($person);
     'address' => [
         'id' => 6,
         'street' => 'Examplestreet 123'
+    ]
+]
+```
+
+You can also define a circular reference handler to return a value that you want to replace the circular reference with.
+
+```php
+$objectMapper->normalize($person, null, ['circular_reference_handler' => function($object) {
+    return sprintf('/%s/%d', get_class($object), $object->id);
+}]);
+// results in the following array
+[
+    'id' => 3,
+    'name' => 'Peter Parker',
+    'address' => [
+        'id' => 6,
+        'street' => 'Examplestreet 123'
+        'person' => '/Person/3'
     ]
 ]
 ```
@@ -1067,24 +1085,6 @@ $objectMapper->normalize($person, null, ['circular_reference_limit' => 2]);
                 'street' => 'Examplestreet 123'   
             ]
         ]
-    ]
-]
-```
-
-You can define a custom circular reference handler to return a value that you want to replace the circular reference with.
-
-```php
-$objectMapper->normalize($person, null, ['circular_reference_handler' => function($object) {
-    return sprintf('/%s/%d', get_class($object), $object->id);
-}]);
-// results in the following array
-[
-    'id' => 3,
-    'name' => 'Peter Parker',
-    'address' => [
-        'id' => 6,
-        'street' => 'Examplestreet 123'
-        'person' => '/Person/3'
     ]
 ]
 ```

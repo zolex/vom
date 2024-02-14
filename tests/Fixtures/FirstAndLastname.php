@@ -14,7 +14,7 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class NestedName
+class FirstAndLastname
 {
     #[VOM\Property('[nested][firstname]')]
     public string $firstname;

@@ -17,6 +17,7 @@ use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\ExtraAttributesException;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
@@ -32,9 +33,10 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
-use Zolex\VOM\Metadata\Factory\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
+use Zolex\VOM\Test\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
 
 final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
@@ -57,6 +59,12 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
      * should be excluded when normalizing.
      */
     public const SKIP_UNINITIALIZED_VALUES = 'skip_uninitialized_values';
+
+    /**
+     * Flag to control whether circular references should be excluded
+     * if they were not handled using a circular reference handler.
+     */
+    public const SKIP_CIRCULAR_REFERENCE = 'skip_circular_reference';
 
     private readonly \Closure $objectClassResolver;
 
@@ -169,7 +177,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         $constructorArguments = [];
         $metadata = $this->modelMetadataFactory->getMetadataFor($class);
         if (!$metadata->isInstantiable()) {
-            throw new MappingException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
+            throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
         }
 
         foreach ($metadata->getConstructorArguments() as $argument) {
@@ -190,17 +198,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $data = &$context[self::ROOT_DATA];
         }
 
-        if (!$accessor = $property->getAccessor()) {
-            $value = $data;
+        if ($accessor = $property->getAccessor()) {
+            $value = $this->propertyAccessor->getValue($data, $accessor);
         } else {
-            try {
-                $value = $this->propertyAccessor->getValue($data, $accessor);
-            } catch (\Throwable) {
-                $value = null;
-            }
+            $value = $data;
         }
 
-        if (null === $value) {
+        if (null === $value && !$property->isNullable()) {
             return null;
         }
 
@@ -380,62 +384,76 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         if ($this->isCircularReference($object, $context)) {
-            return $this->handleCircularReference($object, $format, $context);
+            try {
+                return $this->handleCircularReference($object, $format, $context);
+            } catch (CircularReferenceException $e) {
+                if ($context[self::SKIP_CIRCULAR_REFERENCE] ?? $this->defaultContext[self::SKIP_CIRCULAR_REFERENCE] ?? false) {
+                    throw new IgnoreCircularReferenceException();
+                }
+
+                throw new CircularReferenceException(sprintf('%s Consider adding "%s" or "%s" to the context.', $e->getMessage(), self::CIRCULAR_REFERENCE_HANDLER, self::SKIP_CIRCULAR_REFERENCE), $e->getCode(), $e);
+            }
         }
 
         $allowedAttributes = $this->getAllowedAttributes($object::class, $context, true);
         foreach ($metadata->getProperties() as $property) {
+            if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
+                continue;
+            }
+
+            $context = $this->getAttributeNormalizationContext($object, $property->getName(), $context);
             try {
-                if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
+                $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($object)?->getTypeProperty()
+                    ? $this->classDiscriminatorResolver?->getTypeForMappedObject($object)
+                    : $this->propertyAccessor->getValue($object, $property->getName());
+            } catch (UninitializedPropertyException|\Error $e) {
+                if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
                     continue;
                 }
+                throw $e;
+            }
 
-                $context = $this->getAttributeNormalizationContext($object, $property->getName(), $context);
-                try {
-                    $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($object)?->getTypeProperty()
-                        ? $this->classDiscriminatorResolver?->getTypeForMappedObject($object)
-                        : $this->propertyAccessor->getValue($object, $property->getName());
-                } catch (UninitializedPropertyException|\Error $e) {
-                    if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
-                        continue;
-                    }
-                    throw $e;
-                }
-
-                if (null !== $attributeValue) {
-                    foreach ($property->getTypes() as $type) {
-                        if (Type::BUILTIN_TYPE_BOOL === $type->getBuiltinType()) {
-                            if ($attributeValue === $property->getTrueValue() || \in_array($attributeValue, self::TRUE_VALUES, true)) {
-                                $attributeValue = $property->getTrueValue() ?? true;
-                            } elseif ($attributeValue === $property->getFalseValue() || \in_array($attributeValue, self::FALSE_VALUES, true)) {
-                                $attributeValue = $property->getFalseValue() ?? false;
-                            }
+            if (null !== $attributeValue) {
+                foreach ($property->getTypes() as $type) {
+                    if (Type::BUILTIN_TYPE_BOOL === $type->getBuiltinType()) {
+                        if ($attributeValue === $property->getTrueValue() || \in_array($attributeValue, self::TRUE_VALUES, true)) {
+                            $attributeValue = $property->getTrueValue() ?? true;
+                        } elseif ($attributeValue === $property->getFalseValue() || \in_array($attributeValue, self::FALSE_VALUES, true)) {
+                            $attributeValue = $property->getFalseValue() ?? false;
                         }
                     }
                 }
+            }
 
+            try {
                 $normalizedValue = $this->serializer->normalize($attributeValue, $format, $context);
+            } catch (IgnoreCircularReferenceException) {
+                continue;
+            }
 
-                if (null === $normalizedValue && ($context[self::SKIP_NULL_VALUES] ?? $this->defaultContext[self::SKIP_NULL_VALUES] ?? false)) {
-                    continue;
-                }
+            if (null === $normalizedValue && ($context[self::SKIP_NULL_VALUES] ?? $this->defaultContext[self::SKIP_NULL_VALUES] ?? false)) {
+                continue;
+            }
 
-                if ($property->isRoot()) {
-                    $target = &$context[self::ROOT_DATA];
-                } else {
-                    $target = &$data;
-                }
+            if ($property->isRoot()) {
+                $target = &$context[self::ROOT_DATA];
+            } else {
+                $target = &$data;
+            }
 
-                if ($property->isNested()) {
-                    try {
-                        $accessor = $property->getAccessor();
-                        $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
-                    } catch (\Throwable) {
+            if ($property->isNested()) {
+                try {
+                    $accessor = $property->getAccessor();
+                    $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
+                } catch (\Throwable $e) {
+                    if (preg_match('/^Cannot write property "[^"]+" to an array./', $e->getMessage())) {
+                        throw new MappingException(sprintf('Normalization is only supported with array-access syntax. Accessor "%s" on class "%s" uses object syntax and therefore can not be normalized.', $accessor, $metadata->getClass()));
                     }
-                } else {
-                    $target = array_merge($target, $normalizedValue);
+
+                    throw $e;
                 }
-            } catch (\Throwable) {
+            } else {
+                $target = array_merge($target, $normalizedValue);
             }
         }
 

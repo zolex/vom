@@ -11,10 +11,10 @@
 
 namespace Fixtures;
 
-use Zolex\VOM\Test\Fixtures\NestedName;
+use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 
 class NestedNameArray
 {
-    /** @var array|NestedName[] */
+    /** @var array|FirstAndLastname[] */
     private array $nestedNames;
 }
