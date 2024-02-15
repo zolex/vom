@@ -62,4 +62,18 @@ class Calls
     {
         return $this->moreData;
     }
+
+    #[Groups(['good'])]
+    #[VOM\Normalizer(accessor: '[good_string]')]
+    public function getGoodString(): string
+    {
+        return 'string';
+    }
+
+    #[Groups(['bad'])]
+    #[VOM\Normalizer]
+    public function getBadString(): string
+    {
+        return 'string';
+    }
 }

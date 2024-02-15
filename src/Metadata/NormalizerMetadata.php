@@ -15,4 +15,13 @@ namespace Zolex\VOM\Metadata;
 
 class NormalizerMetadata extends AbstractMethodMetadata
 {
+    public function __construct(string $method, ?string $virtualPropertyName, private ?string $accessor = null)
+    {
+        parent::__construct($method, $virtualPropertyName);
+    }
+
+    public function getAccessor(): ?string
+    {
+        return $this->accessor;
+    }
 }
