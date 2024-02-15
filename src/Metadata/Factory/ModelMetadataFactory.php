@@ -99,8 +99,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     } else {
                         throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $class->getName(), $reflectionMethod->getName()));
                     }
-                    $normalizer = new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $attribute->getAccessor());
-                    $modelMetadata->addNormalizer($normalizer);
+                    $modelMetadata->addNormalizer(new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $attribute->getAccessor()));
                     continue;
                 }
 
@@ -129,8 +128,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                         throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $class->getName(), $reflectionMethod->getName()));
                     }
 
-                    $denormalizer = new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
-                    $modelMetadata->addDenormalizer($denormalizer);
+                    $modelMetadata->addDenormalizer(new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments, $virtualPropertyName));
                     continue;
                 }
 
@@ -150,8 +148,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                         }
                     }
 
-                    $factory = new FactoryMetadata($reflectionMethod->getName(), $methodArguments);
-                    $modelMetadata->addFactory($factory);
+                    $modelMetadata->addFactory(new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $attribute->getPriority()));
                     continue;
                 }
             }
