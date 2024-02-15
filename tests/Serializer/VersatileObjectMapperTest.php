@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Zolex\VOM\Metadata\Exception\FactoryMethodException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
@@ -41,6 +42,7 @@ use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
+use Zolex\VOM\Test\Fixtures\ModelWithFactory;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\NonInstantiable;
@@ -635,6 +637,58 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertTrue($constructed->getNullable());
         $this->assertfalse($constructed->getDefault());
+    }
+
+    public function testFactoryMethod(): void
+    {
+        $data = [
+            'name' => 'woohoo',
+            'group' => 'something',
+            'flag' => true,
+        ];
+
+        $model = self::$serializer->denormalize($data, ModelWithFactory::class);
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testFactoryMethodWithUnionType(): void
+    {
+        $data = [
+            'name' => 'woohoo',
+            'group' => 123,
+            'flag' => false,
+        ];
+
+        $model = self::$serializer->denormalize($data, ModelWithFactory::class);
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testAlternativeFactoryMethod(): void
+    {
+        $data = [
+            'somethingRequired' => 'yes',
+        ];
+
+        $model = self::$serializer->denormalize($data, ModelWithFactory::class);
+        $this->assertEquals('yes', $model->getModelName());
+    }
+
+    public function testFactoryMethodException(): void
+    {
+        $this->expectException(FactoryMethodException::class);
+        $this->expectExceptionMessage('Could not instantiate model "Zolex\VOM\Test\Fixtures\ModelWithFactory" using any of the factory methods (tried "anotherCreate", "create").');
+        $this->expectExceptionMessage('- Zolex\VOM\Test\Fixtures\ModelWithFactory::anotherCreate(): Argument #1 ($somethingRequired) must be of type string, null given');
+        $this->expectExceptionMessage('- The type of the "name" attribute for class "Zolex\VOM\Test\Fixtures\ModelWithFactory" must be one of "string" ("int" given).');
+        self::$serializer->denormalize(['name' => 123], ModelWithFactory::class);
+    }
+
+    public function testFactoryReturnsInvalidTypeException(): void
+    {
+        $this->expectException(FactoryMethodException::class);
+        $this->expectExceptionMessage('The factory method Zolex\VOM\Test\Fixtures\ModelWithFactory::invalidReturn() must return an instance of "Zolex\VOM\Test\Fixtures\ModelWithFactory".');
+        self::$serializer->denormalize(['last' => true], ModelWithFactory::class);
     }
 
     public function testMethodCalls(): void

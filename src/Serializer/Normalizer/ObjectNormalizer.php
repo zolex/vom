@@ -33,6 +33,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
+use Zolex\VOM\Metadata\Exception\FactoryMethodException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -105,7 +106,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         $context[self::ROOT_DATA] ??= $data;
 
         $model = $this->createInstance($data, $type, $context, $format);
-        $metadata = $this->modelMetadataFactory->getMetadataFor($model::class);
+        if (!$metadata = $this->modelMetadataFactory->getMetadataFor($model::class)) {
+            return null;
+        }
 
         $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
         foreach ($metadata->getDenormalizers() as $denormalizer) {
@@ -174,12 +177,40 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return $this->createInstance($data, $mappedClass, $context, $format);
         }
 
-        $constructorArguments = [];
         $metadata = $this->modelMetadataFactory->getMetadataFor($class);
         if (!$metadata->isInstantiable()) {
+            $factoryExceptions = [];
+            foreach ($metadata->getFactories() as $factory) {
+                try {
+                    $factoryArguments = [];
+                    foreach ($factory->getArguments() as $argument) {
+                        $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+                        if (null === $value && $argument->hasDefaultValue()) {
+                            $value = $argument->getDefaultValue();
+                        }
+
+                        $factoryArguments[$argument->getName()] = $value;
+                    }
+
+                    $model = \call_user_func_array([$metadata->getClass(), $factory->getMethod()], $factoryArguments);
+                    if ($model instanceof $class) {
+                        return $model;
+                    }
+
+                    $factoryExceptions[] = sprintf('The factory method %s::%s() must return an instance of "%s".', $class, $factory->getMethod(), $class);
+                } catch (\Throwable $e) {
+                    $factoryExceptions[$factory->getMethod()] = $e->getMessage();
+                }
+            }
+
+            if (\count($factoryExceptions)) {
+                throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
+            }
+
             throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
         }
 
+        $constructorArguments = [];
         foreach ($metadata->getConstructorArguments() as $argument) {
             $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
             if (null === $value && $argument->hasDefaultValue()) {
