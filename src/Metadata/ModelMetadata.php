@@ -153,7 +153,13 @@ final class ModelMetadata
 
     public function addFactory(FactoryMetadata $factoryMetadata): void
     {
-        $this->factories[] = $factoryMetadata;
+        $priority = $factoryMetadata->getPriority();
+        while (isset($this->factories[$priority])) {
+            --$priority;
+        }
+
+        $this->factories[$priority] = $factoryMetadata;
+        krsort($this->factories, \SORT_NUMERIC);
     }
 
     public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata

@@ -311,6 +311,70 @@ class PropertyPromotion
  }
 ```
 
+### Factory Methods
+
+Alternatively to inject values in the model's constructor, it is also possible to configure factory methods on the model.
+
+```php
+#[VOM\Model]
+class ModelWithFactory
+{
+    private string $modelName;
+    private string|int $modelGroup;
+
+    private function __construct()
+    {
+    }
+
+    #[VOM\Factory]
+    public static function create(
+        #[VOM\Argument]
+        string $name,
+        #[VOM\Argument]
+        string|int|null $group
+    ): self {
+        $instance = new self();
+        $instance->setModelName($name);
+        if (null !== $group) {
+            $instance->setModelGroup($group);
+        }
+
+        return $instance;
+    }
+    
+    public function setModelName(string $name): void
+    {
+        $this->modelName = $name;
+    }
+    
+    public function setModelGroup(string|int $group): void
+    {
+        $this->mdoelGroup = $group;
+    }
+}
+```
+
+In the case that your source data is inconsistent and/or your model is instantiable with different sets of required properties, you can provide multiple factories that VOM will try to instantiate your model with.
+Optionally you can provide a priority for each factory, the higher the value, the earlier VOM with try to call it. If no priority is given, the order of appearance in the code is used.
+
+```php
+#[VOM\Model]
+class ModelWithFactory
+{
+    #[VOM\Factory]
+    public static function createWithSetOne(/* ... */): self
+    {
+        // ...
+    }
+    
+    #[VOM\Factory(priority: 100)]
+    public static function createWithSetTwo(/* ... */): self
+    {
+        // ...
+    }
+}
+```
+
 ### Method Calls
 
 #### Denormalizer Methods
