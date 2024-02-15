@@ -55,7 +55,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 ## Recommended Workflow
 When starting a new project or refactoring an existing one, you should always design your models first. For example If it's an API-Platform REST API, the design of your models will directly reflect it's OpenAPI specification.
 If you have the need to receive an arbitary data format in your existing application, the models should already be in place. This is a great starting point vor the Versatile Object Mapper.
-The models can be anything, so if you receive data from somewhere and need to write it to a database, the models can also be Doctrine Entities. See the example [API-Platform with Doctrine](../examples/api-platform-doctrine).
+The models can be anything, so if you receive data from somewhere and need to write it to a database, the models can also be Doctrine Entities. See the example [API-Platform with Doctrine](https://github.com/zolex/vom-examples/tree/main/api-platform-doctrine).
 
 1. **The first step always is to design your models.** _At this point you should not implement any business logic. Just the plain models._
 2. **Now it makes sense to add the VOM attributes to your models.** _This way you avoid changing the mapping attributes as your models evolve._
@@ -64,7 +64,7 @@ The models can be anything, so if you receive data from somewhere and need to wr
 
 ## The Object Mapper
 
-In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](../examples/symfony-framework).
+In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](https://github.com/zolex/vom-examples/tree/main/symfony-framework).
 The recommended way to use it is by type-hinting Symfony's `SerializerInterface` or `VersatileObjectMapper`.
 
 The only difference is, that `VersatileObjectMapper` by default processes the VOM attributes and Serializer does not.
@@ -87,7 +87,7 @@ class AnySymfonyService
 
 Symfony Serializer needs additional context to enable the VersatileObjectMapper, to not interfere with the framework's behavior if not explicitly wanted (especially with API-Platform).
 A particular use-case for this is API-Platform, where it would otherwise always return the VOM normalized data.
-Check the [custom StateProvider](../examples/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](../examples/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state.
+Check the [custom StateProvider](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state.
 
 ```php
 use Symfony\Component\Serializer\SerializerInterface;
@@ -104,7 +104,7 @@ class AnySymfonyService
 }
 ```
 
-Without symfony framework, you can construct the mapper yourself or simply use the factory. Also see the [plain php example](../examples/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
+Without symfony framework, you can construct the mapper yourself or simply use the factory. Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
 
 ```php
 $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
