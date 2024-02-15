@@ -19,7 +19,7 @@ class FactoryMetadata extends AbstractMethodWithArgumentsMetadata
 {
     public function __construct(
         string $method,
-        /* @var array|PropertyMetadata[] $arguments */
+        /* @var array|ArgumentMetadata[] $arguments */
         array $arguments,
         private readonly Factory $attribute,
         ?string $virtualPropertyName = null,

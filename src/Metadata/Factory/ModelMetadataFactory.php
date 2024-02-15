@@ -20,6 +20,7 @@ use Zolex\VOM\Mapping\Denormalizer;
 use Zolex\VOM\Mapping\Factory;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Normalizer;
+use Zolex\VOM\Metadata\ArgumentMetadata;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\FactoryMetadata;
@@ -112,7 +113,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         foreach ($class->getProperties() as $reflectionProperty) {
-            if ($modelMetadata->hasConstructorArgument($reflectionProperty->getName())) {
+            if ($modelMetadata->isConstructorArgumentPromoted($reflectionProperty->getName())) {
                 continue;
             }
 
@@ -233,11 +234,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         foreach ($reflectionProperty->getAttributes() as $reflectionAttribute) {
             $attribute = $reflectionAttribute->newInstance();
             if ($attribute instanceof AbstractProperty) {
+                $propertyAttribute = $attribute;
                 /* @see Argument why we trow this php-like error */
                 if (null === $reflectionMethod && $attribute instanceof Argument) {
                     throw new MappingException(sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
                 }
-                $propertyAttribute = $attribute;
                 continue;
             }
         }
@@ -246,14 +247,19 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             return null;
         }
 
-        $class = $reflectionProperty->getDeclaringClass()->name;
+        $class = $reflectionProperty->getDeclaringClass()->getName();
         $property = $reflectionProperty->name;
         $types = $this->propertyInfoExtractor->getTypes($class, $property, [
             'reflection_class' => $reflectionClass,
             'reflection_method' => $reflectionMethod,
         ]);
 
-        $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute);
+        if ($reflectionProperty instanceof \ReflectionProperty) {
+            $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $propertyAttribute);
+        } else {
+            $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $propertyAttribute, $reflectionProperty->isPromoted());
+        }
+
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
         } catch (\ReflectionException) {

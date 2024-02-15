@@ -24,7 +24,7 @@ final class ModelMetadata
      */
     private array $properties = [];
     /**
-     * @var array|PropertyMetadata[]
+     * @var array|ArgumentMetadata[]
      */
     private array $constructorArguments = [];
     private ?Model $attribute = null;
@@ -96,16 +96,27 @@ final class ModelMetadata
         $this->properties[$property->getName()] = $property;
     }
 
-    public function hasConstructorArgument(string $name): bool
+    /**
+     * Check if a property is already injected via constructor property promotion.
+     */
+    public function isConstructorArgumentPromoted(string $name): bool
     {
-        return isset($this->constructorArguments[$name]);
+        return isset($this->constructorArguments[$name]) && $this->constructorArguments[$name]->isPromoted();
     }
 
+    /**
+     * @return PropertyMetadata[]
+     */
     public function getConstructorArguments(): array
     {
         return $this->constructorArguments;
     }
 
+    /**
+     * Adds a constructor argument to the model, so it can be injected when instantiating the model.
+     *
+     * {@see PropertyMetadata}
+     */
     public function addConstructorArgument(PropertyMetadata $property): void
     {
         $this->constructorArguments[$property->getName()] = $property;
@@ -121,6 +132,11 @@ final class ModelMetadata
         }
     }
 
+    /**
+     * Adds normalizer metadata to the model, so it can be called during denormalization.
+     *
+     * {@see DenormalizerMetadata}
+     */
     public function addDenormalizer(DenormalizerMetadata $denormalizerMetadata): void
     {
         $this->denormalizers[] = $denormalizerMetadata;
@@ -136,6 +152,11 @@ final class ModelMetadata
         }
     }
 
+    /**
+     * Adds normalizer metadata to the model, so it can be called during normalization.
+     *
+     * {@see NormalizerMetadata}
+     */
     public function addNormalizer(NormalizerMetadata $normalizerMetadata): void
     {
         $this->normalizers[] = $normalizerMetadata;
@@ -151,6 +172,13 @@ final class ModelMetadata
         }
     }
 
+    /**
+     * Adds factory metadata to the model, so it can be used to instantiate a model.
+     * If a factory with the same priority already exists, the new one to be added
+     * will be less prioritized.
+     *
+     * {@See FactoryMetadata}
+     */
     public function addFactory(FactoryMetadata $factoryMetadata): void
     {
         $priority = $factoryMetadata->getPriority();
@@ -162,6 +190,11 @@ final class ModelMetadata
         krsort($this->factories, \SORT_NUMERIC);
     }
 
+    /**
+     * Recursively finds nested property metadata. If metadata does not exist it will be created.
+     *
+     * A use-case could be to map API-Platform style HTTP query params to the VOM normalized field names.
+     */
     public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata
     {
         $property = null;

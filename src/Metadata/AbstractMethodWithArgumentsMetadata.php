@@ -20,7 +20,7 @@ class AbstractMethodWithArgumentsMetadata extends AbstractMethodMetadata
 {
     public function __construct(
         string $method,
-        /** @var array|PropertyMetadata[] */
+        /** @var array|ArgumentMetadata[] $arguments */
         private readonly array $arguments,
         ?string $virtualPropertyName = null,
     ) {
