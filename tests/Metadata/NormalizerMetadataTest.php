@@ -12,21 +12,22 @@
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 
 class NormalizerMetadataTest extends TestCase
 {
-    public function testGetGetMethodAndAttribute(): void
+    public function testGetMethodAndPropertyName(): void
     {
-        $metadata = new NormalizerMetadata('getName', 'name');
+        $metadata = new NormalizerMetadata('getName', 'name', new Normalizer());
 
         $this->assertEquals('getName', $metadata->getMethod());
         $this->assertEquals('name', $metadata->getPropertyName());
     }
 
-    public function testGetGetMethodAndAttributeWithNonCompliantName(): void
+    public function testGetMethodAndPropertyNameWithNonCompliantName(): void
     {
-        $metadata = new NormalizerMetadata('somethingElse', 'somethingElse');
+        $metadata = new NormalizerMetadata('somethingElse', 'somethingElse', new Normalizer());
 
         $this->assertEquals('somethingElse', $metadata->getMethod());
         $this->assertEquals('somethingElse', $metadata->getPropertyName());

@@ -27,11 +27,6 @@ abstract class AbstractProperty
     ) {
     }
 
-    public function isNested(): bool
-    {
-        return (bool) $this->accessor;
-    }
-
     public function isRoot(): bool
     {
         return $this->root;
@@ -40,6 +35,11 @@ abstract class AbstractProperty
     public function getAccessor(): string|bool
     {
         return $this->accessor;
+    }
+
+    public function hasAccessor(): bool
+    {
+        return (bool) $this->accessor;
     }
 
     public function getField(): ?string

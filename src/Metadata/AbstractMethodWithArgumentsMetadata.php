@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
+/**
+ * Base class for all VOM Attributes that can be added on a method and require arguments.
+ */
 class AbstractMethodWithArgumentsMetadata extends AbstractMethodMetadata
 {
     public function __construct(

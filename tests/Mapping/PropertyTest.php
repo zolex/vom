@@ -31,7 +31,7 @@ class PropertyTest extends TestCase
 
         $this->assertEquals('foo', $prop->getAccessor());
         $this->assertEquals('bar', $prop->getField());
-        $this->assertTrue($prop->isNested());
+        $this->assertTrue($prop->hasAccessor());
         $this->assertTrue($prop->isRoot());
         $this->assertEquals(['foo' => 'bar'], $prop->getAliases());
         $this->assertEquals('foo', $prop->getTrueValue());

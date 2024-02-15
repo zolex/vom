@@ -17,6 +17,7 @@ use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\BadMethodCallException;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\ExtraAttributesException;
@@ -39,6 +40,9 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\Test\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
 
+/**
+ * Normalizes and denormalizes VOM models and their attributes.
+ */
 final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
     use ObjectToPopulateTrait;
@@ -47,6 +51,11 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     public const TRUE_VALUES = [true, 1, '1', 'TRUE', 'true', 'T', 't', 'ON', 'on', 'YES', 'yes', 'Y', 'y'];
     public const FALSE_VALUES = [false, 0, '0', 'FALSE', 'false', 'F', 'f', 'OFF', 'off', 'NO', 'no', 'N', 'n'];
 
+    /**
+     * Context key  where the normalizer stores the initial/root data
+     * that it was called with to allow denormalizing data from the root
+     * anywhere in a potentially nested structure.
+     */
     public const ROOT_DATA = 'vom_root_data';
 
     /**
@@ -77,10 +86,12 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         array $defaultContext = [],
     ) {
         parent::__construct($classMetadataFactory, null, $defaultContext);
-
         $this->objectClassResolver = ($objectClassResolver ?? 'get_class')(...);
     }
 
+    /**
+     * Returns the types potentially supported by this denormalizer.
+     */
     public function getSupportedTypes(?string $format): array
     {
         return [
@@ -88,6 +99,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         ];
     }
 
+    /**
+     * Checks whether the given class is supported for denormalization by this normalizer.
+     */
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
         if (!isset($context['vom']) || !$context['vom']) {
@@ -97,6 +111,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->getMetadataFor($type);
     }
 
+    /**
+     * Denormalizes data back into an object of the given class.
+     *
+     * @throws BadMethodCallException When a denormalizer method was configured and could not be called
+     * @throws MappingException       When the mapping is not configured properly, but it could not be detected earlier
+     * @throws ExceptionInterface     For any other type of exception
+     */
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         if (null === $data) {
@@ -126,7 +147,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             try {
                 $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
-                throw new MappingException(sprintf('Unable to denormalize: %s', $e->getMessage()), 0, $e);
+                throw new BadMethodCallException(sprintf('Bad denormalizer method call: %s', $e->getMessage()), 0, $e);
             }
         }
 
@@ -161,6 +182,17 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         return $model;
     }
 
+    /**
+     * Tries to instantiate a model of the given class. If applicable the given data will be injected.
+     * First try to instantiate it normally while nd injecting constructor arguments.
+     * If that was not possible, iterate ove the model's factories until the first one succeeds.
+     *
+     * Finally, fail if no instance could be created.
+     *
+     * @throws NotNormalizableValueException
+     * @throws FactoryMethodException        When at least one factory method is configured but failed to instantiate the model
+     * @throws ExceptionInterface            For any other type of exception
+     */
     protected function createInstance(array &$data, string $class, array &$context, ?string $format): object
     {
         if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
@@ -178,51 +210,56 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         $metadata = $this->modelMetadataFactory->getMetadataFor($class);
-        if (!$metadata->isInstantiable()) {
-            $factoryExceptions = [];
-            foreach ($metadata->getFactories() as $factory) {
-                try {
-                    $factoryArguments = [];
-                    foreach ($factory->getArguments() as $argument) {
-                        $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
-                        if (null === $value && $argument->hasDefaultValue()) {
-                            $value = $argument->getDefaultValue();
-                        }
-
-                        $factoryArguments[$argument->getName()] = $value;
-                    }
-
-                    $model = \call_user_func_array([$metadata->getClass(), $factory->getMethod()], $factoryArguments);
-                    if ($model instanceof $class) {
-                        return $model;
-                    }
-
-                    $factoryExceptions[] = sprintf('The factory method %s::%s() must return an instance of "%s".', $class, $factory->getMethod(), $class);
-                } catch (\Throwable $e) {
-                    $factoryExceptions[$factory->getMethod()] = $e->getMessage();
+        if ($metadata->isInstantiable()) {
+            $constructorArguments = [];
+            foreach ($metadata->getConstructorArguments() as $argument) {
+                $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+                if (null === $value && $argument->hasDefaultValue()) {
+                    $value = $argument->getDefaultValue();
                 }
+
+                $constructorArguments[$argument->getName()] = $value;
             }
 
-            if (\count($factoryExceptions)) {
-                throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
-            }
-
-            throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
+            return new $class(...$constructorArguments);
         }
 
-        $constructorArguments = [];
-        foreach ($metadata->getConstructorArguments() as $argument) {
-            $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
-            if (null === $value && $argument->hasDefaultValue()) {
-                $value = $argument->getDefaultValue();
-            }
+        $factoryExceptions = [];
+        foreach ($metadata->getFactories() as $factory) {
+            try {
+                $factoryArguments = [];
+                foreach ($factory->getArguments() as $argument) {
+                    $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+                    if (null === $value && $argument->hasDefaultValue()) {
+                        $value = $argument->getDefaultValue();
+                    }
 
-            $constructorArguments[$argument->getName()] = $value;
+                    $factoryArguments[$argument->getName()] = $value;
+                }
+
+                $model = \call_user_func_array([$metadata->getClass(), $factory->getMethod()], $factoryArguments);
+                if ($model instanceof $class) {
+                    return $model;
+                }
+
+                $factoryExceptions[] = sprintf('The factory method %s::%s() must return an instance of "%s".', $class, $factory->getMethod(), $class);
+            } catch (\Throwable $e) {
+                $factoryExceptions[$factory->getMethod()] = $e->getMessage();
+            }
         }
 
-        return new $class(...$constructorArguments);
+        if (\count($factoryExceptions)) {
+            throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
+        }
+
+        throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
     }
 
+    /**
+     * Denormalizes a single property of VOM model.
+     *
+     * @throws ExceptionInterface
+     */
     private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
         if ($property->isRoot()) {
@@ -245,6 +282,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     /**
      * Validates the submitted data and denormalizes it.
      *
+     * @throws NotNormalizableValueException
+     * @throws ExtraAttributesException
+     * @throws MissingConstructorArgumentsException
+     * @throws LogicException
      * @throws ExceptionInterface
      */
     private function validateAndDenormalize(string $currentClass, PropertyMetadata $property, mixed $data, ?string $format, array $context): mixed
@@ -394,6 +435,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type of the "%s" attribute for class "%s" must be one of "%s" ("%s" given).', $attribute, $currentClass, implode('", "', array_keys($expectedTypes)), get_debug_type($data)), $data, array_keys($expectedTypes), $context['deserialization_path'] ?? $attribute);
     }
 
+    /**
+     * Checks whether the given class is supported for normalization by this normalizer.
+     */
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
         if (!isset($context['vom']) || !$context['vom']) {
@@ -403,6 +447,17 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         return \is_object($data) && null !== $this->modelMetadataFactory->getMetadataFor($data::class);
     }
 
+    /**
+     * Normalizes an object into a set of arrays/scalars.
+     *
+     * @throws InvalidArgumentException         When the object given is not a supported type for the normalizer
+     * @throws CircularReferenceException       When the normalizer detects a circular reference when no circular reference handler can fix it
+     * @throws IgnoreCircularReferenceException When the normalizer detects a circular reference, and it should be ignored according to the context
+     * @throws LogicException                   When the normalizer is not called in an expected context
+     * @throws BadMethodCallException           When a normalizer method was called but failed
+     * @throws MappingException                 When the mapping is not configured properly, but it could not be detected earlier
+     * @throws ExceptionInterface               For all the other cases of errors
+     */
     public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
         if (!\is_object($object) || !$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
@@ -472,7 +527,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 $target = &$data;
             }
 
-            if ($property->isNested()) {
+            if ($property->hasAccessor()) {
                 try {
                     $accessor = $property->getAccessor();
                     $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
@@ -497,7 +552,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             try {
                 $normalized = $object->{$normalizer->getMethod()}();
             } catch (\Throwable $e) {
-                throw new MappingException(sprintf('Unable to normalize: %s', $e->getMessage()), 0, $e);
+                throw new BadMethodCallException(sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
             }
 
             if (null !== $accessor = $normalizer->getAccessor()) {

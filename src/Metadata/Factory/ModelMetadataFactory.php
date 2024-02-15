@@ -152,7 +152,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        return new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $normalizer->getAccessor());
+        return new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $normalizer);
     }
 
     /**
@@ -217,7 +217,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
-        return new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $factory->getPriority());
+        return new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $factory);
     }
 
     /**
