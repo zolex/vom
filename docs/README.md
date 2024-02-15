@@ -18,10 +18,10 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 - [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
-  * [Deserialization](#deserialization)
   * [Denormalization](#denormalization)
-  * [Serialization](#serialization)
   * [Normalization](#normalization)
+  * [Deserialization](#deserialization)
+  * [Serialization](#serialization)
 - [Attribute Configuration](#attribute-configuration)
   * [The Accessor](#the-accessor)
   * [Constructor Arguments](#constructor-arguments)
@@ -86,9 +86,11 @@ class AnySymfonyService
 }
 ```
 
-Symfony Serializer needs additional context to enable the VersatileObjectMapper, to not interfere with the framework's behavior if not explicitly wanted (especially with API-Platform).
-A particular use-case for this is API-Platform, where it would otherwise always return the VOM normalized data.
-Check the [custom StateProvider](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state.
+Symfony Serializer needs additional context to utilize the Versatile Object Mapper. This is required to not interfere with the framework's behavior if not explicitly wanted.
+A particular use-case where it would otherwise produce unwanted results is API-Platform, where it would always return the VOM normalized data without the extra context.
+
+_For technical details, check the [StateProvider](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state
+as well as the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-doctrine/src/Entity/Person.php) in the API-Platform example with Doctrine._
 
 ```php
 use Symfony\Component\Serializer\SerializerInterface;
@@ -105,7 +107,8 @@ class AnySymfonyService
 }
 ```
 
-Without symfony framework, you can construct the mapper yourself or simply use the factory. Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
+Without symfony framework, you can construct the mapper yourself or simply use the included factory.
+Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
 
 ```php
 $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
@@ -114,24 +117,39 @@ $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::crea
 > [!TIP]
 > The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available in Symfony, such as PHPStan and Doctrine. You can also write a custom extractor to give VOM additional information on your model's properties.
 
-### Deserialization
-
-The object mapper can process several kinds of serialized data, such as JSON or XML. To create a model instance from the input data, simply call the `deserialize()` method on the mapper.
-
-```php
-$person = $objectMapper->deserialize($jsonString, Person::class);
-```
-
-
 ### Denormalization
 
-If your data is already an array or object, you can call the `denormalize()` method on the mapper to create a model instance from it. 
+Denormalization is the process of mapping arbitrary, untyped data to strictly typed models. Other well known synonyms for this process are hydration or transformation.
 
-The object mapper can process any kind of PHP data structure as input. This includes arrays, plain old PHP objects, class instances and any combination and nesting of all these.
-So the input data might be an indexed array, an associative array an stdClass, other class instances with private properties and their own getters and setters as well as several collections.
+If your data already is an array you can call the `denormalize()` method on the mapper to create a model instance from it.
 
 ```php
 $person = $objectMapper->denormalize($data, Person::class);
+```
+
+### Normalization
+
+Normalization is ht process of mapping a strictly typed model to an arbitrary array with untyped values.
+
+If you need a native php array representation of your model you can call the `normalize()` method and pass it your model.
+
+```php
+$array = $objectMapper->normalize($personModel);
+```
+
+If you need it converted to an object, use the static `toObject()` method and pass it the normalization result.
+This is not simply casting, but recursively converts the whole data structure to an `stdClass`, just leaving indexed, sequential arrays intact.
+
+```php
+$object = \Zolex\VOM\Serializer\VersatileObjectMapper::toObject($array);
+```
+
+### Deserialization
+
+VOM can process several kinds of serialized data, such as JSON or XML. To create a model instance from the string, simply call the `deserialize()` method on the mapper.
+
+```php
+$person = $objectMapper->deserialize($jsonString, Person::class);
 ```
 
 ### Serialization
@@ -142,24 +160,10 @@ To create a string representation of a model, such as JSON, you can call the `se
 $jsonString = $objectMapper->serialize($personModel, 'json'); // json is the default
 ```
 
-### Normalization
-
-If you need a native php array representation of your model you can call the `normalize()` method.
-
-```php
-$array = $objectMapper->normalize($personModel);
-```
-
-If you need it converted to an object, use the `toObject()` method and pass it the denormalization result (this is not just casting, but deeply converting the whole data structure, just leaving indexed, sequential arrays intact).
-
-```php
-$object = \Zolex\VOM\Serializer\VersatileObjectMapper::toObject($array);
-```
-
 ## Attribute Configuration
 
 When attributes with no arguments are added to the model properties, VOM will utilize its default behavior, which essentially is the same as the standard symfony object normalizer.
-Meaning that in this case no actual data transformation will be done, it will simply inject the values from the data structure where they match in the same structure of your models.
+Meaning that in this case no actual data transformation/mapping will be done, it will simply inject the values from the data structure where they match in the same structure of your models.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -193,7 +197,8 @@ $data = [
 $objectMapper->denormalize($data, RootClass:class);
 ```
 
-As the data structures and names of all properties are identical, no additional configuration is required. _But as mentioned above, in this scenario you probably just want to use a symfony normalizer to save resources._
+As the data structures and names of all properties are identical, no additional configuration is required.
+_But as mentioned above, in this scenario you probably just want to use a symfony normalizer to save resources._
 
 > [!TIP]
 > Every model that should be processed by VOM needs the `#[VOM\Model]` attribute, so does every property need the `#[VOM\Property]`attribute.
