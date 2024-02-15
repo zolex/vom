@@ -25,7 +25,7 @@ class DenormalizerMetadataTest extends TestCase
             new PropertyMetadata('name', [], new Property()),
         ];
 
-        $metadata = new DenormalizerMetadata('getData', 'data', $args);
+        $metadata = new DenormalizerMetadata('getData', $args, 'data');
 
         $this->assertEquals('getData', $metadata->getMethod());
         $this->assertEquals('data', $metadata->getPropertyName());
@@ -39,7 +39,7 @@ class DenormalizerMetadataTest extends TestCase
             new PropertyMetadata('name', [], new Property()),
         ];
 
-        $metadata = new DenormalizerMetadata('somethingElse', 'somethingElse', $args);
+        $metadata = new DenormalizerMetadata('somethingElse', $args, 'somethingElse');
 
         $this->assertEquals('somethingElse', $metadata->getMethod());
         $this->assertEquals('somethingElse', $metadata->getPropertyName());

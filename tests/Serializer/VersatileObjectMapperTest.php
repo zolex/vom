@@ -647,8 +647,23 @@ class VersatileObjectMapperTest extends TestCase
         ];
 
         $calls = self::$serializer->denormalize($data, Calls::class);
-        $normalized = self::$serializer->normalize($calls);
+        $normalized = self::$serializer->normalize($calls, null, ['groups' => ['data', 'more']]);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testGoodDenormalizer(): void
+    {
+        $calls = new Calls();
+        $normalized = self::$serializer->normalize($calls, null, ['groups' => ['good']]);
+        $this->assertEquals(['good_string' => 'string'], $normalized);
+    }
+
+    public function testBadDenormalizerThrowsException(): void
+    {
+        $calls = new Calls();
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Normalizer Zolex\VOM\Test\Fixtures\Calls::getBadString() without accessor must return an array.');
+        self::$serializer->normalize($calls, null, ['groups' => ['bad']]);
     }
 
     public function testMethodCallsOnInvalidDenormalizer(): void

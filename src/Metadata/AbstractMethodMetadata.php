@@ -15,7 +15,7 @@ abstract class AbstractMethodMetadata
 {
     public function __construct(
         private readonly string $method,
-        private readonly string $virtualPropertyName,
+        private readonly ?string $virtualPropertyName,
     ) {
     }
 
@@ -24,7 +24,7 @@ abstract class AbstractMethodMetadata
         return $this->method;
     }
 
-    public function getPropertyName(): string
+    public function getPropertyName(): ?string
     {
         return $this->virtualPropertyName;
     }

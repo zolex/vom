@@ -39,6 +39,11 @@ final class ModelMetadata
      */
     private array $normalizers = [];
 
+    /**
+     * @var array|FactoryMetadata[]
+     */
+    private array $factories = [];
+
     public function __construct(private readonly string $class, private bool $isInstantiable = true)
     {
     }
@@ -134,6 +139,21 @@ final class ModelMetadata
     public function addNormalizer(NormalizerMetadata $normalizerMetadata): void
     {
         $this->normalizers[] = $normalizerMetadata;
+    }
+
+    /**
+     * @return FactoryMetadata[]
+     */
+    public function getFactories(): iterable
+    {
+        foreach ($this->factories as $factory) {
+            yield $factory;
+        }
+    }
+
+    public function addFactory(FactoryMetadata $factoryMetadata): void
+    {
+        $this->factories[] = $factoryMetadata;
     }
 
     public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata

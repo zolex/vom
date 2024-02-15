@@ -464,9 +464,18 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             try {
-                $data = array_merge($data, $object->{$normalizer->getMethod()}());
+                $normalized = $object->{$normalizer->getMethod()}();
             } catch (\Throwable $e) {
                 throw new MappingException(sprintf('Unable to normalize: %s', $e->getMessage()), 0, $e);
+            }
+
+            if (null !== $accessor = $normalizer->getAccessor()) {
+                $this->propertyAccessor->setValue($data, $accessor, $normalized);
+            } else {
+                if (!\is_array($normalized)) {
+                    throw new MappingException(sprintf('Normalizer %s::%s() without accessor must return an array.', $metadata->getClass(), $normalizer->getMethod()));
+                }
+                $data = array_merge($data, $normalized);
             }
         }
 
