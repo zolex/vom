@@ -47,11 +47,15 @@ use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\NonInstantiable;
 use Zolex\VOM\Test\Fixtures\Person;
+use Zolex\VOM\Test\Fixtures\PrivateDenormalizer;
+use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\SickChild;
 use Zolex\VOM\Test\Fixtures\SickRoot;
 use Zolex\VOM\Test\Fixtures\SickSack;
 use Zolex\VOM\Test\Fixtures\SickSuck;
+use Zolex\VOM\Test\Fixtures\StaticDenormalizer;
+use Zolex\VOM\Test\Fixtures\StaticNormalizer;
 use Zolex\VOM\Test\Fixtures\Thing;
 
 /**
@@ -718,6 +722,34 @@ class VersatileObjectMapperTest extends TestCase
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('Normalizer Zolex\VOM\Test\Fixtures\Calls::getBadString() without accessor must return an array.');
         self::$serializer->normalize($calls, null, ['groups' => ['bad']]);
+    }
+
+    public function testStaticNormalizerThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Normalizer method Zolex\VOM\Test\Fixtures\StaticNormalizer::staticNormalizer() should not be static.');
+        self::$serializer->denormalize([], StaticNormalizer::class);
+    }
+
+    public function testPrivateNormalizerThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Normalizer method Zolex\VOM\Test\Fixtures\PrivateNormalizer::privateNormalizer() must be public.');
+        self::$serializer->denormalize([], PrivateNormalizer::class);
+    }
+
+    public function testStaticDenormalizerThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Denormalizer method Zolex\VOM\Test\Fixtures\StaticDenormalizer::staticDenormalizer() should not be static.');
+        self::$serializer->denormalize([], StaticDenormalizer::class);
+    }
+
+    public function testPrivateDenormalizerThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Denormalizer method Zolex\VOM\Test\Fixtures\PrivateDenormalizer::privateDenormalizer() must be public.');
+        self::$serializer->denormalize([], PrivateDenormalizer::class);
     }
 
     public function testMethodCallsOnInvalidDenormalizer(): void

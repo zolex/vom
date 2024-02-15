@@ -82,8 +82,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 continue;
             }
 
-            $normalizer = null;
-            $denormalizer = null;
             foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
                 if ($attribute instanceof Normalizer) {
                     if (!$reflectionMethod->isPublic()) {
