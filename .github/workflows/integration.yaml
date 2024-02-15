@@ -2,8 +2,11 @@ name: Integration
 
 on:
   pull_request:
+    branches:
+      - master
   push:
-    branches: [master, feature/*]
+    branches:
+      - master
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
