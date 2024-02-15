@@ -48,6 +48,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      * the same metadata instance is returned.
      *
      * Otherwise, a new metadata instance is created.
+     *
+     * @throws MappingException
      */
     public function getMetadataFor(string|\ReflectionClass $class, ?ModelMetadata $modelMetadata = null): ?ModelMetadata
     {
@@ -70,6 +72,19 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
                 if ($attribute instanceof Model) {
                     $modelMetadata->setAttribute($attribute);
+                    if (null !== $factory = $attribute->getFactory()) {
+                        if (2 !== \count($factory)) {
+                            throw new MappingException(sprintf('Factory for %s must be an array with fully qualified classname and method name.', $class->getName()));
+                        }
+                        try {
+                            $factoryClass = new \ReflectionClass($factory[0]);
+                            $factoryMethod = $factoryClass->getMethod($factory[1]);
+                        } catch (\ReflectionException $e) {
+                            throw new MappingException(sprintf('Can not create factory for %s. %s', $class->getName(), $e->getMessage()));
+                        }
+
+                        $modelMetadata->addFactory($this->createFactoryMetadata($factoryClass, $factoryMethod, \PHP_INT_MAX));
+                    }
                     continue;
                 }
             }
@@ -106,7 +121,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 }
 
                 if ($attribute instanceof Factory) {
-                    $modelMetadata->addFactory($this->createFactoryMetadata($class, $reflectionMethod, $attribute));
+                    $modelMetadata->addFactory($this->createFactoryMetadata($class, $reflectionMethod, $attribute->getPriority()));
                     continue;
                 }
             }
@@ -153,7 +168,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        return new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $normalizer);
+        return new NormalizerMetadata([$reflectionClass->getName(), $reflectionMethod->getName()], $virtualPropertyName, $normalizer);
     }
 
     /**
@@ -190,7 +205,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        return new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
+        return new DenormalizerMetadata([$reflectionClass->getName(), $reflectionMethod->getName()], $methodArguments, $virtualPropertyName);
     }
 
     /**
@@ -201,7 +216,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     private function createFactoryMetadata(
         \ReflectionClass $reflectionClass,
         \ReflectionMethod $reflectionMethod,
-        Factory $factory,
+        int $priority,
     ): FactoryMetadata {
         if (!$reflectionMethod->isStatic()) {
             throw new MappingException(sprintf('Factory method %s::%s() must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
@@ -218,7 +233,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
-        return new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $factory);
+        return new FactoryMetadata([$reflectionClass->getName(), $reflectionMethod->getName()], $methodArguments, $priority);
     }
 
     /**

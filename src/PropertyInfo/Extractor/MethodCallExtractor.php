@@ -30,21 +30,25 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
 
         foreach ($context['reflection_method']->getParameters() as $parameter) {
             if ($parameter->getName() === $property) {
-                return $this->extractFromReflectionType($context['reflection_class'], $context['reflection_method'], $parameter->getType());
+                return $this->extractFromReflectionType(
+                    $context['reflection_class']?->getName() ?? null,
+                    $context['reflection_method']->getName(),
+                    $parameter->getType()
+                );
             }
         }
 
         return null;
     }
 
-    private function extractFromReflectionType(\ReflectionClass $reflectionClass, \ReflectionMethod $reflectionMethod, \ReflectionType $reflectionType): array
+    private function extractFromReflectionType(?string $className, string $methodName, \ReflectionType $reflectionType): array
     {
         $types = [];
         $nullable = $reflectionType->allowsNull();
 
         foreach (($reflectionType instanceof \ReflectionUnionType || $reflectionType instanceof \ReflectionIntersectionType) ? $reflectionType->getTypes() : [$reflectionType] as $type) {
             if (!$type->isBuiltin()) {
-                throw new MappingException(sprintf('Only builtin types are supported for denormalizer method call %s::%s().', $reflectionClass->getName(), $reflectionMethod->getName()));
+                throw new MappingException(sprintf('Only builtin types are supported for method call %s::%s().', $className, $methodName));
             }
 
             $phpTypeOrClass = $type->getName();
@@ -53,7 +57,7 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
             }
 
             if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass) {
-                throw new MappingException(sprintf('Only scalars are supported for denormalizer method call %s::%s().', $reflectionClass->getName(), $reflectionMethod->getName()));
+                throw new MappingException(sprintf('Only scalars are supported for method call %s::%s().', $className, $methodName));
             }
 
             $types[] = new Type($phpTypeOrClass, $nullable);

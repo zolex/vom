@@ -13,6 +13,19 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-class DenormalizerMetadata extends AbstractMethodWithArgumentsMetadata
+class DenormalizerMetadata extends AbstractCallableMetadata implements CallableMetadataInterface
 {
+    public function __construct(
+        array $callable,
+        /* @var array|ArgumentMetadata[] $arguments */
+        array $arguments,
+        private readonly string $virualPropertyName,
+    ) {
+        parent::__construct($callable, $arguments);
+    }
+
+    public function getPropertyName(): string
+    {
+        return $this->virualPropertyName;
+    }
 }

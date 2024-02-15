@@ -179,14 +179,14 @@ final class ModelMetadata
      *
      * {@See FactoryMetadata}
      */
-    public function addFactory(FactoryMetadata $factoryMetadata): void
+    public function addFactory(FactoryMetadata $factory): void
     {
-        $priority = $factoryMetadata->getPriority();
+        $priority = $factory->getPriority();
         while (isset($this->factories[$priority])) {
             --$priority;
         }
 
-        $this->factories[$priority] = $factoryMetadata;
+        $this->factories[$priority] = $factory;
         krsort($this->factories, \SORT_NUMERIC);
     }
 
