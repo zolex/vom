@@ -11,6 +11,9 @@
 
 namespace Zolex\VOM\Metadata;
 
+/**
+ * Base class for all VOM Attributes that can be added on a method.
+ */
 abstract class AbstractMethodMetadata
 {
     public function __construct(

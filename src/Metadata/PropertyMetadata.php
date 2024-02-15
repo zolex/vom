@@ -69,14 +69,19 @@ class PropertyMetadata
         return $this->types;
     }
 
+    public function hasAccessor(): bool
+    {
+        return $this->attribute->hasAccessor();
+    }
+
     public function getAccessor(): string|false
     {
         $accessor = $this->attribute->getAccessor();
-        if (false === $effectiveAccessor = (true === $accessor ? '['.$this->name.']' : $accessor)) {
+        if (false === $accessor = (true === $accessor ? '['.$this->name.']' : $accessor)) {
             return false;
         }
 
-        return $effectiveAccessor;
+        return $accessor;
     }
 
     public function getAliases(): array
@@ -87,11 +92,6 @@ class PropertyMetadata
     public function getAlias(string $name): ?string
     {
         return $this->attribute->getAlias($name);
-    }
-
-    public function isNested(): bool
-    {
-        return $this->attribute->isNested();
     }
 
     public function isRoot(): bool

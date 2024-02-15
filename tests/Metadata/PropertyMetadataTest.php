@@ -34,7 +34,7 @@ class PropertyMetadataTest extends TestCase
         $this->assertEquals('name', $metadata->getName());
         $this->assertEquals('[accessor]', $metadata->getAccessor());
         $this->assertEquals('field', $metadata->getField());
-        $this->assertTrue($metadata->isNested());
+        $this->asserttrue($metadata->hasAccessor());
         $this->assertTrue($metadata->isRoot());
         $this->assertEquals(['foo' => 'bar'], $metadata->getAliases());
         $this->assertEquals('bar', $metadata->getAlias('foo'));
