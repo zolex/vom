@@ -144,6 +144,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
             }
 
+            if ($model::class !== $denormalizer->getClass()) {
+                throw new MappingException(sprintf('Model class "%s" does not match the expected denormalizer class "%s".', $model::class, $denormalizer->getClass()));
+            }
+
             try {
                 $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
@@ -210,6 +214,38 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         $metadata = $this->modelMetadataFactory->getMetadataFor($class);
+
+        $hasFactory = false;
+        $factoryExceptions = [];
+        foreach ($metadata->getFactories() as $factory) {
+            $hasFactory = true;
+            try {
+                $factoryArguments = [];
+                foreach ($factory->getArguments() as $argument) {
+                    $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+                    if (null === $value && $argument->hasDefaultValue()) {
+                        $value = $argument->getDefaultValue();
+                    }
+
+                    $factoryArguments[$argument->getName()] = $value;
+                }
+
+                $callable = $factory->getCallable();
+                $model = \call_user_func_array($callable, $factoryArguments);
+                if ($model instanceof $class) {
+                    return $model;
+                }
+
+                $factoryExceptions[$factory->getLongMethodName()] = sprintf('The factory method "%s:%s()" must return an instance of "%s".', $factory->getClass(), $factory->getMethod(), $class);
+            } catch (\Throwable $e) {
+                $factoryExceptions[$factory->getLongMethodName()] = $e->getMessage();
+            }
+        }
+
+        if (true === $hasFactory && \count($factoryExceptions)) {
+            throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
+        }
+
         if ($metadata->isInstantiable()) {
             $constructorArguments = [];
             foreach ($metadata->getConstructorArguments() as $argument) {
@@ -222,34 +258,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             return new $class(...$constructorArguments);
-        }
-
-        $factoryExceptions = [];
-        foreach ($metadata->getFactories() as $factory) {
-            try {
-                $factoryArguments = [];
-                foreach ($factory->getArguments() as $argument) {
-                    $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
-                    if (null === $value && $argument->hasDefaultValue()) {
-                        $value = $argument->getDefaultValue();
-                    }
-
-                    $factoryArguments[$argument->getName()] = $value;
-                }
-
-                $model = \call_user_func_array([$metadata->getClass(), $factory->getMethod()], $factoryArguments);
-                if ($model instanceof $class) {
-                    return $model;
-                }
-
-                $factoryExceptions[] = sprintf('The factory method %s::%s() must return an instance of "%s".', $class, $factory->getMethod(), $class);
-            } catch (\Throwable $e) {
-                $factoryExceptions[$factory->getMethod()] = $e->getMessage();
-            }
-        }
-
-        if (\count($factoryExceptions)) {
-            throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
         }
 
         throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
@@ -547,6 +555,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $attribute = $normalizer->getPropertyName();
             if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
                 continue;
+            }
+
+            if ($object::class !== $normalizer->getClass()) {
+                throw new MappingException(sprintf('Model class "%s" does not match the expected normalizer class "%s".', $object::class, $normalizer->getClass()));
             }
 
             try {

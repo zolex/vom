@@ -13,22 +13,19 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-use Zolex\VOM\Mapping\Factory;
-
-class FactoryMetadata extends AbstractMethodWithArgumentsMetadata
+class FactoryMetadata extends AbstractCallableMetadata implements CallableMetadataInterface
 {
     public function __construct(
-        string $method,
+        array $callable,
         /* @var array|ArgumentMetadata[] $arguments */
-        array $arguments,
-        private readonly Factory $attribute,
-        ?string $virtualPropertyName = null,
+        array $arguments = [],
+        private int $priority = 0,
     ) {
-        parent::__construct($method, $arguments, $virtualPropertyName);
+        parent::__construct($callable, $arguments);
     }
 
     public function getPriority(): int
     {
-        return $this->attribute->getPriority();
+        return $this->priority;
     }
 }

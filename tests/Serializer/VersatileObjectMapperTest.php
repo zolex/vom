@@ -42,7 +42,11 @@ use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
+use Zolex\VOM\Test\Fixtures\ModelWithCallableFactory;
 use Zolex\VOM\Test\Fixtures\ModelWithFactory;
+use Zolex\VOM\Test\Fixtures\ModelWithInvalidFactory;
+use Zolex\VOM\Test\Fixtures\ModelWithNonPublicFactory;
+use Zolex\VOM\Test\Fixtures\ModelWithNonStaticFactory;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\NonInstantiable;
@@ -643,6 +647,39 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertfalse($constructed->getDefault());
     }
 
+    public function testCallableStaticClassMethodFactory(): void
+    {
+        $data = [
+            'name' => 'woohoo',
+            'group' => 'something',
+        ];
+
+        $model = self::$serializer->denormalize($data, ModelWithCallableFactory::class);
+        $this->assertEquals($data['name'], $model->getName());
+        $this->assertEquals($data['group'], $model->getGroup());
+    }
+
+    public function testInvalidFactoryThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Can not create factory for Zolex\VOM\Test\Fixtures\ModelWithInvalidFactory. Method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::blah() does not exist');
+        self::$serializer->denormalize([], ModelWithInvalidFactory::class);
+    }
+
+    public function testNonStaticFactoryThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Factory method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonStaticMethod() must be static.');
+        self::$serializer->denormalize([], ModelWithNonStaticFactory::class);
+    }
+
+    public function testNonPublicFactoryThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Factory method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonPublicMethod() must be public.');
+        self::$serializer->denormalize([], ModelWithNonPublicFactory::class);
+    }
+
     public function testFactoryMethod(): void
     {
         $data = [
@@ -691,7 +728,7 @@ class VersatileObjectMapperTest extends TestCase
     public function testFactoryReturnsInvalidTypeException(): void
     {
         $this->expectException(FactoryMethodException::class);
-        $this->expectExceptionMessage('The factory method Zolex\VOM\Test\Fixtures\ModelWithFactory::invalidReturn() must return an instance of "Zolex\VOM\Test\Fixtures\ModelWithFactory".');
+        $this->expectExceptionMessage('The factory method "Zolex\VOM\Test\Fixtures\ModelWithFactory:invalidReturn()" must return an instance of "Zolex\VOM\Test\Fixtures\ModelWithFactory".');
         self::$serializer->denormalize(['last' => true], ModelWithFactory::class);
     }
 
@@ -769,14 +806,14 @@ class VersatileObjectMapperTest extends TestCase
     public function testMethodCallWithUnsupportedArrayThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Only scalars are supported for denormalizer method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray().');
+        $this->expectExceptionMessage('Only scalars are supported for method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray().');
         self::$serializer->denormalize([], CallWithUnsupportedArray::class);
     }
 
     public function testMethodCallWithUnsupportedClassThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Only builtin types are supported for denormalizer method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass::setObject().');
+        $this->expectExceptionMessage('Only builtin types are supported for method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass::setObject().');
         self::$serializer->denormalize([], CallWithUnsupportedClass::class);
     }
 
