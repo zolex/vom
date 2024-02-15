@@ -27,6 +27,9 @@ use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
+/**
+ * Returns a {@see ModelMetadata}.
+ */
 class ModelMetadataFactory implements ModelMetadataFactoryInterface
 {
     /**
@@ -39,6 +42,12 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
+    /**
+     * If the method was called with the same class name before,
+     * the same metadata instance is returned.
+     *
+     * Otherwise, a new metadata instance is created.
+     */
     public function getMetadataFor(string|\ReflectionClass $class, ?ModelMetadata $modelMetadata = null): ?ModelMetadata
     {
         if (\is_string($class)) {
@@ -55,17 +64,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         if (null === $modelMetadata) {
             $modelMetadata = new ModelMetadata($class->getName(), $class->isInstantiable());
-            foreach ($this->loadAttributes($class) as $attribute) {
+            foreach ($class->getAttributes() as $reflectionAttribute) {
+                $attribute = $reflectionAttribute->newInstance();
+
                 if ($attribute instanceof Model) {
                     $modelMetadata->setAttribute($attribute);
                     continue;
                 }
-            }
-
-            if (!$modelMetadata->hasAttribute()) {
-                unset($this->localCache[$class->getName()]);
-
-                return null;
             }
 
             if ($constructor = $class->getConstructor()) {
@@ -77,76 +82,30 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
+        if (!$modelMetadata->hasAttribute()) {
+            return null;
+        }
+
         foreach ($class->getMethods() as $reflectionMethod) {
-            if ('__construct' === $reflectionMethod->getName()) {
+            if ($reflectionMethod->isConstructor()) {
                 continue;
             }
 
-            foreach ($this->loadAttributes($reflectionMethod) as $attribute) {
+            foreach ($reflectionMethod->getAttributes() as $reflectionAttribute) {
+                $attribute = $reflectionAttribute->newInstance();
+
                 if ($attribute instanceof Normalizer) {
-                    if (!$reflectionMethod->isPublic()) {
-                        throw new MappingException(sprintf('Normalizer method %s::%s() must be public.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    if ($reflectionMethod->isStatic()) {
-                        throw new MappingException(sprintf('Normalizer method %s::%s() should not be static.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    if (preg_match('/^(get|has|is)(.+)$/i', $reflectionMethod->getName(), $matches)) {
-                        $virtualPropertyName = lcfirst($matches[2]);
-                    } else {
-                        throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $class->getName(), $reflectionMethod->getName()));
-                    }
-                    $modelMetadata->addNormalizer(new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $attribute->getAccessor()));
+                    $modelMetadata->addNormalizer($this->createNormalizerMetadata($class, $reflectionMethod, $attribute));
                     continue;
                 }
 
                 if ($attribute instanceof Denormalizer) {
-                    if (!$reflectionMethod->isPublic()) {
-                        throw new MappingException(sprintf('Denormalizer method %s::%s() must be public.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    if ($reflectionMethod->isStatic()) {
-                        throw new MappingException(sprintf('Denormalizer method %s::%s() should not be static.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    if (preg_match('/^(set)(.+)$/i', $reflectionMethod->getName(), $matches)) {
-                        $virtualPropertyName = lcfirst($matches[2]);
-                    } else {
-                        throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set".', $class->getName(), $reflectionMethod->getName()));
-                    }
-                    $methodArguments = [];
-                    foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                        if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $reflectionMethod)) {
-                            $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
-                        }
-                    }
-
-                    if (!\count($methodArguments)) {
-                        throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    $modelMetadata->addDenormalizer(new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments, $virtualPropertyName));
+                    $modelMetadata->addDenormalizer($this->createDenormalizerMetadata($class, $reflectionMethod, $attribute));
                     continue;
                 }
 
                 if ($attribute instanceof Factory) {
-                    if (!$reflectionMethod->isStatic()) {
-                        throw new MappingException(sprintf('Factory method %s::%s() must be static.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    if (!$reflectionMethod->isPublic()) {
-                        throw new MappingException(sprintf('Factory method %s::%s() must be public.', $class->getName(), $reflectionMethod->getName()));
-                    }
-
-                    $methodArguments = [];
-                    foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-                        if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $reflectionMethod)) {
-                            $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
-                        }
-                    }
-
-                    $modelMetadata->addFactory(new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $attribute->getPriority()));
+                    $modelMetadata->addFactory($this->createFactoryMetadata($class, $reflectionMethod, $attribute));
                     continue;
                 }
             }
@@ -156,6 +115,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ($modelMetadata->hasConstructorArgument($reflectionProperty->getName())) {
                 continue;
             }
+
             if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty)) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
@@ -168,13 +128,110 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         return $this->localCache[$class->getName()] = $modelMetadata;
     }
 
+    /**
+     * Validates and creates metadata for Normalizer methods.
+     * Methods must be public, non-static and start with "get", "has" or "is.
+     * Method return type is mixed, this will be validated during normalization.
+     */
+    private function createNormalizerMetadata(
+        \ReflectionClass $reflectionClass,
+        \ReflectionMethod $reflectionMethod,
+        Normalizer $normalizer,
+    ): NormalizerMetadata {
+        if (!$reflectionMethod->isPublic()) {
+            throw new MappingException(sprintf('Normalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        if ($reflectionMethod->isStatic()) {
+            throw new MappingException(sprintf('Normalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        if (preg_match('/^(get|has|is)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+            $virtualPropertyName = lcfirst($matches[2]);
+        } else {
+            throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        return new NormalizerMetadata($reflectionMethod->getName(), $virtualPropertyName, $normalizer->getAccessor());
+    }
+
+    /**
+     * Creates and validates metadata for Denormalizer methods.
+     * Methods must be public, non-static and start with "set".
+     * Methods without arguments make no sense.
+     */
+    private function createDenormalizerMetadata(
+        \ReflectionClass $reflectionClass,
+        \ReflectionMethod $reflectionMethod,
+        Denormalizer $denormalizer,
+    ): DenormalizerMetadata {
+        if (!$reflectionMethod->isPublic()) {
+            throw new MappingException(sprintf('Denormalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        if ($reflectionMethod->isStatic()) {
+            throw new MappingException(sprintf('Denormalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        if (preg_match('/^(set)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+            $virtualPropertyName = lcfirst($matches[2]);
+        } else {
+            throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set".', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+        $methodArguments = [];
+        foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
+                $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+            }
+        }
+
+        if (!\count($methodArguments)) {
+            throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        return new DenormalizerMetadata($reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
+    }
+
+    /**
+     * Creates and validates metadata for Factory methods.
+     * Methods must be public static and return an instance of the respective model.
+     * To allow legacy code without a strict return type defined, this is not validated here but when it is executed.
+     */
+    private function createFactoryMetadata(
+        \ReflectionClass $reflectionClass,
+        \ReflectionMethod $reflectionMethod,
+        Factory $factory,
+    ): FactoryMetadata {
+        if (!$reflectionMethod->isStatic()) {
+            throw new MappingException(sprintf('Factory method %s::%s() must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        if (!$reflectionMethod->isPublic()) {
+            throw new MappingException(sprintf('Factory method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        $methodArguments = [];
+        foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
+                $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+            }
+        }
+
+        return new FactoryMetadata($reflectionMethod->getName(), $methodArguments, $factory->getPriority());
+    }
+
+    /**
+     * Creates and validates metadata for a Property.
+     * A Property can be an actual class property or an argument to a normalizer, denormalizer, factory or constructor.
+     */
     private function createPropertyMetadata(
         \ReflectionParameter|\ReflectionProperty $reflectionProperty,
         ?\ReflectionClass $reflectionClass = null,
         ?\ReflectionMethod $reflectionMethod = null,
     ): ?PropertyMetadata {
         $propertyAttribute = null;
-        foreach ($this->loadAttributes($reflectionProperty) as $attribute) {
+        foreach ($reflectionProperty->getAttributes() as $reflectionAttribute) {
+            $attribute = $reflectionAttribute->newInstance();
             if ($attribute instanceof AbstractProperty) {
                 /* @see Argument why we trow this php-like error */
                 if (null === $reflectionMethod && $attribute instanceof Argument) {
@@ -195,19 +252,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             'reflection_class' => $reflectionClass,
             'reflection_method' => $reflectionMethod,
         ]);
+
         $propertyMetadata = new PropertyMetadata($reflectionProperty->name, $types, $propertyAttribute);
         try {
             $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
-        } catch (\Throwable) {
+        } catch (\ReflectionException) {
         }
 
         return $propertyMetadata;
-    }
-
-    private function loadAttributes(\ReflectionMethod|\ReflectionClass|\ReflectionProperty|\ReflectionParameter $reflector): iterable
-    {
-        foreach ($reflector->getAttributes() as $attribute) {
-            yield $attribute->newInstance();
-        }
     }
 }
