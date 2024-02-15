@@ -361,9 +361,9 @@ $objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-nam
 
 #### Normalizer Methods
 
-Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization.
-These methods must not have any required arguments and always return an associative array.
-The keys in that array will be reflected as-is in the normalized output array.
+Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization. These methods must not have any required arguments. 
+
+Without an accessor, the normalizer must return an array which is merged into the normalized data. So the keys of that returned array will be the keys in the normalized output.
 
 ```php
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -372,12 +372,30 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Calls
 {
-    private GenericModel $data;
-
     #[VOM\Mormalizer]
     public function getData(): array
     {
-        return $this->data->toArray();
+        return [
+            'normalized_key' => 'something',
+            'another_key' => 123,
+        ]
+    }
+}
+```
+
+If a normalizer has an accessor, the return value can be anything and VOM will put it at the given path.
+
+```php
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    #[VOM\Mormalizer(accessor: '[path][in][output]')]
+    public function getAnything(): mixed
+    {
+        return 'anything, even an object or array';
     }
 }
 ```
