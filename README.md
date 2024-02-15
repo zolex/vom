@@ -26,7 +26,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 VOM is available on packagist. To install, simply require it via composer. 
 
 ```bash
-composer require zolex/vom ^0.0.11
+composer require zolex/vom ^0.0.13
 ```
 
 ### Symfony
