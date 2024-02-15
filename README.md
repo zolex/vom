@@ -18,8 +18,8 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
-- [Documentation](./docs/README.md)
-- [Examples](./examples)
+- [Full Documentation](./docs/README.md)
+- [Examples](#examples)
 
 ## Installation
 
@@ -136,8 +136,8 @@ If there is any difference between the data structure of your input and your app
 
 ## Documentation
 
-An [complete documentation](./docs) of all features is available in the docs folder of this repository.
+A [full documentation](./docs) of all features is available in the docs folder of this repository.
 
 ## Examples
 
-The example from the above quickstart and some more working examples can be found in this repository. Head over to the [examples](./examples) folder.
+The example from the above quickstart and more can be found in the [VOM Examples repository](https://github.com/zolex/vom-examples).
