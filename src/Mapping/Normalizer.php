@@ -16,7 +16,7 @@ namespace Zolex\VOM\Mapping;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class Normalizer
 {
-    public function __construct(private ?string $accessor = null)
+    public function __construct(private readonly ?string $accessor = null)
     {
     }
 

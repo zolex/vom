@@ -15,19 +15,20 @@ namespace Zolex\VOM\Metadata;
 
 use Zolex\VOM\Mapping\Normalizer;
 
-class NormalizerMetadata extends AbstractCallableMetadata implements CallableMetadataInterface
+class NormalizerMetadata extends AbstractCallableMetadata
 {
     public function __construct(
-        array $callable,
-        private readonly string $virualPropertyName,
+        string $class,
+        string $method,
+        private readonly string $virtualPropertyName,
         private readonly Normalizer $attribute,
     ) {
-        parent::__construct($callable);
+        parent::__construct($class, $method);
     }
 
     public function getPropertyName(): ?string
     {
-        return $this->virualPropertyName;
+        return $this->virtualPropertyName;
     }
 
     public function getAccessor(): ?string

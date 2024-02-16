@@ -13,15 +13,16 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-class FactoryMetadata extends AbstractCallableMetadata implements CallableMetadataInterface
+class FactoryMetadata extends AbstractCallableMetadata
 {
     public function __construct(
-        array $callable,
+        string $class,
+        string $method,
         /* @var array|ArgumentMetadata[] $arguments */
         array $arguments = [],
         private int $priority = 0,
     ) {
-        parent::__construct($callable, $arguments);
+        parent::__construct($class, $method, $arguments);
     }
 
     public function getPriority(): int
