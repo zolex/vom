@@ -13,6 +13,6 @@ namespace Zolex\VOM\Metadata\Exception;
 
 use Zolex\VOM\Exception\ExceptionInterface;
 
-class FactoryMethodException extends RuntimeException implements ExceptionInterface
+class FactoryException extends RuntimeException implements ExceptionInterface
 {
 }

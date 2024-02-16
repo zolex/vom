@@ -34,7 +34,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
-use Zolex\VOM\Metadata\Exception\FactoryMethodException;
+use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -194,7 +194,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
      * Finally, fail if no instance could be created.
      *
      * @throws NotNormalizableValueException
-     * @throws FactoryMethodException        When at least one factory method is configured but failed to instantiate the model
+     * @throws FactoryException              When at least one factory method is configured but failed to instantiate the model
      * @throws ExceptionInterface            For any other type of exception
      */
     protected function createInstance(array &$data, string $class, array &$context, ?string $format): object
@@ -243,7 +243,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         if (true === $hasFactory && \count($factoryExceptions)) {
-            throw new FactoryMethodException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
+            throw new FactoryException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
         }
 
         if ($metadata->isInstantiable()) {
