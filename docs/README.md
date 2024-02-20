@@ -16,7 +16,6 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 <!-- toc -->
 
-- [Recommended Workflow](#recommended-workflow)
 - [The Object Mapper](#the-object-mapper)
   * [Denormalization](#denormalization)
   * [Normalization](#normalization)
@@ -52,16 +51,6 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Circular References](#circular-references)
 
 <!-- tocstop -->
-
-## Recommended Workflow
-When starting a new project or refactoring an existing one, you should always design your models first. For example If it's an API-Platform REST API, the design of your models will directly reflect it's OpenAPI specification.
-If you have the need to receive an arbitary data format in your existing application, the models should already be in place. This is a great starting point vor the Versatile Object Mapper.
-The models can be anything, so if you receive data from somewhere and need to write it to a database, the models can also be Doctrine Entities. See the example [API-Platform with Doctrine](https://github.com/zolex/vom-examples/tree/main/api-platform-doctrine).
-
-1. **The first step always is to design your models.** _At this point you should not implement any business logic. Just the plain models._
-2. **Now it makes sense to add the VOM attributes to your models.** _This way you avoid changing the mapping attributes as your models evolve._
-3. **Finally, implement your business logic.** _With well-designed models, automatically fed by VOM, implementing your business logic will be a piece of cake._
-
 
 ## The Object Mapper
 
