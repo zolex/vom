@@ -1,12 +1,12 @@
 {
     "name": "zolex/vom",
-    "description": "Versatile Object Mapper",
+    "description": "Versatile Object Mapper. Map arbitrary data to strictly typed models using PHP attributes.",
     "type": "symfony-bundle",
     "license": "MIT",
     "authors": [
         {
             "name": "Andreas Linden",
-            "email": "andreas.linden@coxautoinc.com"
+            "email": "zlx@gmx.de"
         }
     ],
     "minimum-stability": "dev",
