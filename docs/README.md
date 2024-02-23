@@ -17,6 +17,9 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 <!-- toc -->
 
 - [The Object Mapper](#the-object-mapper)
+  * [Without Framework](#without-framework)
+  * [Laravel Framework](#laravel-framework)
+  * [Symfony Framework](#symfony-framework)
   * [Denormalization](#denormalization)
   * [Normalization](#normalization)
   * [Deserialization](#deserialization)
@@ -53,6 +56,44 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 <!-- tocstop -->
 
 ## The Object Mapper
+
+### Without Framework
+
+Without symfony framework, you can construct the mapper yourself or simply use the included factory.
+Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
+
+```php
+$objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
+```
+
+### Laravel Framework
+
+In Laravel the `VersatileObjectMapper` is registered for dependency injection. Also eee the [Laravel example with Dependency Injection](https://github.com/zolex/vom-examples/tree/main/laravel).
+
+```php
+use Zolex\VOM\Serializer\VersatileObjectMapper;
+
+class ExampleController
+{
+    public function __construct(private VersatileObjectMapper $objectMapper)
+    {
+    }
+    
+    public function deserialize(): void
+    {
+        $person = $this->objectMapper->deserialize('{"id": 123, "firstname": "Peter"}', Person::class);
+    }
+}
+```
+
+If you prefer you can also get a VOM instance using `app()` or `resolve()` etc.
+
+```php
+$objectMapper = resolve(VersatileObjectMapper::class);
+$objectMapper = app(VersatileObjectMapper::class);
+```
+
+### Symfony Framework
 
 In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](https://github.com/zolex/vom-examples/tree/main/symfony-framework).
 The recommended way to use it is by type-hinting Symfony's `SerializerInterface` or `VersatileObjectMapper`.
@@ -94,13 +135,6 @@ class AnySymfonyService
         $person = $this->serializer->deserialize('{"id": 123, "firstname": "Peter"}', Person::class, context: ['vom' => true]);
     }
 }
-```
-
-Without symfony framework, you can construct the mapper yourself or simply use the included factory.
-Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
-
-```php
-$objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
 ```
 
 > [!TIP]

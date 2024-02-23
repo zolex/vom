@@ -38,5 +38,12 @@
     },
     "scripts": {
         "test": "vendor/phpunit/phpunit/phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Zolex\\VOM\\Laravel\\Providers\\VersatileObjectMapperProvider"
+            ]
+        }
     }
 }
