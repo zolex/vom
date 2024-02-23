@@ -44,7 +44,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Zolex\\VOM\\Laravel\\Proviers\\VersatileObjectMapperProvider"
+                "Zolex\\VOM\\Laravel\\Providers\\VersatileObjectMapperProvider"
             ]
         }
     }
