@@ -42,6 +42,16 @@ return [
 ];
 ```
 
+### Laravel
+
+VOM also comes with a Laravel Service Provider. After installing with composer, the `VersatileObjectMapper` class is registered for Dependency Injection and can be accessed using `app()`or `resolve()` etc.
+You are ready to use the [VersatileObjectMapper with Dependency Injection](https://github.com/zolex/vom-examples/tree/main/laravel).
+
+```php
+$objectMapper = resolve(VersatileObjectMapper::class);
+$objectMapper = app(VersatileObjectMapper::class);
+```
+
 ## Quickstart
 
 To give you a basic idea of what VOM does, there is a short example.
