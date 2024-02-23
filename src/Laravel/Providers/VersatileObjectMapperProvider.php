@@ -18,6 +18,7 @@ use Illuminate\Support\ServiceProvider;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 
+// @codeCoverageIgnoreStart
 if (!class_exists('Illuminate\Support\ServiceProvider')) {
     try {
         class_alias(\stdClass::class, 'Illuminate\Support\ServiceProvider');
@@ -31,6 +32,7 @@ if (!class_exists('Illuminate\Contracts\Foundation\Application')) {
     } catch (\Throwable) {
     }
 }
+// @codeCoverageIgnoreEnd
 
 /**
  * @codeCoverageIgnore
