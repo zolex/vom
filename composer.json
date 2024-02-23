@@ -34,9 +34,18 @@
         "symfony/orm-pack": "^2.4",
         "symfony/phpunit-bridge": "^6.4|^7.0",
         "symfony/yaml": "^6.4|^7.0",
-        "friendsofphp/php-cs-fixer": "^3.49"
+        "friendsofphp/php-cs-fixer": "^3.49",
+        "illuminate/contracts": "^10.0",
+        "illuminate/support": "^10.0"
     },
     "scripts": {
         "test": "vendor/phpunit/phpunit/phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Zolex\\VOM\\Laravel\\Proviers\\VersatileObjectMapperProvider"
+            ]
+        }
     }
 }
