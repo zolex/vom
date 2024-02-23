@@ -18,6 +18,9 @@ use Illuminate\Support\ServiceProvider;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 
+/**
+ * @codeCoverageIgnore
+ */
 class VersatileObjectMapperProvider extends ServiceProvider
 {
     public function register(): void
