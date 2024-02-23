@@ -35,8 +35,9 @@
         "symfony/phpunit-bridge": "^6.4|^7.0",
         "symfony/yaml": "^6.4|^7.0",
         "friendsofphp/php-cs-fixer": "^3.49",
-        "illuminate/contracts": "^10.45",
-        "illuminate/support": "^10.45"
+        "illuminate/contracts": "^10.0",
+        "illuminate/support": "^10.0",
+        "symfony/translation": "^6.0|^7.0"
     },
     "scripts": {
         "test": "vendor/phpunit/phpunit/phpunit"
