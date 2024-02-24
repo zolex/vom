@@ -21,7 +21,7 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
-use Zolex\VOM\Test\Fixtures\SickRoot;
+use Zolex\VOM\Test\Fixtures\NestingRoot;
 
 class ModelMetadataTest extends TestCase
 {
@@ -45,15 +45,15 @@ class ModelMetadataTest extends TestCase
     public function testGetNestedMetadata(): void
     {
         $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
-        $metadata = $factory->getMetadataFor(SickRoot::class);
+        $metadata = $factory->getMetadataFor(NestingRoot::class);
 
-        $firstname = $metadata->find('singleChild.firstname', $factory);
-        $this->assertInstanceOf(PropertyMetadata::class, $firstname);
+        $levelTwo = $metadata->find('levelOne.levelTwo', $factory);
+        $this->assertInstanceOf(PropertyMetadata::class, $levelTwo);
 
-        $sickedy = $metadata->find('sickSack.sickSuck.sickedy', $factory);
-        $this->assertInstanceOf(PropertyMetadata::class, $sickedy);
+        $levelFour = $metadata->find('levelOne.levelTwo.levelThree.levelFour', $factory);
+        $this->assertInstanceOf(PropertyMetadata::class, $levelFour);
 
         $this->expectException(RuntimeException::class);
-        $metadata->find('singleChild.non.existent', $factory);
+        $metadata->find('levelOne.non.existent', $factory);
     }
 }

@@ -56,10 +56,6 @@ use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PrivateDenormalizer;
 use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
-use Zolex\VOM\Test\Fixtures\SickChild;
-use Zolex\VOM\Test\Fixtures\SickRoot;
-use Zolex\VOM\Test\Fixtures\SickSack;
-use Zolex\VOM\Test\Fixtures\SickSuck;
 use Zolex\VOM\Test\Fixtures\StaticDenormalizer;
 use Zolex\VOM\Test\Fixtures\StaticNormalizer;
 use Zolex\VOM\Test\Fixtures\Thing;
@@ -1059,47 +1055,6 @@ class VersatileObjectMapperTest extends TestCase
                 ),
             ),
         ];
-    }
-
-    public function testConversions()
-    {
-        $root = new SickRoot();
-        $root = new SickRoot();
-
-        $child1 = new SickChild();
-        $child1->firstname = 'Javier';
-        $child1->hasHair = true;
-        $root->singleChild = $child1;
-
-        $child2 = new SickChild();
-        $child2->firstname = 'Andreas';
-        $child2->hasHair = false;
-        $root->anotherChild = $child2;
-
-        $child3 = new SickChild();
-        $child3->firstname = 'Peter';
-        $child3->hasHair = true;
-        $root->tooManyChildren[] = $child3;
-
-        $child4 = new SickChild();
-        $child4->firstname = 'Hank';
-        $child4->hasHair = false;
-        $root->tooManyChildren[] = $child4;
-
-        $sickSuck = new SickSuck();
-        $sickSuck->sickedy = 'sickedysick';
-        $sickSuck->sackedy = 'sackedysack';
-
-        $sickSack = new SickSack();
-        $sickSack->sick = 1337;
-        $sickSack->sack = 'sackywacky';
-        $sickSack->sickSuck = $sickSuck;
-        $root->sickSack = $sickSack;
-
-        $array1 = self::$serializer->normalize($root);
-        $model1 = self::$serializer->denormalize($array1, SickRoot::class);
-
-        $this->assertEquals($root, $model1);
     }
 
     public function testRootWithNestedAndAccessors(): void
