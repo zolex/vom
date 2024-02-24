@@ -23,6 +23,7 @@ use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\ArgumentMetadata;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MissingMetadataException;
 use Zolex\VOM\Metadata\FactoryMetadata;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\NormalizerMetadata;
@@ -49,7 +50,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      *
      * Otherwise, a new metadata instance is created.
      *
-     * @throws MappingException
+     * @throws MappingException         When invalid mapping is configured on the model class
+     * @throws MissingMetadataException When the class does not exist or the VOM\Model attribute is missing
      */
     public function getMetadataFor(string|\ReflectionClass $class, ?ModelMetadata $modelMetadata = null): ?ModelMetadata
     {
@@ -60,8 +62,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
             try {
                 $class = new \ReflectionClass(trim($class, '?'));
-            } catch (\ReflectionException) {
-                return null;
+            } catch (\ReflectionException $e) {
+                throw new MissingMetadataException(sprintf('Can not create Model metadata for "%s". %s', $class, $e->getMessage()));
             }
         }
 
@@ -80,7 +82,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                             $factoryClass = new \ReflectionClass($factory[0]);
                             $factoryMethod = $factoryClass->getMethod($factory[1]);
                         } catch (\ReflectionException $e) {
-                            throw new MappingException(sprintf('Can not create factory for %s. %s', $class->getName(), $e->getMessage()));
+                            throw new MappingException(sprintf('Can not create factory for "%s". %s', $class->getName(), $e->getMessage()));
                         }
 
                         $modelMetadata->addFactory($this->createFactoryMetadata($factoryClass, $factoryMethod, \PHP_INT_MAX));
@@ -99,7 +101,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         if (!$modelMetadata->hasAttribute()) {
-            return null;
+            throw new MissingMetadataException(sprintf('The class "%s" does not have the "VOM\Model" attribute.', $class->getName()));
         }
 
         foreach ($class->getMethods() as $reflectionMethod) {
@@ -148,6 +150,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      * Validates and creates metadata for Normalizer methods.
      * Methods must be public, non-static and start with "get", "has" or "is.
      * Method return type is mixed, this will be validated during normalization.
+     *
+     * @throws MappingException When the normalizer method can not be used as is
      */
     private function createNormalizerMetadata(
         \ReflectionClass $reflectionClass,
@@ -175,6 +179,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      * Creates and validates metadata for Denormalizer methods.
      * Methods must be public, non-static and start with "set".
      * Methods without arguments make no sense.
+     *
+     * @throws MappingException when the denormalizer method can not be used as is
      */
     private function createDenormalizerMetadata(
         \ReflectionClass $reflectionClass,
@@ -212,6 +218,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      * Creates and validates metadata for Factory methods.
      * Methods must be public static and return an instance of the respective model.
      * To allow legacy code without a strict return type defined, this is not validated here but when it is executed.
+     *
+     * @throws MappingException When the factory method can not be used as is
      */
     private function createFactoryMetadata(
         \ReflectionClass $reflectionClass,
@@ -219,11 +227,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         int $priority,
     ): FactoryMetadata {
         if (!$reflectionMethod->isStatic()) {
-            throw new MappingException(sprintf('Factory method %s::%s() must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(sprintf('Factory method "%s::%s()" must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if (!$reflectionMethod->isPublic()) {
-            throw new MappingException(sprintf('Factory method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(sprintf('Factory method "%s::%s()" must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         $methodArguments = [];
@@ -239,6 +247,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     /**
      * Creates and validates metadata for a Property.
      * A Property can be an actual class property or an argument to a normalizer, denormalizer, factory or constructor.
+     *
+     * @throws MappingException When the VOM\Argument attribute is used on a property. {@see Argument why we trow this php-like error}
      */
     private function createPropertyMetadata(
         \ReflectionParameter|\ReflectionProperty $reflectionProperty,
@@ -250,7 +260,6 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             $attribute = $reflectionAttribute->newInstance();
             if ($attribute instanceof AbstractProperty) {
                 $propertyAttribute = $attribute;
-                /* @see Argument why we trow this php-like error */
                 if (null === $reflectionMethod && $attribute instanceof Argument) {
                     throw new MappingException(sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
                 }

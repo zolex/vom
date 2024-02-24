@@ -446,7 +446,7 @@ class VersatileObjectMapperTest extends TestCase
         ];
 
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('The property Zolex\VOM\Test\Fixtures\CollectionPublic::$people seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.');
+        $this->expectExceptionMessage('The property "Zolex\VOM\Test\Fixtures\CollectionPublic::$people" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.');
         self::$serializer->denormalize($data, CollectionPublic::class);
     }
 
@@ -675,21 +675,21 @@ class VersatileObjectMapperTest extends TestCase
     public function testInvalidFactoryThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Can not create factory for Zolex\VOM\Test\Fixtures\ModelWithInvalidFactory. Method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::blah() does not exist');
+        $this->expectExceptionMessage('Can not create factory for "Zolex\VOM\Test\Fixtures\ModelWithInvalidFactory". Method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::blah() does not exist');
         self::$serializer->denormalize([], ModelWithInvalidFactory::class);
     }
 
     public function testNonStaticFactoryThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Factory method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonStaticMethod() must be static.');
+        $this->expectExceptionMessage('Factory method "Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonStaticMethod()" must be static.');
         self::$serializer->denormalize([], ModelWithNonStaticFactory::class);
     }
 
     public function testNonPublicFactoryThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Factory method Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonPublicMethod() must be public.');
+        $this->expectExceptionMessage('Factory method "Zolex\VOM\Test\Fixtures\RepositoryWithFactory::nonPublicMethod()" must be public.');
         self::$serializer->denormalize([], ModelWithNonPublicFactory::class);
     }
 
