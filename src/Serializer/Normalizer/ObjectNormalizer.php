@@ -38,6 +38,7 @@ use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
 use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MissingMetadataException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\Test\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
@@ -110,7 +111,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return false;
         }
 
-        return (\is_array($data) || \is_object($data)) && $this->modelMetadataFactory->getMetadataFor($type);
+        try {
+            $this->modelMetadataFactory->getMetadataFor($type);
+        } catch (MissingMetadataException) {
+            return false;
+        }
+
+        return \is_array($data) || \is_object($data);
     }
 
     /**
@@ -129,10 +136,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         $context[self::ROOT_DATA] ??= $data;
 
         $model = $this->createInstance($data, $type, $context, $format);
-        if (!$metadata = $this->modelMetadataFactory->getMetadataFor($model::class)) {
-            return null;
-        }
-
+        $metadata = $this->modelMetadataFactory->getMetadataFor($model::class);
         $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
         foreach ($metadata->getDenormalizers() as $denormalizer) {
             $attribute = $denormalizer->getPropertyName();
@@ -177,7 +181,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             } catch (PropertyAccessInvalidArgumentException $e) {
                 if (preg_match('/^Expected argument of type "([^"]+)", "array" given at property path "([^"]+)".$/', $e->getMessage(), $matches)) {
                     if (\ArrayAccess::class === $matches[1] || (($implements = class_implements($matches[1])) && \in_array(\ArrayAccess::class, $implements))) {
-                        throw new MappingException(sprintf('The property %s::$%s seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
+                        throw new MappingException(sprintf('The property "%s::$%s" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
                     }
                 }
 
@@ -291,6 +295,8 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     /**
      * Validates the submitted data and denormalizes it.
+     *
+     * @codeCoverageIgnore 90% monkey-copy from {@see AbstractObjectNormalizer::validateAndDenormalize()}
      *
      * @throws NotNormalizableValueException
      * @throws ExtraAttributesException
@@ -454,7 +460,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return false;
         }
 
-        return \is_object($data) && null !== $this->modelMetadataFactory->getMetadataFor($data::class);
+        try {
+            $this->modelMetadataFactory->getMetadataFor($data::class);
+        } catch (MissingMetadataException) {
+            return false;
+        }
+
+        return \is_object($data);
     }
 
     /**
