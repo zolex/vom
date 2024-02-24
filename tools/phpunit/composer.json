@@ -1,6 +1,6 @@
 {
     "require": {
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^10.5",
         "phpspec/prophecy-phpunit": "^2.1"
     }
 }
