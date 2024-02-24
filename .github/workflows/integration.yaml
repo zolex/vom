@@ -14,7 +14,7 @@ on:
 
 jobs:
   tests:
-    name: 'Tests on ${{ matrix.php }} (deps=${{ matrix.deps }}, symfony=${{ matrix.symfony }})'
+    name: Test ${{ matrix.php }}, symfony=${{ matrix.symfony }}, deps=${{ matrix.deps }}
     runs-on: ubuntu-latest
     env:
       SYMFONY_DEPRECATIONS_HELPER: 'max[self]=0'
@@ -22,52 +22,58 @@ jobs:
       matrix:
         php: [8.2, 8.3]
         deps: [stable]
-        symfony: ['^7.0']
+        symfony: [^7.0]
         include:
           - php: 8.1
             deps: lowest
-            symfony: '^6.1'
+            symfony: ^6.1
 
           - php: 8.2
             deps: stable
-            symfony: '^6.4'
+            symfony: ^6.4
 
           - php: 8.3
             deps: latest
-            symfony: '^7.0'
+            symfony: ^7.0
 
     steps:
       - name: Checkout code
-        uses: 'actions/checkout@v3'
+        uses: actions/checkout@v4
 
       - name: Install PHP with extensions
-        uses: 'shivammathur/setup-php@v2'
+        uses: shivammathur/setup-php@v2
         with:
-          coverage: xdebug
-          php-version: '${{ matrix.php }}'
+          php-version: ${{ matrix.php }}
           tools: 'composer:v2, flex'
 
       - name: Configure Symfony version
-        run: 'echo SYMFONY_REQUIRE="${{ matrix.symfony }}" >> $GITHUB_ENV'
+        run: echo SYMFONY_REQUIRE="${{ matrix.symfony }}" >> $GITHUB_ENV
 
-      - name: "Set up problem matchers for PHP"
-        run: "echo \"::add-matcher::${{ runner.tool_cache }}/php.json\""
+      - name: Set up problem matchers for PHP
+        run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
 
-      - name: "Set up problem matchers for phpunit/phpunit"
-        run: "echo \"::add-matcher::${{ runner.tool_cache }}/phpunit.json\""
+      - name: Set up problem matchers for phpunit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
-      - name: Composer install
-        uses: 'ramsey/composer-install@v2'
+      - name: Install Package Deps
+        uses: ramsey/composer-install@v2
         with:
-          dependency-versions: '${{ matrix.deps }}'
-          composer-options: '--prefer-dist'
+          dependency-versions: ${{ matrix.deps }}
+          composer-options: --prefer-dist
+
+      - name: Install PHPUnit
+        uses: ramsey/composer-install@v2
+        with:
+          composer-options: --prefer-dist
+          working-directory: tools/phpunit
 
       - name: Run tests
-        run: vendor/bin/phpunit --colors=always --testdox
+        run: tools/phpunit/vendor/bin/phpunit --colors=always --testdox
 
   cs:
     name: Code Style & Coverage
     runs-on: ubuntu-latest
+    needs: [ tests ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -83,26 +89,28 @@ jobs:
         uses: ramsey/composer-install@v2
         with:
           dependency-versions: stable
-          composer-options: '--prefer-dist '
+          composer-options: --prefer-dist
 
-      - name: Install CodeStyle Deps
+      - name: Install PHPUnit
+        uses: ramsey/composer-install@v2
+        with:
+          composer-options: --prefer-dist
+          working-directory: tools/phpunit
+
+      - name: Install PHP-CS-Fixer
         uses: ramsey/composer-install@v2
         with:
           dependency-versions: stable
-          composer-options: '--prefer-dist --working-dir=tools/php-cs-fixer'
+          composer-options: --prefer-dist
+          working-directory: tools/php-cs-fixer
 
       - name: PHP-CS-Fixer
         run: tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
 
       - name: Create Coverage Report
-        run: |
-          vendor/bin/phpunit \
-          --colors=always \
-          --coverage-text \
-          --coverage-clover=./clover.xml \
-          --testdox
+        run: tools/phpunit/vendor/bin/phpunit --colors=always --coverage-text --coverage-clover=./clover.xml
 
-      - name: Send code coverage report to codecov.io
+      - name: Publish Coverage Report
         uses: codecov/codecov-action@v3.1.5
         with:
           files: ./clover.xml
