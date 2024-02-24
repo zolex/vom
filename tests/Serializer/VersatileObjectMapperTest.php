@@ -1118,7 +1118,7 @@ class VersatileObjectMapperTest extends TestCase
     public function testToObject(): void
     {
         $data = [
-            [
+            (object) [
                 'prop' => 'val',
             ],
             [
