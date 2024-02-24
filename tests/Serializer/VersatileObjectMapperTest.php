@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Zolex\VOM\Exception\InvalidArgumentException;
 use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
@@ -70,6 +71,20 @@ class VersatileObjectMapperTest extends TestCase
     protected function setUp(): void
     {
         self::$serializer = VersatileObjectMapperFactory::create();
+    }
+
+    public function testNormalizerException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The decorated serializer must implement the NormalizerInterface');
+        new VersatileObjectMapper(new DummySerializer());
+    }
+
+    public function testDenormalizerException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The decorated serializer must implement the DenormalizerInterface');
+        new VersatileObjectMapper(new DummyNormalizer());
     }
 
     public function testAccessor(): void
