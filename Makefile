@@ -12,7 +12,7 @@ codestyle-deps:
 	XDEBUG_MODE=off composer install --prefer-dist --working-dir=tools/php-cs-fixer
 
 test: deps	## Run the testsuite
-	XDEBUG_MODE=coverage vendor/bin/phpunit \
+	XDEBUG_MODE=coverage tools/phpunit/vendor/bin/phpunit \
 		--colors=always \
 		--coverage-text \
 		--testdox
