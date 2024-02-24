@@ -179,7 +179,7 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertNull($booleans->nullableBool);
     }
 
-    public function provideBooleans(): iterable
+    public static function provideBooleans(): iterable
     {
         yield [
             [
@@ -936,7 +936,7 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals($expectedModel, $model);
     }
 
-    public function createNestedModelsDataProvider(): iterable
+    public static function createNestedModelsDataProvider(): iterable
     {
         yield [
             [

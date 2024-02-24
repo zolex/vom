@@ -69,6 +69,7 @@ jobs:
       - name: Install PHPUnit
         uses: ramsey/composer-install@v2
         with:
+          dependency-versions: ${{ matrix.deps }}
           composer-options: --prefer-dist
           working-directory: tools/phpunit
 
