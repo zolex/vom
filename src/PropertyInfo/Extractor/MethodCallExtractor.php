@@ -15,6 +15,7 @@ namespace Zolex\VOM\PropertyInfo\Extractor;
 
 use Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
+use Zolex\VOM\Exception\InvalidArgumentException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 
 class MethodCallExtractor implements PropertyTypeExtractorInterface
@@ -28,6 +29,10 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
         if (!isset($context['reflection_class']) || !$context['reflection_class'] instanceof \ReflectionClass
             || !isset($context['reflection_method']) || !$context['reflection_method'] instanceof \ReflectionMethod) {
             return null;
+        }
+
+        if ($context['reflection_class']->getName() !== $class) {
+            throw new InvalidArgumentException(sprintf('Reflection class in context "%s" does not match the given classname "%s".', $context['reflection_class']->getName(), $class));
         }
 
         foreach ($context['reflection_method']->getParameters() as $parameter) {
