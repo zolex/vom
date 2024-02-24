@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the VOM package.
  *
@@ -41,6 +43,7 @@ return (new PhpCsFixer\Config())
         'nullable_type_declaration' => true,
         'ordered_types' => ['null_adjustment' => 'always_last', 'sort_algorithm' => 'none'],
         'trailing_comma_in_multiline' => ['elements' => ['arrays', 'match', 'parameters']],
+        'declare_strict_types' => true,
     ])
     ->setRiskyAllowed(true)
     ->setFinder(

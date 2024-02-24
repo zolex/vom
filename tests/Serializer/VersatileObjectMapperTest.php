@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the VOM package.
  *
@@ -984,8 +986,8 @@ class VersatileObjectMapperTest extends TestCase
                 isHilarious: false,
                 address: Address::create(
                     street: 'Fireroad',
-                    houseNo: 666,
-                    zip: 56070,
+                    houseNo: '666',
+                    zip: '56070',
                     city: 'Hell',
                 ),
             ),
