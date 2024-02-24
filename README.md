@@ -7,9 +7,14 @@
 
 [![License](http://poser.pugx.org/zolex/vom/license)](https://packagist.org/packages/zolex/vom)
 [![Total Downloads](http://poser.pugx.org/zolex/vom/downloads?update=2)](https://packagist.org/packages/zolex/vom)
-[![Required PHP Version](http://poser.pugx.org/zolex/vom/require/php)](https://packagist.org/packages/zolex/vom)
+![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&style=plastic)
 
 ![VOM](docs/logo.png)
+
+![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
+![Symfony](https://img.shields.io/badge/symfony-%23000000.svg?style=for-the-badge&logo=symfony&logoColor=white)
+![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
+
 
 The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models, by simply adding PHP attributes to existing classes.
 
@@ -23,12 +28,16 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 VOM is available on packagist. To install, simply require it via composer. 
 
 ```bash
-composer require zolex/vom ^0.1.0
+composer require zolex/vom ^0.1
 ```
+
+### Plain PHP
+
+When installed via composer or as a download from the releases page, you are ready to use [VOM without a framework](https://github.com/zolex/vom-examples/tree/main/without-framework).
 
 ### Symfony
 
-When using symfony, the package also integrates as a bundle. With flex and autoconfiguration there is nothing else to do. You are ready to use the [VersatileObjectMapper as a Symfony service](https://github.com/zolex/vom-examples/tree/main/symfony-framework). For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
+When using symfony, the package also integrates as a bundle. With flex and autoconfiguration there is nothing else to do. You are ready to use the [VOM Symfony Service](https://github.com/zolex/vom-examples/tree/main/symfony-framework). For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
 
 _Without autoconfiguration, or if you choose to not run symfony/flex recipe generation, you have to enable the bundle manually by adding it to `config/bundles.php`._
 
@@ -44,13 +53,8 @@ return [
 
 ### Laravel
 
-VOM also comes with a Laravel Service Provider. After installing with composer, the `VersatileObjectMapper` class is registered for Dependency Injection and can be accessed using `app()`or `resolve()` etc.
-You are ready to use the [VersatileObjectMapper with Dependency Injection](https://github.com/zolex/vom-examples/tree/main/laravel).
-
-```php
-$objectMapper = resolve(VersatileObjectMapper::class);
-$objectMapper = app(VersatileObjectMapper::class);
-```
+VOM also comes with a Laravel Service Provider. After installing with composer, the `VersatileObjectMapper` class is registered for Dependency Injection and can also be accessed using `app()`, `resolve()` etc.
+See the example for [VOM in Laravel](https://github.com/zolex/vom-examples/tree/main/laravel).
 
 ## Quickstart
 
