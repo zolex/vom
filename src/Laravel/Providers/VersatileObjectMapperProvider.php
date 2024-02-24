@@ -17,36 +17,34 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
+use Zolex\VOM\Test\Laravel\Illuminate\Contracts\Foundation\DummyApplication;
+use Zolex\VOM\Test\Laravel\Illuminate\Support\DummyServiceProvider;
 
 // @codeCoverageIgnoreStart
 if (!class_exists('Illuminate\Support\ServiceProvider')) {
     try {
-        class_alias(\stdClass::class, 'Illuminate\Support\ServiceProvider');
+        class_alias(DummyServiceProvider::class, 'Illuminate\Support\ServiceProvider');
     } catch (\Throwable) {
     }
 }
 
 if (!class_exists('Illuminate\Contracts\Foundation\Application')) {
     try {
-        class_alias(\stdClass::class, 'Illuminate\Contracts\Foundation\Application');
+        class_alias(DummyApplication::class, 'Illuminate\Contracts\Foundation\Application');
     } catch (\Throwable) {
     }
 }
 // @codeCoverageIgnoreEnd
 
-/**
- * @codeCoverageIgnore
- */
 class VersatileObjectMapperProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(VersatileObjectMapper::class, function (Application $app) {
-            return VersatileObjectMapperFactory::create();
-        });
+        $this->app->singleton(VersatileObjectMapper::class, [$this, 'create']);
     }
 
-    public function boot(): void
+    public function create(Application $app): VersatileObjectMapper
     {
+        return VersatileObjectMapperFactory::create();
     }
 }
