@@ -166,10 +166,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(sprintf('Normalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        if (preg_match('/^(get|has|is)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+        if (preg_match('/^(get|has|is|normalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
             $virtualPropertyName = lcfirst($matches[2]);
         } else {
-            throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has" or "is".', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         return new NormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $virtualPropertyName, $normalizer);
@@ -195,10 +195,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(sprintf('Denormalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        if (preg_match('/^(set)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+        if (preg_match('/^(set|denormalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
             $virtualPropertyName = lcfirst($matches[2]);
         } else {
-            throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set".', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set" or "denormalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
         $methodArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
