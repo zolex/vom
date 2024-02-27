@@ -754,7 +754,7 @@ class VersatileObjectMapperTest extends TestCase
             'data2_name' => 'Peter Parker',
         ];
 
-        $calls = self::$serializer->denormalize($data, Calls::class);
+        $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['data', 'more']]);
         $normalized = self::$serializer->normalize($calls, null, ['groups' => ['data', 'more']]);
         $this->assertEquals($data, $normalized);
     }
@@ -840,7 +840,7 @@ class VersatileObjectMapperTest extends TestCase
         ];
 
         $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['data']]);
-        $this->assertEquals(['id' => 42, 'name' => 'Peter Enis'], $calls->getData());
+        $this->assertEquals(['id' => 42, 'name' => 'Peter Enis'], $calls->normalizeData());
         $this->assertEquals([], $calls->getMoreData());
 
         $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['more']]);
@@ -850,7 +850,7 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $normalizedMore);
 
         $calls = self::$serializer->denormalize($data, Calls::class);
-        $this->assertEquals(['id' => 42, 'name' => 'Peter Enis'], $calls->getData());
+        $this->assertEquals(['id' => 42, 'name' => 'Peter Enis'], $calls->normalizeData());
         $this->assertEquals(['data2_id' => 1337, 'data2_name' => 'Peter Parker'], $calls->getMoreData());
     }
 
