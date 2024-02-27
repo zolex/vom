@@ -412,10 +412,15 @@ class ModelWithFactory
 
 #### Denormalizer Methods
 
-If your models don't follow standard getter and setter naming conventions, VOM can call custom methods with arguments. It will query the source data using the argument accessor (the same way as for VOM\Property) and call the method. It is required to add the `VOM\Denormalizer` attribute on the method to be called.
+If your models don't follow the symfony conventions for mutators, VOM can call custom methods with arguments. 
+It will query the source data using the argument accessor (the same way as for VOM\Property) and call the method. 
+The methods must be prefixed with `set` or `denormalize` and the `VOM\Denormalizer` attribute must be added.
+_If a denormalizer method sets a property that matches its name, it is recommended to use the `denormalize` prefix.
+Otherwise, symfony would use the mutator method to identify the property type which results in unexpected behavior._
+
 
 > [!NOTE]
-> Only consider to use this if you do not have the option to change your models to comply with the conventions for getters and setter or for edge-cases, like you want to reuse a generic model class but with different accessors.
+> Only consider to use this if you do not have the option to change your models to comply with the symfony conventions mutators or for edge-cases. For example if you want to reuse a generic model class but with different accessors.
 
 ```php
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -428,7 +433,7 @@ class Calls
     private GenericModel $two;
 
     #[VOM\Denormalizer]
-    public function setOne(
+    public function denormalizeOne(
         #[VOM\Argument('[ID_FOR_ONE]')]
         int $id,
         #[VOM\Argument('[NAME_FOR_ONE]')]
@@ -437,9 +442,8 @@ class Calls
         $this->one = new GenericModel($id, $name);
     }
     
-    #[Groups(['group-name'])]
     #[VOM\Denormalizer]
-    public function setTwo(
+    public function denormalizeTwo(
         #[VOM\Argument('[ID_FOR_TWO]')]
         int $id,
         #[VOM\Argument('[NAME_FOR_TWO]')]
@@ -450,15 +454,52 @@ class Calls
 }
 ```
 
-Also, it is possible to use the Groups attribute to control if the method should be called during denormalization, depending on the groups in the denormalization context.
+It is possible to use the Groups attribute to control if the method should be called during denormalization, depending on the groups in the denormalization context.
+Groups can be added on denormalizer methods with the `set` prefix (virtual property) or on the related property when using the `denormalize` prefix.
 
 ```php
-$objectMapper->denormalize($data, Calls:class, context: ['groups' => ['group-name']]);
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Calls
+{
+    private GenericModel $differentName;
+    
+    #[Groups('two')]
+    private GenericModel $two;
+
+    #[Groups('one')]        
+    #[VOM\Denormalizer]
+    public function setOne(
+        #[VOM\Argument('[ID_FOR_ONE]')]
+        int $id,
+        #[VOM\Argument('[NAME_FOR_ONE]')]
+        string $name,
+    ): void {
+        $this->differentName = new GenericModel($id, $name);
+    }
+    
+    #[VOM\Denormalizer]
+    public function denormalizeTwo(
+        #[VOM\Argument('[ID_FOR_TWO]')]
+        int $id,
+        #[VOM\Argument('[NAME_FOR_TWO]')]
+        string $name,
+    ): void {
+        $this->two = new GenericModel($id, $name);
+    }
+}
+```
+
+```php
+$objectMapper->denormalize($data, Calls:class, context: ['groups' => ['one']]);
 ```
 
 #### Normalizer Methods
 
 Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization. These methods must not have any required arguments. 
+Normalizer methods must be prefixed with `get`, `has`, `is` or `normalize`. Groups can be added on normalizer methods with the first three prefixes (virtual property) or on the related property when using the `normalize` prefix.
 
 Without an accessor, the normalizer must return an array which is merged into the normalized data. So the keys of that returned array will be the keys in the normalized output.
 
@@ -470,7 +511,7 @@ use Zolex\VOM\Mapping as VOM;
 class Calls
 {
     #[VOM\Mormalizer]
-    public function getData(): array
+    public function normalizeData(): array
     {
         return [
             'normalized_key' => 'something',

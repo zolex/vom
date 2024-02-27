@@ -34,7 +34,7 @@ class MethodCallExtractorTest extends TestCase
         $extractor = new MethodCallExtractor();
         $types = $extractor->getTypes(Calls::class, 'nonExistent', [
             'reflection_class' => $class,
-            'reflection_method' => $class->getMethod('setData'),
+            'reflection_method' => $class->getMethod('denormalizeData'),
         ]);
 
         $this->assertNull($types);

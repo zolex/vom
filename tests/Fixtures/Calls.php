@@ -19,12 +19,13 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Calls
 {
+    #[Groups('data')]
     private array $data = [];
+
     private array $moreData = [];
 
-    #[Groups('data')]
     #[VOM\Denormalizer]
-    public function setData(
+    public function denormalizeData(
         /* @type int $id */
         #[VOM\Argument]
         int|string|null $id,
@@ -38,13 +39,13 @@ class Calls
     }
 
     #[VOM\Normalizer]
-    public function getData(): array
+    public function normalizeData(): array
     {
         return $this->data;
     }
 
-    #[Groups(['more'])]
     #[VOM\Denormalizer]
+    #[Groups(['more'])]
     public function setMoreData(
         /* @type int $id */
         #[VOM\Argument('[data2_id]')]
