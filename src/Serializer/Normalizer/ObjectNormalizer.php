@@ -296,8 +296,6 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     /**
      * Validates the submitted data and denormalizes it.
      *
-     * @codeCoverageIgnore 90% monkey-copy from {@see AbstractObjectNormalizer::validateAndDenormalize()}
-     *
      * @throws NotNormalizableValueException
      * @throws ExtraAttributesException
      * @throws MissingConstructorArgumentsException
@@ -376,20 +374,30 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
                 if (Type::BUILTIN_TYPE_BOOL === $builtinType) {
                     if (null !== $trueValue = $property->getTrueValue()) {
-                        return $data === $trueValue;
-                    }
-
-                    if (null !== $falseValue = $property->getFalseValue()) {
-                        return $data === $falseValue;
-                    }
-
-                    if (\in_array($data, self::TRUE_VALUES, true)) {
+                        if ($data === $trueValue) {
+                            return true;
+                        }
+                    } elseif (\in_array($data, self::TRUE_VALUES, true)) {
                         return true;
                     }
 
-                    if (\in_array($data, self::FALSE_VALUES, true)) {
+                    if (null !== $falseValue = $property->getFalseValue()) {
+                        if ($data === $falseValue) {
+                            return false;
+                        }
+                    } elseif (\in_array($data, self::FALSE_VALUES, true)) {
                         return false;
                     }
+
+                    if ($property->isNullable()) {
+                        return null;
+                    }
+
+                    ob_start();
+                    var_dump($data);
+                    $strData = trim(ob_get_clean());
+
+                    throw new NotNormalizableValueException(sprintf('%s on attribute "%s" for class "%s" could not be normalized to a boolean and the property is not nullable. Check the VOM Property config and/or the data to be normalized.', $strData, $attribute, $currentClass));
                 }
 
                 // JSON only has a Number type corresponding to both int and float PHP types.
