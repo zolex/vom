@@ -236,7 +236,8 @@ _But as mentioned above, in this scenario you probably just want to use a symfon
 
 ### The Accessor
 
-The first argument of the property attribute is the accessor. When not provided, it uses the property's name. It can be written in the following ways.
+The first argument of the property attribute is the accessor. When not provided, it uses the property's name.
+The accessor is not just the name of a parameter but [symfony property access syntax](https://symfony.com/doc/current/components/property_access.html).
 
 ```php
 #[VOM\Property('[source_param]')]
@@ -249,10 +250,6 @@ Or to be more explicit:
 #[VOM\Property(accessor: '[source_param]')]
 public string $value;
 ```
-
-The accessor is not just the name of a parameter, it is [symfony property access syntax](https://symfony.com/doc/current/components/property_access.html).
-Note that **VOM always uses the object syntax**, even if the input data is an array! This way the syntax is independent of the type of input. The only exception when array is kept, is when it is an indexed, sequential array!
-
 
 ```php
 use Zolex\VOM\Mapping as VOM;
