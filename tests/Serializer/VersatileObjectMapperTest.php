@@ -146,6 +146,17 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals($expected, $normalized);
     }
 
+    public function testStrictBoolWithInvalidValueThrowsException(): void
+    {
+        $data = [
+            'anotherBool' => 'SOMETHING_INVALID',
+        ];
+
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('string(17) "SOMETHING_INVALID" on attribute "anotherBool" for class "Zolex\VOM\Test\Fixtures\Booleans" could not be normalized to a boolean and the property is not nullable. Check the VOM Property config and/or the data to be normalized');
+        self::$serializer->denormalize($data, Booleans::class);
+    }
+
     public function testInvalidTypeThrowsException(): void
     {
         $this->expectException(NotNormalizableValueException::class);
@@ -215,14 +226,10 @@ class VersatileObjectMapperTest extends TestCase
 
         yield [
             [
-                'nullableBool' => null,
-                // VOM property explicitly requires the string 'TRUE'
-                'anotherBool' => true,
+                'nullableBool' => 'INVALID_VALUE_FOR_NULLABLE_BOOL',
             ],
             [
                 'nullableBool' => null,
-                // so the bool true becomes the property's false-value!
-                'anotherBool' => 'FALSE',
             ],
         ];
 
