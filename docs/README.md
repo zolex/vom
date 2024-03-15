@@ -251,6 +251,8 @@ Or to be more explicit:
 public string $value;
 ```
 
+The following example maps the value for `$fromTheDeep` from a nested array in the source data.
+
 ```php
 use Zolex\VOM\Mapping as VOM;
 
