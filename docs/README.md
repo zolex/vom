@@ -346,7 +346,7 @@ class PropertyPromotion
 
 ### Factory Methods
 
-Alternatively to inject values in the model's constructor, it is also possible to configure factory methods on the model.
+An alternative to injecting values in the model's constructor, it is also possible to configure factory methods on the model using the `VOM\Factory` together with the `VOM\Argument` attributes.
 
 ```php
 #[VOM\Model]
@@ -388,7 +388,7 @@ class ModelWithFactory
 ```
 
 In the case that your source data is inconsistent and/or your model is instantiable with different sets of required properties, you can provide multiple factories that VOM will try to instantiate your model with.
-Optionally you can provide a priority for each factory, the higher the value, the earlier VOM with try to call it. If no priority is given, the order of appearance in the code is used.
+Optionally you can provide a priority for each factory, the higher the value, the earlier VOM with call it. If no priority is given, the order of appearance in the code is used. The first successful factory method wins.
 
 ```php
 #[VOM\Model]
@@ -404,6 +404,38 @@ class ModelWithFactory
     public static function createWithSetTwo(/* ... */): self
     {
         // ...
+    }
+}
+```
+
+#### Factory in another class
+
+It is also possible to create a factory in another class, for example in a (Doctrine) repository.
+
+```php
+#[VOM\Model(factory: [RepositoryWithFactory::class, 'createModelInstance'])]
+class ModelWithCallableFactory
+{
+    // ...
+}
+```
+
+```php
+class RepositoryWithFactory
+{
+    public static function createModelInstance(
+        #[VOM\Argument]
+        string $name,
+        #[VOM\Argument]
+        string|int|null $group = null,
+    ): ModelWithCallableFactory {
+        $model = new ModelWithCallableFactory();
+        $model->setName($name);
+        if (null !== $group) {
+            $model->setGroup($group);
+        }
+
+        return $model;
     }
 }
 ```
