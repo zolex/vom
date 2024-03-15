@@ -43,6 +43,7 @@ use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
+use Zolex\VOM\Test\Fixtures\Floats;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
 use Zolex\VOM\Test\Fixtures\ModelWithCallableFactory;
@@ -133,6 +134,16 @@ class VersatileObjectMapperTest extends TestCase
 
         $this->expectException(NoSuchPropertyException::class);
         self::$serializer->denormalize($data, FirstAndLastnameObject::class);
+    }
+
+    public function testJsonNumberToFloat(): void
+    {
+        $data = ['value' => 3];
+
+        /* @var Floats $floats */
+        $floats = self::$serializer->denormalize($data, Floats::class, 'json');
+        $normalized = self::$serializer->normalize($floats);
+        $this->assertEquals($data, $normalized);
     }
 
     /**
