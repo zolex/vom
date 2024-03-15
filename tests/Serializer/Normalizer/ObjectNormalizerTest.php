@@ -15,6 +15,7 @@ namespace Zolex\VOM\Test\Serializer\Normalizer;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\BadMethodCallException;
+use Symfony\Component\Serializer\Exception\LogicException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
@@ -22,7 +23,9 @@ use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
+use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\Thing;
+use Zolex\VOM\Test\Serializer\DummySerializer;
 
 class ObjectNormalizerTest extends TestCase
 {
@@ -124,5 +127,22 @@ class ObjectNormalizerTest extends TestCase
         $this->expectException(NotNormalizableValueException::class);
         $this->expectExceptionMessage('The type "doesnt-exist" is not a valid value.');
         $objectNormalizer->denormalize(['type' => 'doesnt-exist'], Thing::class);
+    }
+
+    public function testValidateAndDenormalizeThrowsExceptionWithNonDenormalizerSerializer(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $objectNormalizer->setSerializer(new DummySerializer());
+
+        $data = [
+            'LEVEL_ONE' => [
+                'LEVEL_ONE_VALUE' => '1',
+            ],
+        ];
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('because injected serializer is not a denormalizer');
+        $objectNormalizer->denormalize($data, NestingRoot::class);
     }
 }
