@@ -24,6 +24,16 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
     {
     }
 
+    /**
+     * @experimental Symfony 7.1 calls this without verifying that it actually exists.
+     *   the new type-info component is still experimental and the getType method is only hinted with a @method annotation
+     *   Using the type-info component breaks backwards compatibility to symfony 7.0 and earlier.
+     */
+    public function getType(string $class, string $property, array $context = []): ?\Symfony\Component\TypeInfo\Type
+    {
+        return null;
+    }
+
     public function getTypes(string $class, string $property, array $context = []): ?array
     {
         if (!isset($context['reflection_class']) || !$context['reflection_class'] instanceof \ReflectionClass
