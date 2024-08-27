@@ -3,10 +3,10 @@
 [![Integration](https://github.com/zolex/vom/workflows/Integration/badge.svg)](https://github.com/zolex/vom/actions)
 [![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
 [![Code Coverage](https://codecov.io/gh/zolex/vom/graph/badge.svg?token=RI2NX4S89I)](https://codecov.io/gh/zolex/vom)
-[![Latest Stable Version](http://poser.pugx.org/zolex/vom/v)](https://packagist.org/packages/zolex/vom)
+![Latest Stable Version](https://img.shields.io/packagist/v/zolex/vom)
 
-[![License](http://poser.pugx.org/zolex/vom/license)](https://packagist.org/packages/zolex/vom)
-[![Total Downloads](http://poser.pugx.org/zolex/vom/downloads)](https://packagist.org/packages/zolex/vom)
+![License](https://img.shields.io/packagist/l/zolex/vom)
+![Downloads](https://img.shields.io/packagist/dt/zolex/vom)
 ![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&style=plastic)
 
 ![VOM](docs/logo.png)
