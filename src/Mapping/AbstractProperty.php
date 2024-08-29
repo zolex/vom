@@ -24,6 +24,7 @@ abstract class AbstractProperty
         private bool|string|int|null $falseValue = null,
         private ?string $defaultOrder = null,
         private ?string $dateTimeFormat = null,
+        private ?array $map = null,
     ) {
     }
 
@@ -75,5 +76,15 @@ abstract class AbstractProperty
     public function getDateTimeFormat(): ?string
     {
         return $this->dateTimeFormat;
+    }
+
+    public function hasMap(): bool
+    {
+        return null !== $this->map;
+    }
+
+    public function getMappedValue(mixed $value): mixed
+    {
+        return $this->map[$value] ?? null;
     }
 }
