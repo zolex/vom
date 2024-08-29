@@ -198,7 +198,7 @@ final class ModelMetadata
 
         foreach ($path as $item) {
             if (!$property = $metadata->getProperty($item)) {
-                throw new RuntimeException(sprintf('Could not find metadata path "%s" in "%s"', $query, $this->class));
+                throw new RuntimeException(\sprintf('Could not find metadata path "%s" in "%s"', $query, $this->class));
             }
 
             if (($class = $property->getClass()) && ($modelMetadata = $factory->getMetadataFor($class))) {

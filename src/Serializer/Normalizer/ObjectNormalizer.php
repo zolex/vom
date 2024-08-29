@@ -151,13 +151,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             if ($model::class !== $denormalizer->getClass()) {
-                throw new MappingException(sprintf('Model class "%s" does not match the expected denormalizer class "%s".', $model::class, $denormalizer->getClass()));
+                throw new MappingException(\sprintf('Model class "%s" does not match the expected denormalizer class "%s".', $model::class, $denormalizer->getClass()));
             }
 
             try {
                 $model->{$denormalizer->getMethod()}(...$methodArguments);
             } catch (\Throwable $e) {
-                throw new BadMethodCallException(sprintf('Bad denormalizer method call: %s', $e->getMessage()), 0, $e);
+                throw new BadMethodCallException(\sprintf('Bad denormalizer method call: %s', $e->getMessage()), 0, $e);
             }
         }
 
@@ -181,7 +181,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             } catch (PropertyAccessInvalidArgumentException $e) {
                 if (preg_match('/^Expected argument of type "([^"]+)", "array" given at property path "([^"]+)".$/', $e->getMessage(), $matches)) {
                     if (\ArrayAccess::class === $matches[1] || (($implements = class_implements($matches[1])) && \in_array(\ArrayAccess::class, $implements))) {
-                        throw new MappingException(sprintf('The property "%s::$%s" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
+                        throw new MappingException(\sprintf('The property "%s::$%s" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
                     }
                 }
 
@@ -210,9 +210,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         } elseif (!$mapping = $this->classDiscriminatorResolver?->getMappingForClass($class)) {
             $mappedClass = $class;
         } elseif (null === $type = $data[$mapping->getTypeProperty()] ?? null) {
-            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('Type property "%s" not found for the abstract object "%s".', $mapping->getTypeProperty(), $class), null, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), false);
+            throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('Type property "%s" not found for the abstract object "%s".', $mapping->getTypeProperty(), $class), null, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), false);
         } elseif (null === $mappedClass = $mapping->getClassForType($type)) {
-            throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type "%s" is not a valid value.', $type), $type, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), true);
+            throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('The type "%s" is not a valid value.', $type), $type, ['string'], isset($context['deserialization_path']) ? $context['deserialization_path'].'.'.$mapping->getTypeProperty() : $mapping->getTypeProperty(), true);
         }
 
         if ($class !== $mappedClass) {
@@ -242,14 +242,14 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     return $model;
                 }
 
-                $factoryExceptions[$factory->getLongMethodName()] = sprintf('The factory method "%s:%s()" must return an instance of "%s".', $factory->getClass(), $factory->getMethod(), $class);
+                $factoryExceptions[$factory->getLongMethodName()] = \sprintf('The factory method "%s:%s()" must return an instance of "%s".', $factory->getClass(), $factory->getMethod(), $class);
             } catch (\Throwable $e) {
                 $factoryExceptions[$factory->getLongMethodName()] = $e->getMessage();
             }
         }
 
         if (true === $hasFactory && \count($factoryExceptions)) {
-            throw new FactoryException(sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
+            throw new FactoryException(\sprintf("Could not instantiate model \"%s\" using any of the factory methods (tried \"%s\").\n Factory Errors:\n - %s", $metadata->getClass(), implode('", "', array_keys($factoryExceptions)), implode("\n - ", $factoryExceptions)));
         }
 
         if ($metadata->isInstantiable()) {
@@ -266,7 +266,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return new $class(...$constructorArguments);
         }
 
-        throw new NotNormalizableValueException(sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
+        throw new NotNormalizableValueException(\sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
     }
 
     /**
@@ -284,6 +284,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $value = $this->propertyAccessor->getValue($data, $accessor);
         } else {
             $value = $data;
+        }
+
+        if ($property->hasMap()) {
+            $value = $property->getMappedValue($value);
         }
 
         if (null === $value && !$property->isNullable()) {
@@ -363,7 +367,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
                 if (Type::BUILTIN_TYPE_OBJECT === $builtinType && null !== $class) {
                     if (!$this->serializer instanceof DenormalizerInterface) {
-                        throw new LogicException(sprintf('Cannot denormalize attribute "%s" for class "%s" because injected serializer is not a denormalizer.', $attribute, $class));
+                        throw new LogicException(\sprintf('Cannot denormalize attribute "%s" for class "%s" because injected serializer is not a denormalizer.', $attribute, $class));
                     }
 
                     $childContext = $this->createChildContext($context, $attribute, $format);
@@ -397,7 +401,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     var_dump($data);
                     $strData = trim(ob_get_clean());
 
-                    throw new NotNormalizableValueException(sprintf('%s on attribute "%s" for class "%s" could not be normalized to a boolean and the property is not nullable. Check the VOM Property config and/or the data to be normalized.', $strData, $attribute, $currentClass));
+                    throw new NotNormalizableValueException(\sprintf('%s on attribute "%s" for class "%s" could not be normalized to a boolean and the property is not nullable. Check the VOM Property config and/or the data to be normalized.', $strData, $attribute, $currentClass));
                 }
 
                 // JSON only has a Number type corresponding to both int and float PHP types.
@@ -456,7 +460,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return $data;
         }
 
-        throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type of the "%s" attribute for class "%s" must be one of "%s" ("%s" given).', $attribute, $currentClass, implode('", "', array_keys($expectedTypes)), get_debug_type($data)), $data, array_keys($expectedTypes), $context['deserialization_path'] ?? $attribute);
+        throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('The type of the "%s" attribute for class "%s" must be one of "%s" ("%s" given).', $attribute, $currentClass, implode('", "', array_keys($expectedTypes)), get_debug_type($data)), $data, array_keys($expectedTypes), $context['deserialization_path'] ?? $attribute);
     }
 
     /**
@@ -507,7 +511,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     throw new IgnoreCircularReferenceException();
                 }
 
-                throw new CircularReferenceException(sprintf('%s Consider adding "%s" or "%s" to the context.', $e->getMessage(), self::CIRCULAR_REFERENCE_HANDLER, self::SKIP_CIRCULAR_REFERENCE), $e->getCode(), $e);
+                throw new CircularReferenceException(\sprintf('%s Consider adding "%s" or "%s" to the context.', $e->getMessage(), self::CIRCULAR_REFERENCE_HANDLER, self::SKIP_CIRCULAR_REFERENCE), $e->getCode(), $e);
             }
         }
 
@@ -563,7 +567,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
                 } catch (\Throwable $e) {
                     if (preg_match('/^Cannot write property "[^"]+" to an array./', $e->getMessage())) {
-                        throw new MappingException(sprintf('Normalization is only supported with array-access syntax. Accessor "%s" on class "%s" uses object syntax and therefore can not be normalized.', $accessor, $metadata->getClass()));
+                        throw new MappingException(\sprintf('Normalization is only supported with array-access syntax. Accessor "%s" on class "%s" uses object syntax and therefore can not be normalized.', $accessor, $metadata->getClass()));
                     }
 
                     throw $e;
@@ -580,20 +584,20 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             if ($object::class !== $normalizer->getClass()) {
-                throw new MappingException(sprintf('Model class "%s" does not match the expected normalizer class "%s".', $object::class, $normalizer->getClass()));
+                throw new MappingException(\sprintf('Model class "%s" does not match the expected normalizer class "%s".', $object::class, $normalizer->getClass()));
             }
 
             try {
                 $normalized = $object->{$normalizer->getMethod()}();
             } catch (\Throwable $e) {
-                throw new BadMethodCallException(sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
+                throw new BadMethodCallException(\sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
             }
 
             if (null !== $accessor = $normalizer->getAccessor()) {
                 $this->propertyAccessor->setValue($data, $accessor, $normalized);
             } else {
                 if (!\is_array($normalized)) {
-                    throw new MappingException(sprintf('Normalizer %s::%s() without accessor must return an array.', $metadata->getClass(), $normalizer->getMethod()));
+                    throw new MappingException(\sprintf('Normalizer %s::%s() without accessor must return an array.', $metadata->getClass(), $normalizer->getMethod()));
                 }
                 $data = array_merge($data, $normalized);
             }

@@ -42,7 +42,7 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
         }
 
         if ($context['reflection_class']->getName() !== $class) {
-            throw new InvalidArgumentException(sprintf('Reflection class in context "%s" does not match the given classname "%s".', $context['reflection_class']->getName(), $class));
+            throw new InvalidArgumentException(\sprintf('Reflection class in context "%s" does not match the given classname "%s".', $context['reflection_class']->getName(), $class));
         }
 
         foreach ($context['reflection_method']->getParameters() as $parameter) {
@@ -65,7 +65,7 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
 
         foreach (($reflectionType instanceof \ReflectionUnionType || $reflectionType instanceof \ReflectionIntersectionType) ? $reflectionType->getTypes() : [$reflectionType] as $type) {
             if (!$type->isBuiltin()) {
-                throw new MappingException(sprintf('Only builtin types are supported for method call %s::%s().', $className, $methodName));
+                throw new MappingException(\sprintf('Only builtin types are supported for method call %s::%s().', $className, $methodName));
             }
 
             $phpTypeOrClass = $type->getName();
@@ -74,7 +74,7 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
             }
 
             if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass) {
-                throw new MappingException(sprintf('Only scalars are supported for method call %s::%s().', $className, $methodName));
+                throw new MappingException(\sprintf('Only scalars are supported for method call %s::%s().', $className, $methodName));
             }
 
             $types[] = new Type($phpTypeOrClass, $nullable);

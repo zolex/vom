@@ -1046,6 +1046,59 @@ For normalization purpose, the `dateTimeFormat` argument can be specified on the
 public \DateTime $createdAt;
 ```
 
+### Value Map
+
+A common task is to map single values. To do so you can specify a map in the VOM Property. The keys of the map represent the source values.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ValueMap
+{
+    #[VOM\Property(map: [
+        'TYPE1' => 'A',
+        'TYPE2' => 'B',
+        'TYPE3' => 'C',
+    ])]
+    public string $type;
+}
+```
+
+```php
+$object = $objectMapper->denormalize(['type' => 'TYPE2'], ValueMap::class);
+// $object->type is set to 'B'
+```
+
+If the source value is not found in the map, the property will not be set.
+
+```php
+$object = $objectMapper->denormalize(['type' => 'INVALID_TYPE'], ValueMap::class);
+// $object->type remains uninitialized
+```
+
+If the property has a default value and the source value is not found in the map, the default value will be set.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ValueMap
+{
+    #[VOM\Property(map: [
+        'RED' => '#FF0000',
+        'GREEN' => '#00FF00',
+        'BLUE' => '#0000FF',
+    ])]
+    public string $color = '#000000';
+}
+```
+
+```php
+$object = $objectMapper->denormalize(['color' => 'RAINBOW'], ValueMap::class);
+// $object->color is '#000000', the default value
+```
+
 ## Interfaces and Abstract Classes
 
 When dealing with objects that are fairly similar or share properties, you can use interfaces or abstract classes.
