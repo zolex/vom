@@ -329,7 +329,7 @@ class VersatileObjectMapperTest extends TestCase
         $normalized = self::$serializer->normalize($ref1, null, [
             'circular_reference_limit' => 2,
             'circular_reference_handler' => function ($ref) {
-                return sprintf('/ref/%d', $ref->id);
+                return \sprintf('/ref/%d', $ref->id);
             },
         ]);
         $this->assertEquals($expected, $normalized);

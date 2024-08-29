@@ -63,7 +63,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             try {
                 $class = new \ReflectionClass(trim($class, '?'));
             } catch (\ReflectionException $e) {
-                throw new MissingMetadataException(sprintf('Can not create Model metadata for "%s". %s', $class, $e->getMessage()));
+                throw new MissingMetadataException(\sprintf('Can not create Model metadata for "%s". %s', $class, $e->getMessage()));
             }
         }
 
@@ -76,13 +76,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     $modelMetadata->setAttribute($attribute);
                     if (null !== $factory = $attribute->getFactory()) {
                         if (2 !== \count($factory)) {
-                            throw new MappingException(sprintf('Factory for %s must be an array with fully qualified classname and method name.', $class->getName()));
+                            throw new MappingException(\sprintf('Factory for %s must be an array with fully qualified classname and method name.', $class->getName()));
                         }
                         try {
                             $factoryClass = new \ReflectionClass($factory[0]);
                             $factoryMethod = $factoryClass->getMethod($factory[1]);
                         } catch (\ReflectionException $e) {
-                            throw new MappingException(sprintf('Can not create factory for "%s". %s', $class->getName(), $e->getMessage()));
+                            throw new MappingException(\sprintf('Can not create factory for "%s". %s', $class->getName(), $e->getMessage()));
                         }
 
                         $modelMetadata->addFactory($this->createFactoryMetadata($factoryClass, $factoryMethod, \PHP_INT_MAX));
@@ -101,7 +101,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         if (!$modelMetadata->hasAttribute()) {
-            throw new MissingMetadataException(sprintf('The class "%s" does not have the "VOM\Model" attribute.', $class->getName()));
+            throw new MissingMetadataException(\sprintf('The class "%s" does not have the "VOM\Model" attribute.', $class->getName()));
         }
 
         foreach ($class->getMethods() as $reflectionMethod) {
@@ -159,17 +159,17 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         Normalizer $normalizer,
     ): NormalizerMetadata {
         if (!$reflectionMethod->isPublic()) {
-            throw new MappingException(sprintf('Normalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Normalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if ($reflectionMethod->isStatic()) {
-            throw new MappingException(sprintf('Normalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Normalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if (preg_match('/^(get|has|is|normalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
             $virtualPropertyName = lcfirst($matches[2]);
         } else {
-            throw new MappingException(sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         return new NormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $virtualPropertyName, $normalizer);
@@ -188,17 +188,17 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         Denormalizer $denormalizer,
     ): DenormalizerMetadata {
         if (!$reflectionMethod->isPublic()) {
-            throw new MappingException(sprintf('Denormalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Denormalizer method %s::%s() must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if ($reflectionMethod->isStatic()) {
-            throw new MappingException(sprintf('Denormalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Denormalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if (preg_match('/^(set|denormalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
             $virtualPropertyName = lcfirst($matches[2]);
         } else {
-            throw new MappingException(sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set" or "denormalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set" or "denormalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
         $methodArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
@@ -208,7 +208,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         if (!\count($methodArguments)) {
-            throw new MappingException(sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         return new DenormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
@@ -227,11 +227,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         int $priority,
     ): FactoryMetadata {
         if (!$reflectionMethod->isStatic()) {
-            throw new MappingException(sprintf('Factory method "%s::%s()" must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Factory method "%s::%s()" must be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         if (!$reflectionMethod->isPublic()) {
-            throw new MappingException(sprintf('Factory method "%s::%s()" must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Factory method "%s::%s()" must be public.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         $methodArguments = [];
@@ -261,7 +261,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ($attribute instanceof AbstractProperty) {
                 $propertyAttribute = $attribute;
                 if (null === $reflectionMethod && $attribute instanceof Argument) {
-                    throw new MappingException(sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
+                    throw new MappingException(\sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
                 }
                 continue;
             }
