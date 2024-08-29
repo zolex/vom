@@ -61,6 +61,7 @@ use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\StaticDenormalizer;
 use Zolex\VOM\Test\Fixtures\StaticNormalizer;
 use Zolex\VOM\Test\Fixtures\Thing;
+use Zolex\VOM\Test\Fixtures\ValueMap;
 
 /**
  * Test VOM with a fresh instance for each test.
@@ -1170,5 +1171,34 @@ class VersatileObjectMapperTest extends TestCase
 
         $model = self::$serializer->denormalize(['value' => 13.37], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);
         $this->assertEquals(13.37, $model->value);
+    }
+
+    public function testValueMapping(): void
+    {
+        $model = self::$serializer->denormalize([
+            'type' => 'TYPE1',
+            'color' => 'RED',
+        ], ValueMap::class);
+
+        $this->assertEquals('A', $model->type);
+        $this->assertEquals('#FF0000', $model->color);
+    }
+
+    public function testValueMappingWithInvalidValueAndNoDefaultValue(): void
+    {
+        $model = self::$serializer->denormalize([
+            'type' => 'WRONG_TYPE',
+        ], ValueMap::class);
+
+        $this->assertFalse(isset($model->type));
+    }
+
+    public function testValueMappingWithInvalidValueAndExistingDefaultValue(): void
+    {
+        $model = self::$serializer->denormalize([
+            'color' => 'RAINBOW',
+        ], ValueMap::class);
+
+        $this->assertEquals('#000000', $model->color);
     }
 }

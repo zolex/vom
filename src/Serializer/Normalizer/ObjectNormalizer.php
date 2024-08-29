@@ -286,6 +286,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $value = $data;
         }
 
+        if ($property->hasMap()) {
+            $value = $property->getMappedValue($value);
+        }
+
         if (null === $value && !$property->isNullable()) {
             return null;
         }
