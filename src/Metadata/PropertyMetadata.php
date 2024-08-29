@@ -141,11 +141,11 @@ class PropertyMetadata
 
     public function getMappedValue(mixed $value): mixed
     {
-        $mappedValue = $this->attribute->getMappedValue($value);
-        if (null === $mappedValue && $this->hasDefaultValue()) {
+        $map = $this->attribute->getMap();
+        if (!isset($map[$value])) {
             return $this->getDefaultValue();
         }
 
-        return $mappedValue;
+        return $map[$value];
     }
 }

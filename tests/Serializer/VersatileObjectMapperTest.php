@@ -1201,4 +1201,13 @@ class VersatileObjectMapperTest extends TestCase
 
         $this->assertEquals('#000000', $model->color);
     }
+
+    public function testValueMappingWithNullValue(): void
+    {
+        $model = self::$serializer->denormalize([
+            'nullable' => 'NULL',
+        ], ValueMap::class);
+
+        $this->assertNull($model->nullable);
+    }
 }

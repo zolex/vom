@@ -31,4 +31,11 @@ class ValueMap
         'BLUE' => '#0000FF',
     ])]
     public string $color = '#000000';
+
+    #[VOM\Property(map: [
+        'NULL' => null,
+        'ZERO' => 0,
+        'ONE' => 1,
+    ])]
+    public ?int $nullable;
 }

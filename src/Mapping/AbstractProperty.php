@@ -83,8 +83,8 @@ abstract class AbstractProperty
         return null !== $this->map;
     }
 
-    public function getMappedValue(mixed $value): mixed
+    public function getMap(): ?array
     {
-        return $this->map[$value] ?? null;
+        return $this->map;
     }
 }
