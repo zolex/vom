@@ -40,7 +40,7 @@ abstract class AbstractCallableMetadata
 
     public function getLongMethodName(): string
     {
-        return sprintf('%s::%s()', $this->class, $this->method);
+        return \sprintf('%s::%s()', $this->class, $this->method);
     }
 
     public function getArguments(): array

@@ -133,4 +133,19 @@ class PropertyMetadata
     {
         return isset($this->defaultValue);
     }
+
+    public function hasMap(): bool
+    {
+        return $this->attribute->hasMap();
+    }
+
+    public function getMappedValue(mixed $value): mixed
+    {
+        $map = $this->attribute->getMap();
+        if (!isset($map[$value])) {
+            return $this->getDefaultValue();
+        }
+
+        return $map[$value];
+    }
 }
