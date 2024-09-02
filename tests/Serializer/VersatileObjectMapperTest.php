@@ -20,6 +20,7 @@ use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Exception\InvalidArgumentException;
 use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
+use Zolex\VOM\Metadata\Exception\MissingTypeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
@@ -46,6 +47,7 @@ use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
 use Zolex\VOM\Test\Fixtures\Floats;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
+use Zolex\VOM\Test\Fixtures\MixedProperty;
 use Zolex\VOM\Test\Fixtures\ModelWithCallableFactory;
 use Zolex\VOM\Test\Fixtures\ModelWithFactory;
 use Zolex\VOM\Test\Fixtures\ModelWithInvalidFactory;
@@ -145,6 +147,13 @@ class VersatileObjectMapperTest extends TestCase
         $floats = self::$serializer->denormalize($data, Floats::class, 'json');
         $normalized = self::$serializer->normalize($floats);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testMixed(): void
+    {
+        $this->expectException(MissingTypeException::class);
+        $this->expectExceptionMessage('Could not determine the type of property "mixed" on class "Zolex\VOM\Test\Fixtures\MixedProperty".');
+        self::$serializer->denormalize([], MixedProperty::class);
     }
 
     /**
