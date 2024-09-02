@@ -24,6 +24,7 @@ use Zolex\VOM\Metadata\ArgumentMetadata;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Exception\MissingMetadataException;
+use Zolex\VOM\Metadata\Exception\MissingTypeException;
 use Zolex\VOM\Metadata\FactoryMetadata;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\NormalizerMetadata;
@@ -134,7 +135,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 continue;
             }
 
-            if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty)) {
+            if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty, $class)) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
         }
@@ -277,6 +278,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             'reflection_class' => $reflectionClass,
             'reflection_method' => $reflectionMethod,
         ]);
+
+        if (null === $types) {
+            throw new MissingTypeException(\sprintf('Could not determine the type of property "%s" on class "%s".', $property, $class));
+        }
 
         if ($reflectionProperty instanceof \ReflectionProperty) {
             $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $propertyAttribute);
