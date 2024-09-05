@@ -1,0 +1,10 @@
+zolex_vom:
+  denormalizer:
+    dependencies:
+      - '@serializer'
+
+when@dev:
+  zolex_vom:
+    denormalizer:
+      dependencies:
+        - '@blah'

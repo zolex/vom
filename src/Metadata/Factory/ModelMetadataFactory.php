@@ -22,6 +22,7 @@ use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\ArgumentMetadata;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
+use Zolex\VOM\Metadata\DependencyInjectionMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Exception\MissingMetadataException;
 use Zolex\VOM\Metadata\Exception\MissingTypeException;
@@ -40,9 +41,21 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      */
     private array $localCache = [];
 
+    /**
+     * @var object[]
+     */
+    private array $denormalizerDependencies = [];
+
     public function __construct(
         private readonly PropertyInfoExtractorInterface $propertyInfoExtractor,
     ) {
+    }
+
+    public function injectDenormalizerDependency(object $service): void
+    {
+        if (!\in_array($service, $this->denormalizerDependencies)) {
+            $this->denormalizerDependencies[] = $service;
+        }
     }
 
     /**
@@ -205,6 +218,19 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
             if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
                 $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+            } elseif ($type = $reflectionParameter->getType()?->getName()) {
+                $found = false;
+                foreach ($this->denormalizerDependencies as $dependency) {
+                    if ($dependency instanceof $type) {
+                        $found = true;
+                        $methodArguments[$reflectionParameter->getName()] = new DependencyInjectionMetadata($reflectionParameter->getName(), $dependency);
+                        break;
+                    }
+                }
+
+                if (!$found) {
+                    throw new MappingException(\sprintf('Argument %s of type %s in denormalizer method %s::%s() can not be injected. Did you forget to configure it as a denormalizer dependency?', $reflectionParameter->getName(), $type, $reflectionClass->getName(), $reflectionMethod->getName()));
+                }
             }
         }
 

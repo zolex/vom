@@ -36,6 +36,8 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
+use Zolex\VOM\Metadata\ArgumentMetadata;
+use Zolex\VOM\Metadata\DependencyInjectionMetadata;
 use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Exception\MissingMetadataException;
@@ -147,7 +149,11 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $context = $this->getAttributeDenormalizationContext($type, $attribute, $context);
             $methodArguments = [];
             foreach ($denormalizer->getArguments() as $property) {
-                $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
+                if ($property instanceof ArgumentMetadata) {
+                    $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
+                } elseif ($property instanceof DependencyInjectionMetadata) {
+                    $methodArguments[$property->getName()] = $property->getValue();
+                }
             }
 
             if ($model::class !== $denormalizer->getClass()) {

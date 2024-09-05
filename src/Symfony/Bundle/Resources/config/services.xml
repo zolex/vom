@@ -6,6 +6,9 @@
     <services>
         <service id="zolex_vom.metadata.model_metadata_factory" class="Zolex\VOM\Metadata\Factory\ModelMetadataFactory">
             <argument type="service" id="property_info" />
+            <call method="injectDenormalizerDependency">
+                <argument type="service" id="parameter_bag" />
+            </call>
         </service>
         <service id="Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface" alias="zolex_vom.metadata.model_metadata_factory" />
 
