@@ -33,8 +33,10 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Constructor Arguments](#constructor-arguments)
   * [Constructor Property Promotion](#constructor-property-promotion)
   * [Factory Methods](#factory-methods)
+    + [Factory in another class](#factory-in-another-class)
   * [Method Calls](#method-calls)
     + [Denormalizer Methods](#denormalizer-methods)
+      - [Denormalizer Dependencies](#denormalizer-dependencies)
     + [Normalizer Methods](#normalizer-methods)
   * [Disable Nesting](#disable-nesting)
   * [Root flag](#root-flag)
@@ -49,6 +51,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
     + [Union Types](#union-types)
     + [Booleans](#booleans)
     + [DateTime](#datetime)
+  * [Value Map](#value-map)
 - [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
   * [Skip Null Values](#skip-null-values)
@@ -450,10 +453,6 @@ The methods must be prefixed with `set` or `denormalize` and the `VOM\Denormaliz
 _If a denormalizer method sets a property that matches its name, it is recommended to use the `denormalize` prefix.
 Otherwise, symfony would use the mutator method to identify the property type which results in unexpected behavior._
 
-
-> [!NOTE]
-> Only consider to use this if you do not have the option to change your models to comply with the symfony conventions mutators or for edge-cases. For example if you want to reuse a generic model class but with different accessors.
-
 ```php
 use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping as VOM;
@@ -526,6 +525,51 @@ class Calls
 
 ```php
 $objectMapper->denormalize($data, Calls:class, context: ['groups' => ['one']]);
+```
+
+##### Denormalizer Dependencies
+
+If you need any dependencies in addition to the source data to be mapped, it is possible to inject any object (like a symfony service) into the denormalizer methods.
+To do so, just typehint the dependency in the denormalizer method along with the VOM arguments. Additionally, you need to register the dependency.
+
+```php
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class DenormalizerDependency
+{
+    public string $var;
+
+    #[VOM\Denormalizer]
+    public function denormalizeData(
+        ParameterBagInterface $parameterBag,
+        #[VOM\Argument(...)]
+        int $something,
+        #[VOM\Argument(...)]
+        string $else
+    ): void {
+        $this->var = $parameterBag->get('foo') ? $something ? $else;
+    }
+}
+```
+
+To register the dependency in symfony framework, you can simply add any symfony service by adding it to the package config:
+
+_config/packages/zolex_vom.yaml_
+```yaml
+zolex_vom:
+  denormalizer:
+    dependencies:
+      - '@parameter_bag'
+      - '@serializer'
+```
+
+Without symfony, you simply call the respective method on the `ModelMetadataFactory`
+
+```php
+$factory = new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(/*...*/);
+$factory->injectDenormalizerDependency(new \Some\Dependency());
 ```
 
 #### Normalizer Methods

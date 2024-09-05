@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Symfony\Bundle;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\Thing;
 
@@ -46,6 +47,14 @@ class ZolexVOMBundleTest extends KernelTestCase
             $service = $container->get($id);
             $this->assertInstanceOf($class, $service);
         }
+    }
+
+    public function testParameterBagIsInDenormalizerDependencies(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Denormalizer dependency not found in container: blah');
+        $kernel = self::bootKernel(['environment' => 'dev', 'debug' => false]);
+        $container = $kernel->getContainer();
     }
 
     public function testVomIntegratesWithSerializer(): void

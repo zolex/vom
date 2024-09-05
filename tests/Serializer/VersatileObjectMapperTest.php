@@ -41,6 +41,8 @@ use Zolex\VOM\Test\Fixtures\CollectionWithAdderRemover;
 use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
+use Zolex\VOM\Test\Fixtures\DenormalizerDependency;
+use Zolex\VOM\Test\Fixtures\DenormalizerMissingDependency;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
@@ -785,6 +787,19 @@ class VersatileObjectMapperTest extends TestCase
         $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['data', 'more']]);
         $normalized = self::$serializer->normalize($calls, null, ['groups' => ['data', 'more']]);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testDenormalizerDependency(): void
+    {
+        $model = self::$serializer->denormalize([], DenormalizerDependency::class);
+        $this->assertEquals('bar', $model->var);
+    }
+
+    public function testMissingDenormalizerDependencyThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in denormalizer method Zolex\VOM\Test\Fixtures\DenormalizerMissingDependency::denormalizeData() can not be injected. Did you forget to configure it as a denormalizer dependency?');
+        self::$serializer->denormalize([], DenormalizerMissingDependency::class);
     }
 
     public function testGoodDenormalizer(): void
