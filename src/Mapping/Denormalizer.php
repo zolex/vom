@@ -16,4 +16,12 @@ namespace Zolex\VOM\Mapping;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class Denormalizer
 {
+    public function __construct(private readonly bool $allowNonScalarArguments = false)
+    {
+    }
+
+    public function allowNonScalarArguments(): bool
+    {
+        return $this->allowNonScalarArguments;
+    }
 }
