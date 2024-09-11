@@ -3,11 +3,9 @@
 [![Integration](https://github.com/zolex/vom/workflows/Integration/badge.svg)](https://github.com/zolex/vom/actions)
 [![Release](https://github.com/zolex/vom/workflows/Release/badge.svg)](https://github.com/zolex/vom/actions)
 [![Code Coverage](https://codecov.io/gh/zolex/vom/graph/badge.svg?token=RI2NX4S89I)](https://codecov.io/gh/zolex/vom)
-![Latest Stable Version](https://img.shields.io/packagist/v/zolex/vom)
-
-![License](https://img.shields.io/packagist/l/zolex/vom)
-![Downloads](https://img.shields.io/packagist/dt/zolex/vom)
-![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&style=plastic)
+[![Version](https://img.shields.io/packagist/v/zolex/vom)](https://packagist.org/packages/zolex/vom)
+[![Downloads](https://img.shields.io/packagist/dt/zolex/vom)](https://packagist.org/packages/zolex/vom)
+[![License](https://img.shields.io/packagist/l/zolex/vom)](https://github.com/zolex/vom/blob/master/LICENSE)
 
 ![VOM](docs/logo.png)
 
@@ -147,7 +145,7 @@ If there is any difference between the data structure of your input and your app
 
 ## Documentation
 
-A [full documentation](./docs) of all features is available in the docs folder of this repository.
+The [full documentation](./docs/VOM.md) is available in the docs folder of this repository.
 
 ## Examples
 
