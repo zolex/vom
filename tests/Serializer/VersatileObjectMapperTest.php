@@ -35,6 +35,7 @@ use Zolex\VOM\Test\Fixtures\CallsOnInvalidNormalizer;
 use Zolex\VOM\Test\Fixtures\CallWithArray;
 use Zolex\VOM\Test\Fixtures\CallWithObject;
 use Zolex\VOM\Test\Fixtures\CallWithObjectInput;
+use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CircularReference;
 use Zolex\VOM\Test\Fixtures\CollectionOfCollections;
@@ -920,6 +921,13 @@ class VersatileObjectMapperTest extends TestCase
 
         $this->assertInstanceOf(CallWithObject::class, $result);
         $this->assertNull($result->getName());
+    }
+
+    public function testMethodCallWithUnsupportedArrayThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Only scalars are allowed for method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray(). Consider using collection attributes.');
+        self::$serializer->denormalize([], CallWithUnsupportedArray::class);
     }
 
     public function testMethodCallWithUnsupportedClassThrowsException(): void

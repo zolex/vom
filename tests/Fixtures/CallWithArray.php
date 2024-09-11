@@ -23,7 +23,7 @@ class CallWithArray
      */
     private array $dates;
 
-    #[VOM\Denormalizer]
+    #[VOM\Denormalizer(allowNonScalarArguments: true)]
     public function denormalizeDates(
         #[VOM\Argument('[dates]')]
         array $input,

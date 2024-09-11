@@ -20,7 +20,7 @@ class CallWithObject
 {
     private string $name;
 
-    #[VOM\Denormalizer]
+    #[VOM\Denormalizer(allowNonScalarArguments: true)]
     public function denormalizeThing(
         #[VOM\Argument('[thing]')]
         object $input,
