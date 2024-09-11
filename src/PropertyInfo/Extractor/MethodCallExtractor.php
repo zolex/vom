@@ -73,10 +73,6 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
                 continue;
             }
 
-            if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass) {
-                throw new MappingException(\sprintf('Only scalars are supported for method call %s::%s().', $className, $methodName));
-            }
-
             $types[] = new Type($phpTypeOrClass, $nullable);
         }
 

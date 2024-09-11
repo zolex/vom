@@ -16,12 +16,22 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class CallWithUnsupportedArray
+class CallWithObject
 {
+    private string $name;
+
     #[VOM\Denormalizer]
-    public function setArray(
-        #[VOM\Argument]
-        array $dates,
+    public function denormalizeThing(
+        #[VOM\Argument('[thing]')]
+        object $input,
     ): void {
+        if (property_exists($input, 'name')) {
+            $this->name = $input->name;
+        }
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name ?? null;
     }
 }
