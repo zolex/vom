@@ -50,7 +50,8 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
                 return $this->extractFromReflectionType(
                     $context['reflection_class']?->getName() ?? null,
                     $context['reflection_method']->getName(),
-                    $parameter->getType()
+                    $parameter->getType(),
+                    (bool) ($context['allow_non_scalar'] ?? false),
                 );
             }
         }
@@ -58,7 +59,7 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
         return null;
     }
 
-    private function extractFromReflectionType(?string $className, string $methodName, \ReflectionType $reflectionType): array
+    private function extractFromReflectionType(?string $className, string $methodName, \ReflectionType $reflectionType, bool $allowNonScalar = false): array
     {
         $types = [];
         $nullable = $reflectionType->allowsNull();
@@ -73,8 +74,8 @@ class MethodCallExtractor implements PropertyTypeExtractorInterface
                 continue;
             }
 
-            if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass) {
-                throw new MappingException(\sprintf('Only scalars are supported for method call %s::%s().', $className, $methodName));
+            if (!$allowNonScalar && (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass || Type::BUILTIN_TYPE_OBJECT === $phpTypeOrClass)) {
+                throw new MappingException(\sprintf('Only scalars are allowed for method call %s::%s(). Consider using collection attributes.', $className, $methodName));
             }
 
             $types[] = new Type($phpTypeOrClass, $nullable);

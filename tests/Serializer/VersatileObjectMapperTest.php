@@ -32,6 +32,9 @@ use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
 use Zolex\VOM\Test\Fixtures\CallsOnInvalidDenormalizer;
 use Zolex\VOM\Test\Fixtures\CallsOnInvalidNormalizer;
+use Zolex\VOM\Test\Fixtures\CallWithArray;
+use Zolex\VOM\Test\Fixtures\CallWithObject;
+use Zolex\VOM\Test\Fixtures\CallWithObjectInput;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray;
 use Zolex\VOM\Test\Fixtures\CallWithUnsupportedClass;
 use Zolex\VOM\Test\Fixtures\CircularReference;
@@ -789,6 +792,20 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals($data, $normalized);
     }
 
+    public function testMethodWithArrayArgument(): void
+    {
+        $data = [
+            'id' => 42,
+            'name' => 'Peter Enis',
+            'data2_id' => 1337,
+            'data2_name' => 'Peter Parker',
+        ];
+
+        $calls = self::$serializer->denormalize($data, Calls::class, null, ['groups' => ['data', 'more']]);
+        $normalized = self::$serializer->normalize($calls, null, ['groups' => ['data', 'more']]);
+        $this->assertEquals($data, $normalized);
+    }
+
     public function testDenormalizerDependency(): void
     {
         $model = self::$serializer->denormalize([], DenormalizerDependency::class);
@@ -859,10 +876,57 @@ class VersatileObjectMapperTest extends TestCase
         self::$serializer->normalize(new CallsOnInvalidNormalizer());
     }
 
+    public function testMethodCallWithArray(): void
+    {
+        $result = self::$serializer->denormalize([
+            'dates' => [
+                '20.01.1985',
+                '11.09.2024',
+            ],
+        ], CallWithArray::class);
+
+        $dates = $result->getDates();
+        $this->assertCount(2, $dates);
+        $this->assertEquals('1985-01-20', $dates[0]->format('Y-m-d'));
+        $this->assertEquals('2024-09-11', $dates[1]->format('Y-m-d'));
+    }
+
+    public function testMethodCallWithStdClass(): void
+    {
+        $result = self::$serializer->denormalize([
+            'thing' => (object) [
+                'name' => 'fly thing',
+            ],
+        ], CallWithObject::class);
+
+        $this->assertInstanceOf(CallWithObject::class, $result);
+        $this->assertEquals($result->getName(), 'fly thing');
+    }
+
+    public function testMethodCallWithCompatibleClass(): void
+    {
+        $result = self::$serializer->denormalize([
+            'thing' => new CallWithObjectInput(name: 'hit thing'),
+        ], CallWithObject::class);
+
+        $this->assertInstanceOf(CallWithObject::class, $result);
+        $this->assertEquals($result->getName(), 'hit thing');
+    }
+
+    public function testMethodCallWithIncompatibleClass(): void
+    {
+        $result = self::$serializer->denormalize([
+            'thing' => new Address(),
+        ], CallWithObject::class);
+
+        $this->assertInstanceOf(CallWithObject::class, $result);
+        $this->assertNull($result->getName());
+    }
+
     public function testMethodCallWithUnsupportedArrayThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Only scalars are supported for method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray().');
+        $this->expectExceptionMessage('Only scalars are allowed for method call Zolex\VOM\Test\Fixtures\CallWithUnsupportedArray::setArray(). Consider using collection attributes.');
         self::$serializer->denormalize([], CallWithUnsupportedArray::class);
     }
 

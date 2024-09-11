@@ -216,7 +216,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
         $methodArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
+            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod, $denormalizer->allowNonScalarArguments())) {
                 $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
             } elseif ($type = $reflectionParameter->getType()?->getName()) {
                 $found = false;
@@ -281,6 +281,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         \ReflectionParameter|\ReflectionProperty $reflectionProperty,
         ?\ReflectionClass $reflectionClass = null,
         ?\ReflectionMethod $reflectionMethod = null,
+        bool $allowNonScalarArguments = false,
     ): ?PropertyMetadata {
         $propertyAttribute = null;
         foreach ($reflectionProperty->getAttributes() as $reflectionAttribute) {
@@ -303,6 +304,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         $types = $this->propertyInfoExtractor->getTypes($class, $property, [
             'reflection_class' => $reflectionClass,
             'reflection_method' => $reflectionMethod,
+            'allow_non_scalar' => $allowNonScalarArguments,
         ]);
 
         if (null === $types) {
