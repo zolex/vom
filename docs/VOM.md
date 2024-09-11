@@ -572,9 +572,12 @@ $factory->injectDenormalizerDependency(new \Some\Dependency());
 
 ##### Non-Scalar Denormalizer Arguments
 
-To prevent unnecessary usage of denormalizers when dealing with arrays the denormalizer methods only accept scalar arguments by default.
+To prevent unnecessary usage of denormalizers when dealing with arrays, the denormalizer methods only accept scalar arguments by default.
 However, if you have some very special requirements, or you want to denormalize a custom data structure including class instances, the denormalize attribute
 allows to enable `array` and `object` typehints using the `allowNonScalarArguments` property.
+
+> [!TIP]
+> Consider to use [Collections](#collections) instead of writing a custom denormalizer with the allowNonScalarArguments enabled.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
@@ -593,6 +596,7 @@ class BadHabits
             $this->name = $input->name;
         }
     }
+}
 ```
 
 #### Normalizer Methods
