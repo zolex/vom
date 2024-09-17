@@ -18,7 +18,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
-- [Full Documentation](./docs/README.md)
+- [Documentation](./docs/VOM.md)
 - [Examples](#examples)
 
 ## Installation
@@ -133,7 +133,7 @@ To create instances of your models, you simply pass the data to the `denormalize
 $person = $objectMapper->denormalize($data, Person::class);
 ``` 
 
-You may have noticed, that some property attributes have arguments while others don't. For details on that, see the [full documentation](./docs/README.md).
+You may have noticed, that some property attributes have arguments while others don't. For details on that, see the [full documentation](./docs/VOM.md).
 
 ### Now, do I need this?
 
