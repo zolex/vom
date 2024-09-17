@@ -62,10 +62,11 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 ## The Object Mapper
 
-### Without Framework
+### Plain old PHP
 
-Without symfony framework, you can construct the mapper yourself or simply use the included factory.
-Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework). You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
+Without a framework, you can construct the mapper yourself or simply use the included factory.
+Also see the [plain php example](https://github.com/zolex/vom-examples/tree/main/without-framework).
+You can pass the `create()` method any `\Psr\Cache\CacheItemPoolInterface` to cache the model's metadata and avoid analyzing it on each execution of your application.
 
 ```php
 $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::create();
@@ -73,7 +74,7 @@ $objectMapper = \Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory::crea
 
 ### Laravel Framework
 
-In Laravel the `VersatileObjectMapper` is registered for dependency injection. Also eee the [Laravel example with Dependency Injection](https://github.com/zolex/vom-examples/tree/main/laravel).
+In Laravel the `VersatileObjectMapper` is registered for dependency injection. Also see the [Laravel example with Dependency Injection](https://github.com/zolex/vom-examples/tree/main/laravel).
 
 ```php
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -91,7 +92,7 @@ class ExampleController
 }
 ```
 
-If you prefer you can also get a VOM instance using `app()` or `resolve()` etc.
+If you prefer, you can also get a VOM instance using Laravel's `app()` or `resolve()` etc.
 
 ```php
 $objectMapper = resolve(VersatileObjectMapper::class);
@@ -100,10 +101,10 @@ $objectMapper = app(VersatileObjectMapper::class);
 
 ### Symfony Framework
 
-In symfony framework you can simply use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](https://github.com/zolex/vom-examples/tree/main/symfony-framework).
+In symfony framework you should use dependency injection to gain access to the preconfigured object mapper service. Also see the [Symfony example](https://github.com/zolex/vom-examples/tree/main/symfony-framework).
 The recommended way to use it is by type-hinting Symfony's `SerializerInterface` or `VersatileObjectMapper`.
 
-The only difference is, that `VersatileObjectMapper` by default processes the VOM attributes and Serializer does not.
+The only difference is, that `VersatileObjectMapper` by default processes the VOM attributes and the standard symfony serializer needs additional context to enable the VOM features.
 
 ```php
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -122,7 +123,7 @@ class AnySymfonyService
 ```
 
 Symfony Serializer needs additional context to utilize the Versatile Object Mapper. This is required to not interfere with the framework's behavior if not explicitly wanted.
-A particular use-case where it would otherwise produce unwanted results is API-Platform, where it would always return the VOM normalized data without the extra context.
+A particular use-case where it would otherwise produce unwanted results is API-Platform, where it would always return the VOM-normalized data if VOM wasn't disabled by default.
 
 _For technical details, check the [StateProvider](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/State/PersonStateProvider.php) and the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-custom-state/src/ApiResource/Person.php) in the API-Platform example with custom state
 as well as the [Person Resource](https://github.com/zolex/vom-examples/tree/main/api-platform-doctrine/src/Entity/Person.php) in the API-Platform example with Doctrine._
@@ -157,7 +158,7 @@ $person = $objectMapper->denormalize($data, Person::class);
 
 ### Normalization
 
-Normalization is ht process of mapping a strictly typed model to an arbitrary array with untyped values.
+Normalization is VOM's process of mapping a strictly typed model to an arbitrary array with eventually untyped or at least not strictly typed values.
 
 If you need a native php array representation of your model you can call the `normalize()` method and pass it your model.
 
@@ -165,7 +166,7 @@ If you need a native php array representation of your model you can call the `no
 $array = $objectMapper->normalize($personModel);
 ```
 
-If you need it converted to an object, use the static `toObject()` method and pass it the normalization result.
+If you need it converted to an object, use VOM's static `toObject()` method and pass it the normalization result.
 This is not simply casting, but recursively converts the whole data structure to an `stdClass`, just leaving indexed, sequential arrays intact.
 
 ```php
