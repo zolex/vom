@@ -31,7 +31,11 @@ jobs:
 
           - php: 8.3
             deps: latest
-            symfony: ^7.1
+            symfony: ^7.2
+
+          - php: 8.4
+            deps: latest
+            symfony: ^7.2
 
     steps:
       - name: Checkout code
