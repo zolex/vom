@@ -20,7 +20,7 @@ test-stable: test ## Run the tests with stable dependencies
 test-stable: COMPOSER_ARGS=--prefer-stable
 
 codestyle-fix: deps-codestyle ## Fix Codestyle issues
-	XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --show-progress=dots --ansi --verbose $(CS_FIXER_ARGS)
+	PHP_CS_FIXER_IGNORE_ENV=1 XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --show-progress=dots --ansi --verbose $(CS_FIXER_ARGS)
 
 codestyle: codestyle-fix ## Show Codestyle issues
 codestyle: CS_FIXER_ARGS=--dry-run
