@@ -19,12 +19,12 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class DenormalizerDependency
 {
-    public string $var;
+    public bool $example;
 
     #[VOM\Denormalizer]
     public function denormalizeData(
         ParameterBagInterface $parameterBag,
     ): void {
-        $this->var = $parameterBag->get('foo');
+        $this->example = $parameterBag->get('example');
     }
 }

@@ -23,6 +23,6 @@ class CachedVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     protected function setUp(): void
     {
-        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter());
+        self::$serializer = VersatileObjectMapperFactory::create(new ArrayAdapter(), [self::$parameterBag]);
     }
 }

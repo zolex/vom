@@ -47,9 +47,9 @@ class VersatileObjectMapperFactory
         self::$objectNormalizer = null;
     }
 
-    public static function create(?CacheItemPoolInterface $cacheItemPool = null): VersatileObjectMapper
+    public static function create(?CacheItemPoolInterface $cacheItemPool = null, array $deps = []): VersatileObjectMapper
     {
-        self::$objectNormalizer = self::createObjectNormalizer($cacheItemPool);
+        self::$objectNormalizer = self::createObjectNormalizer($cacheItemPool, $deps);
 
         $serializer = new Serializer(
             [
@@ -66,14 +66,14 @@ class VersatileObjectMapperFactory
         return new VersatileObjectMapper($serializer);
     }
 
-    public static function createObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null): ObjectNormalizer
+    public static function createObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null, array $deps = []): ObjectNormalizer
     {
         $propertyInfo = PropertyInfoExtractorFactory::create();
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
         self::$metadataFactory = new ModelMetadataFactory($propertyInfo);
-        $parameterBag = new ParameterBag();
-        $parameterBag->set('foo', 'bar');
-        self::$metadataFactory->injectDenormalizerDependency($parameterBag);
+        foreach ($deps as $dep) {
+            self::$metadataFactory->injectDenormalizerDependency($dep);
+        }
         if ($cacheItemPool) {
             self::$metadataFactory = new CachedModelMetadataFactory($cacheItemPool, self::$metadataFactory);
         }
