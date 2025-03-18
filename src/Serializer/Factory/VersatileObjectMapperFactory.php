@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Zolex\VOM\Serializer\Factory;
 
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
