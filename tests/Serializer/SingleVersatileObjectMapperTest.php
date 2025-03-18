@@ -22,7 +22,7 @@ class SingleVersatileObjectMapperTest extends VersatileObjectMapperTest
 {
     public static function setUpBeforeClass(): void
     {
-        self::$serializer = VersatileObjectMapperFactory::create();
+        self::$serializer = VersatileObjectMapperFactory::create(null, [self::$parameterBag]);
     }
 
     protected function setUp(): void
