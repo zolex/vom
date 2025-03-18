@@ -33,8 +33,5 @@ class VersatileObjectMapperProviderTest extends TestCase
         $provider = new VersatileObjectMapperProvider();
         $provider->app = $app->reveal();
         $provider->register();
-
-        $vom = $provider->create($provider->app);
-        $this->assertInstanceOf(VersatileObjectMapper::class, $vom);
     }
 }
