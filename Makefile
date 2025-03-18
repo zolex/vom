@@ -8,7 +8,7 @@ deps-test: ## Install PHPUnit dependencies
 	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/phpunit
 
 deps-codestyle: ## Install PHP-CS-Fixer dependencies
-	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/phpunit
+	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/php-cs-fixer
 
 test: deps deps-test ## Run the test with locked dependencies
 	XDEBUG_MODE=coverage tools/phpunit/vendor/bin/phpunit --colors=always --coverage-text --testdox
