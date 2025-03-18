@@ -1,0 +1,9 @@
+services:
+  test:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    restart: no
+    command: make test
+    volumes:
+      - ./:/opt/vom
