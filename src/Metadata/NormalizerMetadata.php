@@ -20,7 +20,7 @@ class NormalizerMetadata extends AbstractCallableMetadata
     public function __construct(
         string $class,
         string $method,
-        private readonly string $virtualPropertyName,
+        private readonly ?string $virtualPropertyName,
         private readonly Normalizer $attribute,
     ) {
         parent::__construct($class, $method);

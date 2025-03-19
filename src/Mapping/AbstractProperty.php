@@ -25,6 +25,7 @@ abstract class AbstractProperty
         private ?string $defaultOrder = null,
         private ?string $dateTimeFormat = null,
         private ?array $map = null,
+        private bool $serialized = false,
     ) {
     }
 
@@ -86,5 +87,10 @@ abstract class AbstractProperty
     public function getMap(): ?array
     {
         return $this->map;
+    }
+
+    public function isSerialized(): bool
+    {
+        return $this->serialized;
     }
 }

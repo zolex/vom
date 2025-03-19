@@ -118,6 +118,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MissingMetadataException(\sprintf('The class "%s" does not have the "VOM\Model" attribute.', $class->getName()));
         }
 
+        $hasSerializer = false;
+        $normalizerCount = 0;
         foreach ($class->getMethods() as $reflectionMethod) {
             if ($reflectionMethod->isConstructor()) {
                 continue;
@@ -127,7 +129,12 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 $attribute = $reflectionAttribute->newInstance();
 
                 if ($attribute instanceof Normalizer) {
-                    $modelMetadata->addNormalizer($this->createNormalizerMetadata($class, $reflectionMethod, $attribute));
+                    ++$normalizerCount;
+                    $normalizer = $this->createNormalizerMetadata($class, $reflectionMethod, $attribute);
+                    if ('__toString' === $normalizer->getMethod()) {
+                        $hasSerializer = true;
+                    }
+                    $modelMetadata->addNormalizer($normalizer);
                     continue;
                 }
 
@@ -141,6 +148,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     continue;
                 }
             }
+        }
+
+        if ($hasSerializer && $normalizerCount > 1) {
+            throw new MappingException(\sprintf('The "__toString()" method on model "%s" is configured as a normalizer. There must be no additional normalizer methods.', $class->getName()));
         }
 
         foreach ($class->getProperties() as $reflectionProperty) {
@@ -180,10 +191,12 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(\sprintf('Normalizer method %s::%s() should not be static.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        if (preg_match('/^(get|has|is|normalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
+        if ('__toString' === $reflectionMethod->getName()) {
+            $virtualPropertyName = null;
+        } elseif (preg_match('/^(get|has|is|normalize)(.+)$/i', $reflectionMethod->getName(), $matches)) {
             $virtualPropertyName = lcfirst($matches[2]);
         } else {
-            throw new MappingException(\sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
+            throw new MappingException(\sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize" or on the "__toString" method.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         return new NormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $virtualPropertyName, $normalizer);

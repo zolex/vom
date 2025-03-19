@@ -19,7 +19,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 <!-- toc -->
 
 - [The Object Mapper](#the-object-mapper)
-  * [Without Framework](#without-framework)
+  * [Without Framework](#plain-old-php)
   * [Laravel Framework](#laravel-framework)
   * [Symfony Framework](#symfony-framework)
   * [Denormalization](#denormalization)
@@ -322,6 +322,33 @@ class ConstructorArguments
 > [!NOTE]
 > When using the [`object_to_populate` context](#object-to-populate), the constructor arguments and constructor property promotion will be skipped.
 
+#### Serialized Objects
+
+In case the source data is a serialized representation of the model, the constructor (or factory) can have a single string argument with the `serialized` option set to `true`.
+
+See [Custom serialization](#custom-serialization) to implement the equivalent normalizer.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class SerializedObject
+{
+    private int $id;
+    private string $name;
+
+    public function __construct(
+        #[VOM\Argument(serialized: true)]
+        string $data,
+    ) {
+        [$this->id, $this->name] = explode(':', $data);
+    }
+}
+```
+
+```php
+$objectMapper->denormalize('123:test', SerializedObject::class);
+```
 
 ### Constructor Property Promotion
 
@@ -638,6 +665,30 @@ class Calls
     public function getAnything(): mixed
     {
         return 'anything, even an object or array';
+    }
+}
+```
+
+##### Custom serialization
+
+The normalizer attribute can be added on the `__toString()` method. Note that in this case it must be the only normalizer on the model and return a string representation of the object.
+
+See [Serialized Objects](#serialized-objects) to implement the equivalent denormalizer.
+
+```php
+use Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class SerializedObject
+{
+    public int $id;
+    public string $name;
+
+    #[VOM\Mormalizer]
+    public function __toString(): string
+    {
+        return $this->id . ':' . $this->name;
     }
 }
 ```

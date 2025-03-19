@@ -101,6 +101,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     {
         return [
             'object' => true,
+            '*' => true,
         ];
     }
 
@@ -119,7 +120,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return false;
         }
 
-        return \is_array($data) || \is_object($data);
+        return \is_array($data) || \is_object($data) || \is_string($data);
     }
 
     /**
@@ -209,7 +210,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
      * @throws FactoryException              When at least one factory method is configured but failed to instantiate the model
      * @throws ExceptionInterface            For any other type of exception
      */
-    protected function createInstance(array &$data, string $class, array &$context, ?string $format): object
+    protected function createInstance(array|string &$data, string $class, array &$context, ?string $format): object
     {
         if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
             return $object;
@@ -284,6 +285,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     {
         if ($property->isRoot()) {
             $data = &$context[self::ROOT_DATA];
+        }
+
+        if (\is_string($data) && $property->isSerialized()) {
+            return $data;
         }
 
         if ($accessor = $property->getAccessor()) {
@@ -478,13 +483,17 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return false;
         }
 
+        if (!\is_object($data)) {
+            return false;
+        }
+
         try {
             $this->modelMetadataFactory->getMetadataFor($data::class);
         } catch (MissingMetadataException) {
             return false;
         }
 
-        return \is_object($data);
+        return true;
     }
 
     /**
@@ -599,7 +608,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 throw new BadMethodCallException(\sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
             }
 
-            if (null !== $accessor = $normalizer->getAccessor()) {
+            if ('__toString' === $normalizer->getMethod()) {
+                return $normalized;
+            } elseif (null !== $accessor = $normalizer->getAccessor()) {
                 $this->propertyAccessor->setValue($data, $accessor, $normalized);
             } else {
                 if (!\is_array($normalized)) {

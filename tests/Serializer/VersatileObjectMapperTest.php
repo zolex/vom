@@ -66,6 +66,10 @@ use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PrivateDenormalizer;
 use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
+use Zolex\VOM\Test\Fixtures\SerializedObject;
+use Zolex\VOM\Test\Fixtures\SerializedObjectArray;
+use Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer;
+use Zolex\VOM\Test\Fixtures\SerializedObjectWithFactory;
 use Zolex\VOM\Test\Fixtures\StaticDenormalizer;
 use Zolex\VOM\Test\Fixtures\StaticNormalizer;
 use Zolex\VOM\Test\Fixtures\Thing;
@@ -1309,5 +1313,53 @@ class VersatileObjectMapperTest extends TestCase
         ], ValueMap::class);
 
         $this->assertNull($model->nullable);
+    }
+
+    public function testArrayOfSerializedObjects(): void
+    {
+        $data = [
+            'images' => [
+                'image1.jpg,tag:foobar,description:source data is shit',
+                'barbaz.png,tag:barbaz,description:mind your own business',
+            ],
+        ];
+
+        $model = self::$serializer->denormalize($data, SerializedObjectArray::class);
+
+        $this->assertInstanceOf(SerializedObjectArray::class, $model);
+
+        $this->assertInstanceOf(SerializedObject::class, $model->images[0]);
+        $this->assertEquals('image1.jpg', $model->images[0]->filename);
+        $this->assertEquals('foobar', $model->images[0]->tag);
+        $this->assertEquals('source data is shit', $model->images[0]->description);
+
+        $this->assertInstanceOf(SerializedObject::class, $model->images[1]);
+        $this->assertEquals('barbaz.png', $model->images[1]->filename);
+        $this->assertEquals('barbaz', $model->images[1]->tag);
+        $this->assertEquals('mind your own business', $model->images[1]->description);
+
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testSerializedObjectWithFactory(): void
+    {
+        $data = 'image1.jpg,tag:foobar,description:source data is shit';
+        $model = self::$serializer->denormalize($data, SerializedObjectWithFactory::class);
+
+        $this->assertInstanceOf(SerializedObjectWithFactory::class, $model);
+        $this->assertEquals('image1.jpg', $model->filename);
+        $this->assertEquals('foobar', $model->tag);
+        $this->assertEquals('source data is shit', $model->description);
+
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testSerializedObjectWithAdditionalNormalizerThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('The "__toString()" method on model "Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer" is configured as a normalizer. There must be no additional normalizer methods.');
+        self::$serializer->denormalize([], SerializedObjectWithAdditionalNormalizer::class);
     }
 }
