@@ -139,6 +139,11 @@ class PropertyMetadata
         return $this->attribute->hasMap();
     }
 
+    public function isSerialized(): bool
+    {
+        return $this->attribute->isSerialized();
+    }
+
     public function getMappedValue(mixed $value): mixed
     {
         $map = $this->attribute->getMap();
