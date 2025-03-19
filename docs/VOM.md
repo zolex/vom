@@ -598,6 +598,13 @@ $factory = new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(/*...*/);
 $factory->injectDenormalizerDependency(new \Some\Dependency());
 ```
 
+If you are using the `VersatileObjectMapperFactory` you can pass the dependencies to the `create` method.
+
+```php
+$vom = VersatileObjectMapperFactory::create(null, [new DependencyA(), new DependencyB()]);
+```
+
+
 ##### Non-Scalar Denormalizer Arguments
 
 To prevent unnecessary usage of denormalizers when dealing with arrays, the denormalizer methods only accept scalar arguments by default.
