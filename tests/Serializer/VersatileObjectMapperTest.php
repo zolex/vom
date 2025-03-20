@@ -1404,7 +1404,7 @@ class VersatileObjectMapperTest extends TestCase
     public function testRegexpExtractorModelThrowsExceptionWhenNotMatching(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Extractor "/^(?<filename>.+),tag:(?<tag>.*),visibility:(?<isVisible>visible|hidden)/" on model "Zolex\VOM\Test\Fixtures\RegexpExtractorModel" does not match the data "WRONGDATA"');
+        $this->expectExceptionMessage('Extractor "/^(?<filename>.+),tag:(.*),visibility:(?<visibility>visible|hidden)/" on model "Zolex\VOM\Test\Fixtures\RegexpExtractorModel" does not match the data "WRONGDATA"');
         self::$serializer->denormalize('WRONGDATA', RegexpExtractorModel::class);
     }
 }

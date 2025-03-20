@@ -22,7 +22,7 @@ class RegexpExtractorModel
     public string $filename;
     #[VOM\Property(accessor: '[2]')]
     public string $tag;
-    #[VOM\Property('visibility', map: ['visible' => true, 'hidden' => false])]
+    #[VOM\Property('[visibility]', map: ['visible' => true, 'hidden' => false])]
     public bool $isVisible;
 
     #[VOM\Normalizer]
