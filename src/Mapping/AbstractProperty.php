@@ -26,6 +26,7 @@ abstract class AbstractProperty
         private ?string $dateTimeFormat = null,
         private ?array $map = null,
         private bool $serialized = false,
+        private ?string $extractor = null,
     ) {
     }
 
@@ -92,5 +93,10 @@ abstract class AbstractProperty
     public function isSerialized(): bool
     {
         return $this->serialized;
+    }
+
+    public function getExtractor(): ?string
+    {
+        return $this->extractor;
     }
 }

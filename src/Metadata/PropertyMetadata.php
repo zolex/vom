@@ -144,6 +144,11 @@ class PropertyMetadata
         return $this->attribute->isSerialized();
     }
 
+    public function getExtractor(): ?string
+    {
+        return $this->attribute->getExtractor();
+    }
+
     public function getMappedValue(mixed $value): mixed
     {
         $map = $this->attribute->getMap();

@@ -66,6 +66,8 @@ use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\PrivateDenormalizer;
 use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
+use Zolex\VOM\Test\Fixtures\RegexpExtractorModel;
+use Zolex\VOM\Test\Fixtures\RegexpExtractorProperty;
 use Zolex\VOM\Test\Fixtures\SerializedObject;
 use Zolex\VOM\Test\Fixtures\SerializedObjectArray;
 use Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer;
@@ -1361,5 +1363,48 @@ class VersatileObjectMapperTest extends TestCase
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('The "__toString()" method on model "Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer" is configured as a normalizer. There must be no additional normalizer methods.');
         self::$serializer->denormalize([], SerializedObjectWithAdditionalNormalizer::class);
+    }
+
+    public function testRegexpExtractorModel(): void
+    {
+        $data = 'image1.jpg,tag:foobar,visibility:hidden';
+        $model = self::$serializer->denormalize($data, RegexpExtractorModel::class);
+
+        $this->assertInstanceOf(RegexpExtractorModel::class, $model);
+        $this->assertEquals('image1.jpg', $model->filename);
+        $this->assertEquals('foobar', $model->tag);
+        $this->assertFalse($model->isVisible);
+
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testRegexpExtractorProperty(): void
+    {
+        $data = 'image2.jpg,tag:foobar,visibility:visible';
+        $model = self::$serializer->denormalize($data, RegexpExtractorProperty::class);
+
+        $this->assertInstanceOf(RegexpExtractorProperty::class, $model);
+        $this->assertEquals('image2.jpg', $model->filename);
+        $this->assertEquals('foobar', $model->tag);
+        $this->assertTrue($model->isVisible);
+
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testRegexpExtractorPropertyThrowsExceptionWhenNotMatching(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Extractor "/tag:([^,]+)/" on "Zolex\VOM\Test\Fixtures\RegexpExtractorProperty::$tag" does not match the data "WRONGDATA"');
+
+        self::$serializer->denormalize('WRONGDATA', RegexpExtractorProperty::class);
+    }
+
+    public function testRegexpExtractorModelThrowsExceptionWhenNotMatching(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Extractor "/^(?<filename>.+),tag:(?<tag>.*),visibility:(?<isVisible>visible|hidden)/" on model "Zolex\VOM\Test\Fixtures\RegexpExtractorModel" does not match the data "WRONGDATA"');
+        self::$serializer->denormalize('WRONGDATA', RegexpExtractorModel::class);
     }
 }

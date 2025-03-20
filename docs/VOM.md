@@ -50,6 +50,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
     + [Booleans](#booleans)
     + [DateTime](#datetime)
   * [Value Map](#value-map)
+  * [Regular Expression Extractors](#regular-expression-extractors)
 - [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
   * [Skip Null Values](#skip-null-values)
@@ -1227,6 +1228,58 @@ class ValueMap
 ```php
 $object = $objectMapper->denormalize(['color' => 'RAINBOW'], ValueMap::class);
 // $object->color is '#000000', the default value
+```
+
+## Regular Expression Extractors
+
+If the data is a string consisting of multiple values, you can use regexp extractors to read the properties into your model.
+
+On the `VOM\Model` attribute the regexp extractor must have named subpattern matching the model's properties.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model(extractor: '/^(?<filename>.+),tag:(?<tag>.*),description:(?<text>.*)/')]
+class RegexpExtractorModel
+{
+    #[VOM\Property]
+    public string $filename;
+    
+    #[VOM\Property]
+    public string $tag;
+    
+    #[VOM\Property]
+    public string $text;
+}
+```
+
+```php
+$model = $objectMapper->denormalize('image1.jpg,tag:foobar,description:source data is shit', RegexpExtractorModel::class);
+```
+
+Onb the `VOM\Property``attribute the regexp extractor must have exactly one subpattern to extract the data.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class RegexpExtractorProperty
+{
+    #[VOM\Property(extractor: '/^([^,]+)/')]
+    public string $filename;
+    
+    #[VOM\Property(extractor: '/tag:([^,]+)/')]
+    public string $tag;
+    
+    #[VOM\Property(
+        map: ['visible' => true, 'hidden' => false],
+        extractor: '/visibility:(visible|hidden)/'
+    )]
+    public bool $isVisible;
+```
+
+```php
+$model = $objectMapper->denormalize('image1.jpg,tag:foobar,visibility:hidden', RegexpExtractorProperty::class);
 ```
 
 ## Interfaces and Abstract Classes

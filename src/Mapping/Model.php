@@ -16,12 +16,17 @@ namespace Zolex\VOM\Mapping;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final class Model
 {
-    public function __construct(private readonly ?array $factory = null)
+    public function __construct(private readonly ?array $factory = null, private readonly ?string $extractor = null)
     {
     }
 
     public function getFactory(): ?array
     {
         return $this->factory;
+    }
+
+    public function getExtractor(): ?string
+    {
+        return $this->extractor;
     }
 }

@@ -141,6 +141,15 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         $model = $this->createInstance($data, $type, $context, $format);
         $metadata = $this->modelMetadataFactory->getMetadataFor($model::class);
         $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
+
+        if (\is_string($data) && ($extractor = $metadata->getAttribute()?->getExtractor())) {
+            if (!preg_match($extractor, $data, $matches)) {
+                throw new MappingException(\sprintf('Extractor "%s" on model "%s" does not match the data "%s"', $extractor, $type, $data));
+            }
+
+            $data = $matches;
+        }
+
         foreach ($metadata->getDenormalizers() as $denormalizer) {
             $attribute = $denormalizer->getPropertyName();
             if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
@@ -287,14 +296,23 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $data = &$context[self::ROOT_DATA];
         }
 
-        if (\is_string($data) && $property->isSerialized()) {
-            return $data;
-        }
+        if (\is_string($data)) {
+            if ($property->isSerialized()) {
+                return $data;
+            }
 
-        if ($accessor = $property->getAccessor()) {
-            $value = $this->propertyAccessor->getValue($data, $accessor);
+            if ($extractor = $property->getExtractor()) {
+                if (!preg_match($extractor, $data, $matches)) {
+                    throw new MappingException(\sprintf('Extractor "%s" on "%s::$%s" does not match the data "%s"', $extractor, $type, $property->getName(), $data));
+                }
+                $value = $matches[1] ?? null;
+            }
         } else {
-            $value = $data;
+            if ($accessor = $property->getAccessor()) {
+                $value = $this->propertyAccessor->getValue($data, $accessor);
+            } else {
+                $value = $data;
+            }
         }
 
         if ($property->hasMap()) {
