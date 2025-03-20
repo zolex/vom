@@ -1234,7 +1234,7 @@ $object = $objectMapper->denormalize(['color' => 'RAINBOW'], ValueMap::class);
 
 If the data is a string consisting of multiple values, you can use regexp extractors to read the properties into your model.
 
-On the `VOM\Model` attribute the regexp extractor should have named subpattern matching the model's property names.
+On the `VOM\Model` attribute the regexp extractor should have named subpattern matching the property accessors.
 
 ```php
 use Zolex\VOM\Mapping as VOM;
