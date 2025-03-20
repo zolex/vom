@@ -649,7 +649,7 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Calls
 {
-    #[VOM\Mormalizer]
+    #[VOM\Normalizer]
     public function normalizeData(): array
     {
         return [
@@ -669,7 +669,7 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class Calls
 {
-    #[VOM\Mormalizer(accessor: '[path][in][output]')]
+    #[VOM\Normalizer(accessor: '[path][in][output]')]
     public function getAnything(): mixed
     {
         return 'anything, even an object or array';
@@ -693,7 +693,7 @@ class SerializedObject
     public int $id;
     public string $name;
 
-    #[VOM\Mormalizer]
+    #[VOM\Normalizer]
     public function __toString(): string
     {
         return $this->id . ':' . $this->name;
@@ -727,7 +727,7 @@ class Calls
         $this->data = new GenericModel($id, $name);
     }
     
-    #[VOM\Mormalizer]
+    #[VOM\Normalizer]
     public function getData(): array
     {
         return [
