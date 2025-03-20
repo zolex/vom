@@ -15,14 +15,14 @@ namespace Zolex\VOM\Test\Fixtures;
 
 use Zolex\VOM\Mapping as VOM;
 
-#[VOM\Model(extractor: '/^(?<filename>.+),tag:(?<tag>.*),visibility:(?<isVisible>visible|hidden)/')]
+#[VOM\Model(extractor: '/^(?<filename>.+),tag:(.*),visibility:(?<visibility>visible|hidden)/')]
 class RegexpExtractorModel
 {
     #[VOM\Property]
     public string $filename;
-    #[VOM\Property]
+    #[VOM\Property(accessor: '[2]')]
     public string $tag;
-    #[VOM\Property(map: ['visible' => true, 'hidden' => false])]
+    #[VOM\Property('visibility', map: ['visible' => true, 'hidden' => false])]
     public bool $isVisible;
 
     #[VOM\Normalizer]
