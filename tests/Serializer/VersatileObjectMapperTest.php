@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Serializer;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
@@ -822,13 +822,11 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals($data, $normalized);
     }
 
-    /*
     public function testDenormalizerDependency(): void
     {
         $model = self::$serializer->denormalize([], DenormalizerDependency::class);
         $this->assertTrue($model->example);
     }
-    */
 
     public function testMissingDenormalizerDependencyThrowsException(): void
     {
