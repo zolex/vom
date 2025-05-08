@@ -28,6 +28,7 @@ use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\Address;
+use Zolex\VOM\Test\Fixtures\ArgumentOnProperty;
 use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\Calls;
@@ -45,7 +46,6 @@ use Zolex\VOM\Test\Fixtures\CollectionWithAdderRemover;
 use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
-use Zolex\VOM\Test\Fixtures\DenormalizerDependency;
 use Zolex\VOM\Test\Fixtures\DenormalizerMissingDependency;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
@@ -714,6 +714,14 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals('Peter Pan', $constructed->getName());
         $this->assertTrue($constructed->getNullable());
         $this->assertfalse($constructed->getDefault());
+    }
+
+    public function testArgumentOnPropertyThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Attribute "Zolex\VOM\Mapping\Argument" cannot target property (allowed targets: parameter)');
+
+        self::$serializer->denormalize([], ArgumentOnProperty::class);
     }
 
     public function testCallableStaticClassMethodFactory(): void
