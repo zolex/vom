@@ -335,7 +335,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             if ($reflectionProperty instanceof \ReflectionProperty) {
                 $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $attribute);
             } else {
-                $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $attribute, $reflectionProperty->isPromoted());
+                $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $attribute);
             }
 
             try {

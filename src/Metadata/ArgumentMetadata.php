@@ -23,13 +23,7 @@ class ArgumentMetadata extends PropertyMetadata
         /* @var array|Type[] $types */
         array $types,
         Argument $attribute,
-        private readonly bool $isPromoted = false,
     ) {
         parent::__construct($name, $types, $attribute);
-    }
-
-    public function isPromoted(): bool
-    {
-        return $this->isPromoted;
     }
 }
