@@ -18,17 +18,11 @@ final class Factory
 {
     public function __construct(
         private readonly int $priority = 0,
-        private readonly ?string $scenario = null,
     ) {
     }
 
     public function getPriority(): int
     {
         return $this->priority;
-    }
-
-    public function getScenario(): ?string
-    {
-        return $this->scenario;
     }
 }
