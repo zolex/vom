@@ -35,4 +35,9 @@ class NormalizerMetadata extends AbstractCallableMetadata
     {
         return $this->attribute->getAccessor();
     }
+
+    public function getScenario(): string
+    {
+        return $this->attribute->getScenario() ?? ModelMetadata::DEFAULT_SCENARIO;
+    }
 }

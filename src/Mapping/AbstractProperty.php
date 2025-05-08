@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Mapping;
 
+use Zolex\VOM\Metadata\ModelMetadata;
+
 abstract class AbstractProperty
 {
     public function __construct(
@@ -27,6 +29,7 @@ abstract class AbstractProperty
         private ?array $map = null,
         private bool $serialized = false,
         private ?string $extractor = null,
+        private ?string $scenario = ModelMetadata::DEFAULT_SCENARIO,
     ) {
     }
 
@@ -98,5 +101,10 @@ abstract class AbstractProperty
     public function getExtractor(): ?string
     {
         return $this->extractor;
+    }
+
+    public function getScenario(): string
+    {
+        return $this->scenario;
     }
 }

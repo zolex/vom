@@ -68,6 +68,13 @@ use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorModel;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorProperty;
+use Zolex\VOM\Test\Fixtures\ScenarioConstructorArguments;
+use Zolex\VOM\Test\Fixtures\ScenarioConstructorPropertyPromotion;
+use Zolex\VOM\Test\Fixtures\ScenarioDenormalizer;
+use Zolex\VOM\Test\Fixtures\ScenarioFactory;
+use Zolex\VOM\Test\Fixtures\ScenarioNormalizer;
+use Zolex\VOM\Test\Fixtures\ScenarioNormalizerWithGroups;
+use Zolex\VOM\Test\Fixtures\ScenarioProperties;
 use Zolex\VOM\Test\Fixtures\SerializedObject;
 use Zolex\VOM\Test\Fixtures\SerializedObjectArray;
 use Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer;
@@ -1406,5 +1413,92 @@ class VersatileObjectMapperTest extends TestCase
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('Extractor "/^(?<filename>.+),tag:(.*),visibility:(?<visibility>visible|hidden)/" on model "Zolex\VOM\Test\Fixtures\RegexpExtractorModel" does not match the data "WRONGDATA"');
         self::$serializer->denormalize('WRONGDATA', RegexpExtractorModel::class);
+    }
+
+    public function testScenarioProperties(): void
+    {
+        $defaultScenario = [
+            'street' => 'default street',
+            'houseNo' => '1337 a',
+        ];
+
+        $default = self::$serializer->denormalize($defaultScenario, ScenarioProperties::class);
+        $this->assertInstanceOf(ScenarioProperties::class, $default);
+        $this->assertEquals($defaultScenario['street'], $default->getStreet());
+        $this->assertEquals($defaultScenario['houseNo'], $default->getHouseNo());
+
+        $customScenario = [
+            'address' => [
+                'street_name' => 'custom street',
+                'house_number' => '42',
+            ],
+        ];
+
+        $custom = self::$serializer->denormalize($customScenario, ScenarioProperties::class, null, ['scenario' => 'custom']);
+        $this->assertInstanceOf(ScenarioProperties::class, $custom);
+        $this->assertEquals($customScenario['address']['street_name'], $custom->getStreet());
+        $this->assertEquals($customScenario['address']['house_number'], $custom->getHouseNo());
+    }
+
+    public static function getMethodTypes(): array
+    {
+        return [
+            [ScenarioDenormalizer::class],
+            [ScenarioFactory::class],
+            [ScenarioConstructorArguments::class],
+            [ScenarioConstructorPropertyPromotion::class],
+        ];
+    }
+
+    /**
+     * @dataProvider getMethodTypes
+     */
+    public function testScenarioMethods(string $class): void
+    {
+        $scenarioOne = [
+            'firstname' => 'Peter',
+            'lastname' => 'Parker',
+        ];
+
+        $one = self::$serializer->denormalize($scenarioOne, $class, null, ['scenario' => 'one']);
+        $this->assertInstanceOf($class, $one);
+        $this->assertEquals($scenarioOne['firstname'], $one->getFirstName());
+        $this->assertEquals($scenarioOne['lastname'], $one->getLastName());
+
+        $scenarioTwo = [
+            'name' => [
+                'firstname' => 'Uncle',
+                'surname' => 'Ben',
+            ],
+        ];
+
+        $two = self::$serializer->denormalize($scenarioTwo, $class, null, ['scenario' => 'two']);
+        $this->assertInstanceOf($class, $two);
+        $this->assertEquals($scenarioTwo['name']['firstname'], $two->getFirstName());
+        $this->assertEquals($scenarioTwo['name']['surname'], $two->getLastName());
+    }
+
+    public function testScenarioNormalizer(): void
+    {
+        $one = self::$serializer->normalize(new ScenarioNormalizer(), null, ['scenario' => 'one']);
+        $this->assertEquals(['scenario' => 'one', 'additional' => 1], $one);
+
+        $two = self::$serializer->normalize(new ScenarioNormalizer(), null, ['scenario' => 'two']);
+        $this->assertEquals(['scenario' => 'two', 'additional' => 2], $two);
+    }
+
+    public function testScenarioNormalizerWithGroups(): void
+    {
+        $oneA = self::$serializer->normalize(new ScenarioNormalizerWithGroups(), null, ['scenario' => 'one', 'groups' => ['a']]);
+        $this->assertEquals(['scenario' => 'oneA', 'additional' => 1], $oneA);
+
+        $oneB = self::$serializer->normalize(new ScenarioNormalizerWithGroups(), null, ['scenario' => 'one', 'groups' => ['b']]);
+        $this->assertEquals(['scenario' => 'oneB', 'additional' => 1], $oneB);
+
+        $twoA = self::$serializer->normalize(new ScenarioNormalizerWithGroups(), null, ['scenario' => 'two', 'groups' => ['a']]);
+        $this->assertEquals(['scenario' => 'twoA', 'additional' => 2], $twoA);
+
+        $twoB = self::$serializer->normalize(new ScenarioNormalizerWithGroups(), null, ['scenario' => 'two', 'groups' => ['b']]);
+        $this->assertEquals(['scenario' => 'twoB', 'additional' => 2], $twoB);
     }
 }

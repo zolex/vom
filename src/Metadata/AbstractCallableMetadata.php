@@ -43,8 +43,8 @@ abstract class AbstractCallableMetadata
         return \sprintf('%s::%s()', $this->class, $this->method);
     }
 
-    public function getArguments(): array
+    public function getArguments(string $scenario = ModelMetadata::DEFAULT_SCENARIO): array
     {
-        return $this->arguments;
+        return $this->arguments[$scenario] ?? [];
     }
 }

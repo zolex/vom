@@ -16,12 +16,19 @@ namespace Zolex\VOM\Mapping;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class Denormalizer
 {
-    public function __construct(private readonly bool $allowNonScalarArguments = false)
-    {
+    public function __construct(
+        private readonly bool $allowNonScalarArguments = false,
+        private readonly ?string $scenario = null,
+    ) {
     }
 
     public function allowNonScalarArguments(): bool
     {
         return $this->allowNonScalarArguments;
+    }
+
+    public function getScenario(): ?string
+    {
+        return $this->scenario;
     }
 }
