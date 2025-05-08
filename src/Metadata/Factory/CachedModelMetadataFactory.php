@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata\Factory;
 
-use Psr\Cache\CacheException;
 use Psr\Cache\CacheItemPoolInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
 

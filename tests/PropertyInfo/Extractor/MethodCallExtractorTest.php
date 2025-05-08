@@ -27,7 +27,6 @@ class MethodCallExtractorTest extends TestCase
         $this->assertNull($extractor->getType('', '', []));
     }
 
-
     public function testMissingArgumentReturnsNull(): void
     {
         $class = new \ReflectionClass(Calls::class);
