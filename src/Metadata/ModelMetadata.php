@@ -19,7 +19,7 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 
 final class ModelMetadata
 {
-    public const string DEFAULT_SCENARIO = 'default';
+    public const DEFAULT_SCENARIO = 'default';
 
     /**
      * @var array|PropertyMetadata[]
