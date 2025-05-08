@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Laravel\Providers;
 
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Zolex\VOM\Laravel\Providers\VersatileObjectMapperProvider;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -26,12 +25,12 @@ class VersatileObjectMapperProviderTest extends TestCase
 
     public function testSingletonIsRegistered(): void
     {
-        $app = $this->prophesize(DummyApplication::class);
-        $app->singleton(Argument::is(VersatileObjectMapper::class), Argument::type('callable'))
-            ->shouldBeCalledOnce();
+        $app = new DummyApplication();
 
         $provider = new VersatileObjectMapperProvider();
-        $provider->app = $app->reveal();
+        $provider->app = $app;
         $provider->register();
+
+        $this->assertInstanceOf(VersatileObjectMapper::class, $app(VersatileObjectMapper::class));
     }
 }

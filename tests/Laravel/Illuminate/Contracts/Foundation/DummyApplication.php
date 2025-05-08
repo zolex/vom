@@ -15,7 +15,23 @@ namespace Zolex\VOM\Test\Laravel\Illuminate\Contracts\Foundation;
 
 class DummyApplication
 {
-    public function singleton(string $class, callable $closure): void
+    private array $singletons = [];
+
+    public function __invoke($class): ?object
     {
+        if (isset($this->singletons[$class])) {
+            return $this->singletons[$class];
+        }
+
+        return null;
+    }
+
+    public function singleton(string $class, callable $closure): object
+    {
+        if (!isset($this->singletons[$class])) {
+            $this->singletons[$class] = \call_user_func_array($closure, [$this]);
+        }
+
+        return $this->singletons[$class];
     }
 }
