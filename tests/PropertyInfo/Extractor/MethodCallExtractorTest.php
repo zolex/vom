@@ -21,12 +21,12 @@ use Zolex\VOM\Test\Fixtures\CallsOnInvalidDenormalizer;
 
 class MethodCallExtractorTest extends TestCase
 {
-    public function testMissingContextReturnsNull(): void
+    public function testGetTypeReturnsNull(): void
     {
         $extractor = new MethodCallExtractor();
-        $types = $extractor->getTypes(Calls::class, 'name');
-        $this->assertNull($types);
+        $this->assertNull($extractor->getType('', '', []));
     }
+
 
     public function testMissingArgumentReturnsNull(): void
     {
