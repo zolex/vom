@@ -22,7 +22,7 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
  *
  * {@see ModelMetadataFactory::createPropertyMetadata()}
  */
-#[\Attribute(\Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE)]
 final class Argument extends AbstractProperty
 {
 }

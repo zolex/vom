@@ -107,7 +107,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
             if ($constructor = $class->getConstructor()) {
                 foreach ($constructor->getParameters() as $reflectionParameter) {
-                    if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $class, $constructor)) {
+                    foreach ($this->createPropertyMetadata($reflectionParameter, $class, $constructor) as $propertyMetadata) {
                         $modelMetadata->addConstructorArgument($propertyMetadata);
                     }
                 }
@@ -155,11 +155,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         foreach ($class->getProperties() as $reflectionProperty) {
-            if ($modelMetadata->isConstructorArgumentPromoted($reflectionProperty->getName())) {
-                continue;
-            }
-
-            if ($propertyMetadata = $this->createPropertyMetadata($reflectionProperty, $class)) {
+            foreach ($this->createPropertyMetadata($reflectionProperty, $class) as $propertyMetadata) {
                 $modelMetadata->addProperty($propertyMetadata);
             }
         }
@@ -229,14 +225,24 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
         $methodArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod, $denormalizer->allowNonScalarArguments())) {
-                $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
-            } elseif ($type = $reflectionParameter->getType()?->getName()) {
+            $hasPropertyMetadata = false;
+            foreach ($this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod, $denormalizer->allowNonScalarArguments()) as $propertyMetadata) {
+                $hasPropertyMetadata = true;
+                $scenario = $propertyMetadata->getScenario();
+                if (!isset($methodArguments[$scenario])) {
+                    $methodArguments[$scenario] = [];
+                }
+                $methodArguments[$scenario][$reflectionParameter->getName()] = $propertyMetadata;
+            }
+
+            if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
                 $found = false;
                 foreach ($this->denormalizerDependencies as $dependency) {
                     if ($dependency instanceof $type) {
                         $found = true;
-                        $methodArguments[$reflectionParameter->getName()] = new DependencyInjectionMetadata($reflectionParameter->getName(), $dependency);
+                        foreach ($methodArguments as &$scenarioArgument) {
+                            $scenarioArgument[$reflectionParameter->getName()] = new DependencyInjectionMetadata($reflectionParameter->getName(), $dependency);
+                        }
                         break;
                     }
                 }
@@ -247,8 +253,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
         }
 
-        if (!\count($methodArguments)) {
-            throw new MappingException(\sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+        foreach ($methodArguments as $scenarioArguments) {
+            if (!\count($scenarioArguments)) {
+                throw new MappingException(\sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
+            }
         }
 
         return new DenormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
@@ -276,8 +284,12 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         $methodArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-            if ($propertyMetadata = $this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod)) {
-                $methodArguments[$reflectionParameter->getName()] = $propertyMetadata;
+            foreach ($this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod) as $propertyMetadata) {
+                $scenario = $propertyMetadata->getScenario();
+                if (!isset($methodArguments[$scenario])) {
+                    $methodArguments[$scenario] = [];
+                }
+                $methodArguments[$scenario][$reflectionParameter->getName()] = $propertyMetadata;
             }
         }
 
@@ -288,6 +300,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
      * Creates and validates metadata for a Property.
      * A Property can be an actual class property or an argument to a normalizer, denormalizer, factory or constructor.
      *
+     * @return \Generator<PropertyMetadata>
+     *
      * @throws MappingException When the VOM\Argument attribute is used on a property. {@see Argument why we trow this php-like error}
      */
     private function createPropertyMetadata(
@@ -295,46 +309,41 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         ?\ReflectionClass $reflectionClass = null,
         ?\ReflectionMethod $reflectionMethod = null,
         bool $allowNonScalarArguments = false,
-    ): ?PropertyMetadata {
-        $propertyAttribute = null;
+    ): \Generator {
         foreach ($reflectionProperty->getAttributes() as $reflectionAttribute) {
             $attribute = $reflectionAttribute->newInstance();
-            if ($attribute instanceof AbstractProperty) {
-                $propertyAttribute = $attribute;
-                if (null === $reflectionMethod && $attribute instanceof Argument) {
-                    throw new MappingException(\sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
-                }
+            if (!$attribute instanceof AbstractProperty) {
                 continue;
             }
+
+            if (null === $reflectionMethod && $attribute instanceof Argument && !$reflectionProperty->isPromoted()) {
+                throw new MappingException(\sprintf('Attribute "%s" cannot target property (allowed targets: parameter)', Argument::class));
+            }
+
+            $class = $reflectionProperty->getDeclaringClass()->getName();
+            $property = $reflectionProperty->name;
+            $types = $this->propertyInfoExtractor->getTypes($class, $property, [
+                'reflection_class' => $reflectionClass,
+                'reflection_method' => $reflectionMethod,
+                'allow_non_scalar' => $allowNonScalarArguments,
+            ]);
+
+            if (null === $types) {
+                throw new MissingTypeException(\sprintf('Could not determine the type of property "%s" on class "%s".', $property, $class));
+            }
+
+            if ($reflectionProperty instanceof \ReflectionProperty) {
+                $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $attribute);
+            } else {
+                $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $attribute, $reflectionProperty->isPromoted());
+            }
+
+            try {
+                $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
+            } catch (\ReflectionException) {
+            }
+
+            yield $propertyMetadata;
         }
-
-        if (!$propertyAttribute) {
-            return null;
-        }
-
-        $class = $reflectionProperty->getDeclaringClass()->getName();
-        $property = $reflectionProperty->name;
-        $types = $this->propertyInfoExtractor->getTypes($class, $property, [
-            'reflection_class' => $reflectionClass,
-            'reflection_method' => $reflectionMethod,
-            'allow_non_scalar' => $allowNonScalarArguments,
-        ]);
-
-        if (null === $types) {
-            throw new MissingTypeException(\sprintf('Could not determine the type of property "%s" on class "%s".', $property, $class));
-        }
-
-        if ($reflectionProperty instanceof \ReflectionProperty) {
-            $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $propertyAttribute);
-        } else {
-            $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $propertyAttribute, $reflectionProperty->isPromoted());
-        }
-
-        try {
-            $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
-        } catch (\ReflectionException) {
-        }
-
-        return $propertyMetadata;
     }
 }

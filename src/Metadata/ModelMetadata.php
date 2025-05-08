@@ -19,12 +19,14 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 
 final class ModelMetadata
 {
+    public const DEFAULT_SCENARIO = 'default';
+
     /**
      * @var array|PropertyMetadata[]
      */
-    private array $properties = [];
+    private array $properties = [self::DEFAULT_SCENARIO => []];
     /**
-     * @var array|ArgumentMetadata[]
+     * @var array|ArgumentMetadata[][]
      */
     private array $constructorArguments = [];
     private ?Model $attribute = null;
@@ -76,35 +78,32 @@ final class ModelMetadata
     /**
      * @return PropertyMetadata[]
      */
-    public function getProperties(): array
+    public function getProperties(string $scenario = self::DEFAULT_SCENARIO): array
     {
-        return $this->properties;
+        return $this->properties[$scenario] ?? [];
     }
 
-    public function getProperty(string $name): ?PropertyMetadata
+    public function getProperty(string $name, string $scenario = self::DEFAULT_SCENARIO): ?PropertyMetadata
     {
-        return $this->properties[$name] ?? null;
+        return $this->properties[$scenario] ? $this->properties[$scenario][$name] ?? null : null;
     }
 
     public function addProperty(PropertyMetadata $property): void
     {
-        $this->properties[$property->getName()] = $property;
-    }
+        $scenario = $property->getScenario();
+        if (!isset($this->properties[$scenario])) {
+            $this->properties[$scenario] = [];
+        }
 
-    /**
-     * Check if a property is already injected via constructor property promotion.
-     */
-    public function isConstructorArgumentPromoted(string $name): bool
-    {
-        return isset($this->constructorArguments[$name]) && $this->constructorArguments[$name]->isPromoted();
+        $this->properties[$scenario][$property->getName()] = $property;
     }
 
     /**
      * @return PropertyMetadata[]
      */
-    public function getConstructorArguments(): array
+    public function getConstructorArguments(string $scenario = self::DEFAULT_SCENARIO): array
     {
-        return $this->constructorArguments;
+        return $this->constructorArguments[$scenario] ?? [];
     }
 
     /**
@@ -114,7 +113,12 @@ final class ModelMetadata
      */
     public function addConstructorArgument(PropertyMetadata $property): void
     {
-        $this->constructorArguments[$property->getName()] = $property;
+        $scenario = $property->getScenario();
+        if (!isset($this->constructorArguments[$scenario])) {
+            $this->constructorArguments[$scenario] = [];
+        }
+
+        $this->constructorArguments[$scenario][$property->getName()] = $property;
     }
 
     /**
@@ -140,9 +144,9 @@ final class ModelMetadata
     /**
      * @return NormalizerMetadata[]
      */
-    public function getNormalizers(): iterable
+    public function getNormalizers(string $scenario = self::DEFAULT_SCENARIO): iterable
     {
-        foreach ($this->normalizers as $normalizer) {
+        foreach ($this->normalizers[$scenario] ?? [] as $normalizer) {
             yield $normalizer;
         }
     }
@@ -154,7 +158,12 @@ final class ModelMetadata
      */
     public function addNormalizer(NormalizerMetadata $normalizerMetadata): void
     {
-        $this->normalizers[] = $normalizerMetadata;
+        $scenario = $normalizerMetadata->getScenario();
+        if (!isset($this->normalizers[$scenario])) {
+            $this->normalizers[$scenario] = [];
+        }
+
+        $this->normalizers[$scenario][] = $normalizerMetadata;
     }
 
     /**

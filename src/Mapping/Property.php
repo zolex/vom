@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Mapping;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE)]
 final class Property extends AbstractProperty
 {
 }

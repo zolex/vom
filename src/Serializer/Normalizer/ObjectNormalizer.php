@@ -42,6 +42,7 @@ use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Exception\MissingMetadataException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
+use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\Test\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
 
@@ -136,6 +137,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return null;
         }
 
+        $scenario = $context['scenario'] ?? ModelMetadata::DEFAULT_SCENARIO;
         $context[self::ROOT_DATA] ??= $data;
 
         $model = $this->createInstance($data, $type, $context, $format);
@@ -158,7 +160,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
             $context = $this->getAttributeDenormalizationContext($type, $attribute, $context);
             $methodArguments = [];
-            foreach ($denormalizer->getArguments() as $property) {
+            foreach ($denormalizer->getArguments($scenario) as $property) {
                 if ($property instanceof ArgumentMetadata) {
                     $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
                 } elseif ($property instanceof DependencyInjectionMetadata) {
@@ -177,7 +179,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
         }
 
-        foreach ($metadata->getProperties() as $property) {
+        foreach ($metadata->getProperties($scenario) as $property) {
             if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                 continue;
             }
@@ -237,13 +239,14 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
         $metadata = $this->modelMetadataFactory->getMetadataFor($class);
 
+        $scenario = $context['scenario'] ?? ModelMetadata::DEFAULT_SCENARIO;
         $hasFactory = false;
         $factoryExceptions = [];
         foreach ($metadata->getFactories() as $factory) {
             $hasFactory = true;
             try {
                 $factoryArguments = [];
-                foreach ($factory->getArguments() as $argument) {
+                foreach ($factory->getArguments($scenario) as $argument) {
                     $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
                     if (null === $value && $argument->hasDefaultValue()) {
                         $value = $argument->getDefaultValue();
@@ -270,7 +273,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
         if ($metadata->isInstantiable()) {
             $constructorArguments = [];
-            foreach ($metadata->getConstructorArguments() as $argument) {
+            foreach ($metadata->getConstructorArguments($scenario) as $argument) {
                 $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
                 if (null === $value && $argument->hasDefaultValue()) {
                     $value = $argument->getDefaultValue();
@@ -531,6 +534,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             return null;
         }
 
+        $scenario = $context['scenario'] ?? ModelMetadata::DEFAULT_SCENARIO;
         $data = [];
         if (!isset($context[self::ROOT_DATA])) {
             $context[self::ROOT_DATA] = &$data;
@@ -549,7 +553,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         $allowedAttributes = $this->getAllowedAttributes($object::class, $context, true);
-        foreach ($metadata->getProperties() as $property) {
+        foreach ($metadata->getProperties($scenario) as $property) {
             if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                 continue;
             }
@@ -610,7 +614,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
         }
 
-        foreach ($metadata->getNormalizers() as $normalizer) {
+        foreach ($metadata->getNormalizers($scenario) as $normalizer) {
             $attribute = $normalizer->getPropertyName();
             if ($allowedAttributes && !\in_array($attribute, $allowedAttributes)) {
                 continue;

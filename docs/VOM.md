@@ -1282,6 +1282,195 @@ class RegexpExtractorProperty
 $model = $objectMapper->denormalize('image1.jpg,tag:foobar,visibility:hidden', RegexpExtractorProperty::class);
 ```
 
+## Scenarios
+
+If there is more than one representation of your normalized data, the `scenario` argument allows to switch between different mappings.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    #[VOM\Property]
+    #[VOM\Property('[FIRST_NAME]', scenario: 'second')]
+    #[VOM\Property('[name][first]'), scenario: 'third'])]
+    public string $firstName;
+    
+    #[VOM\Property]
+    #[VOM\Property('[LAST_NAME]', scenario: 'second')]
+    #[VOM\Property('[name][last]'), scenario: 'third'])]
+    public string $lastName;
+}
+```
+
+The scenario can be passed in the context of the `serialize`, `deserialize`, `normalize` and `denormalize` methods of the ObjectMapper.
+
+```php
+$data = [
+    'firstName' => 'Peter',
+    'lastName' => 'Parker'
+];
+$objectMapper->denormalize($data, ModelWithScenarios::class);
+
+$data = [
+    'FIRST_NAME' => 'Peter',
+    'LAST_NAME' => 'Parker'
+];
+$objectMapper->denormalize($data, ModelWithScenarios::class, null, ['scenario' => 'second']);
+
+$data = [
+    'name' => [
+        'first' => 'Peter',
+        'last' => 'Parker'
+    ]
+];
+$objectMapper->denormalize($data, ModelWithScenarios::class, null, ['scenario' => 'third']);
+```
+
+The `scenario` argument can also be used on the arguments of constructors, factories and denormalizers as well as on normalizer methods.
+
+**Constructor Scenarios**
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    public function __construct(
+      #[VOM\Argument]
+      #[VOM\Argument('[FIRST_NAME]', scenario: 'second')]
+      string $firstName,
+      
+      #[VOM\Argument]
+      #[VOM\Argument('[LAST_NAME]', scenario: 'second')]
+      string $lastName,
+    ) {
+        // ...
+    }
+}
+```
+
+**Factory Scenarios**
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    #[VOM\Factory]
+    public function create(
+      #[VOM\Argument]
+      #[VOM\Argument('[FIRST_NAME]', scenario: 'second')]
+      string $firstName,
+      
+      #[VOM\Argument]
+      #[VOM\Argument('[LAST_NAME]', scenario: 'second')]
+      string $lastName,
+    ): self {
+        // ...
+    }
+}
+```
+
+**Denormalizer Scenarios**
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    #[VOM\Denormalizer]
+    public function denormalizeValues(
+      #[VOM\Argument]
+      #[VOM\Argument('[FIRST_NAME]', scenario: 'second')]
+      string $firstName,
+      
+      #[VOM\Argument]
+      #[VOM\Argument('[LAST_NAME]', scenario: 'second')]
+      string $lastName,
+    ) {
+        // ...
+    }
+}
+```
+
+**Normalizer Scenarios**
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    private string $firstName = 'Peter';
+    private string $lastName = 'Parker';
+
+    #[VOM\Normalizer(accessor: '[firstName]')]
+    public function normalizeFirstNameForDefaultScenario(): string {
+        return $this->firstName;
+    }
+    
+    #[VOM\Normalizer(accessor: '[FIRST_NAME]', scenario: 'second')]
+    public function normalizeFirstNameForSecondScenario(): string {
+        return strtoupper($this->firstName);
+    }
+    
+    #[VOM\Normalizer(accessor: '[lastName]')]
+    public function normalizeLastNameForDefaultScenario(): string {
+        return return $this->lastName;
+    }
+    
+    #[VOM\Normalizer(accessor: '[LAST_NAME]', scenario: 'second')]
+    public function normalizeFirstNameForSecondScenario(): string {
+        return strtoupper($this->lastName);
+    }
+}
+```
+
+> [!NOTE]
+> For fine-grained control, scenarios can also be combined with the `Groups` feature.
+
+```php
+use \Symfony\Component\Serializer\Attribute\Groups;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ModelWithScenarios
+{
+    private string $firstName = 'Peter';
+    private string $lastName = 'Parker';
+
+    #[Groups('firstname')]
+    #[VOM\Normalizer(accessor: '[firstName]')]
+    public function getFirstNameForDefaultScenario(): string {
+        return $this->firstName;
+    }
+    
+    #[Groups('firstname')]
+    #[VOM\Normalizer(accessor: '[FIRST_NAME]', scenario: 'second')]
+    public function getFirstNameForSecondScenario(): string {
+        return strtoupper($this->firstName);
+    }
+    
+    #[Groups('lastname')]
+    #[VOM\Normalizer(accessor: '[lastName]')]
+    public function getLastNameForDefaultScenario(): string {
+        return return $this->lastName;
+    }
+    
+    #[Groups('lastname')]
+    #[VOM\Normalizer(accessor: '[LAST_NAME]', scenario: 'second')]
+    public function getFirstNameForSecondScenario(): string {
+       return strtoupper($this->lastName);
+    }
+}
+``` 
+
+
 ## Interfaces and Abstract Classes
 
 When dealing with objects that are fairly similar or share properties, you can use interfaces or abstract classes.

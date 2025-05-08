@@ -158,4 +158,9 @@ class PropertyMetadata
 
         return $map[$value];
     }
+
+    public function getScenario(): string
+    {
+        return $this->attribute->getScenario();
+    }
 }
