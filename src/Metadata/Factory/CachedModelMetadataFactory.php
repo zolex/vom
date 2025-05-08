@@ -35,12 +35,9 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
             return $this->localCache[$cacheKey];
         }
 
-        try {
-            $cacheItem = $this->cacheItemPool->getItem($cacheKey);
-            if ($cacheItem->isHit()) {
-                return $this->localCache[$cacheKey] = $cacheItem->get();
-            }
-        } catch (CacheException) {
+        $cacheItem = $this->cacheItemPool->getItem($cacheKey);
+        if ($cacheItem->isHit()) {
+            return $this->localCache[$cacheKey] = $cacheItem->get();
         }
 
         $this->localCache[$cacheKey] = $this->decorated->getMetadataFor($class);
