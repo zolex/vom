@@ -65,6 +65,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     public const ROOT_DATA = 'vom_root_data';
 
     /**
+     * Context key  where the normalizer stores the all accessors
+     * that have been used to reach the current nesting level.
+     * Required for relative accessors.
+     */
+    public const NESTING_PATH = 'vom_nesting_path';
+
+    /**
      * Flag to control whether fields with the value `null` should be output
      * when normalizing or omitted.
      */
@@ -317,7 +324,16 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
         } else {
             if ($accessor = $property->getAccessor()) {
-                $value = $this->propertyAccessor->getValue($data, $accessor);
+                if (($relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
+                    $parts = \array_slice($context[self::NESTING_PATH], 0, -$relative);
+                    $parts[] = $accessor;
+                    $fromTheRoot = implode('', $parts);
+                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $fromTheRoot);
+                } else {
+                    $context[self::NESTING_PATH] ??= [];
+                    $context[self::NESTING_PATH][] = $accessor;
+                    $value = $this->propertyAccessor->getValue($data, $accessor);
+                }
             } else {
                 $value = $data;
             }

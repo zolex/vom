@@ -30,6 +30,7 @@ abstract class AbstractProperty
         private bool $serialized = false,
         private ?string $extractor = null,
         private ?string $scenario = ModelMetadata::DEFAULT_SCENARIO,
+        private ?int $relative = null,
     ) {
     }
 
@@ -106,5 +107,10 @@ abstract class AbstractProperty
     public function getScenario(): string
     {
         return $this->scenario;
+    }
+
+    public function getRelative(): ?int
+    {
+        return $this->relative;
     }
 }

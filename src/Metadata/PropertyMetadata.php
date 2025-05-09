@@ -163,4 +163,9 @@ class PropertyMetadata
     {
         return $this->attribute->getScenario();
     }
+
+    public function getRelative(): ?int
+    {
+        return $this->attribute->getRelative();
+    }
 }
