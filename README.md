@@ -68,7 +68,7 @@ $data = [
     'city' => 'Worsthausen',
     'zip' => '12345',
     'country_name' => 'United Kingdom',
-    'email_address' => 'jane.doe@coxautoinc.com',
+    'email_address' => 'jane.doe@mailprovider.net',
     'phone' => '0123456789'
 ];
 ```
