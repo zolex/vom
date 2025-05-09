@@ -30,6 +30,11 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->arrayNode('method_dependencies')
+                    ->scalarPrototype()
+                ->end()->end()
+
+                // deprecated. to be removed in future release
                 ->arrayNode('denormalizer')
                     ->addDefaultsIfNotSet()
                     ->children()

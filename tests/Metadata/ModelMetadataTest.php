@@ -14,13 +14,16 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
+use Zolex\VOM\Metadata\DependencyInjectionMetadata;
 use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
+use Zolex\VOM\Test\Fixtures\DependencyInConstructor;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 
 class ModelMetadataTest extends TestCase
@@ -55,5 +58,17 @@ class ModelMetadataTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $metadata->find('levelOne.non.existent', $factory);
+    }
+
+    public function testDeprecatedInjectDenormalizerDependency(): void
+    {
+        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $factory->injectDenormalizerDependency(new ParameterBag());
+        $metaData = $factory->getMetadataFor(DependencyInConstructor::class);
+        $args = $metaData->getConstructorArguments();
+        $this->assertArrayHasKey('parameterBag', $args);
+        $this->assertInstanceOf(DependencyInjectionMetadata::class, $args['parameterBag']);
+        $parameterBag = $args['parameterBag']->getValue();
+        $this->assertInstanceOf(ParameterBag::class, $parameterBag);
     }
 }

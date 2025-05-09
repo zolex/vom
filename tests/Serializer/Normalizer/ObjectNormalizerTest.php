@@ -91,7 +91,7 @@ class ObjectNormalizerTest extends TestCase
         $metadataFactory = VersatileObjectMapperFactory::getMetadataFactory();
         $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
         $metadata = $metadataFactory->getMetadataFor(DateAndTime::class);
-        $metadata->addNormalizer(new NormalizerMetadata('AnotherClass', 'nonExistentDenormalizerMethod', 'virtualName', new Normalizer()));
+        $metadata->addNormalizer(new NormalizerMetadata('AnotherClass', 'nonExistentDenormalizerMethod', [], new Normalizer(), 'virtualName'));
 
         $this->expectException(MappingException::class);
         $this->expectExceptionMessage('Model class "Zolex\VOM\Test\Fixtures\DateAndTime" does not match the expected normalizer class "AnotherClass".');
@@ -104,7 +104,7 @@ class ObjectNormalizerTest extends TestCase
         $metadataFactory = VersatileObjectMapperFactory::getMetadataFactory();
         $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
         $metadata = $metadataFactory->getMetadataFor(DateAndTime::class);
-        $metadata->addNormalizer(new NormalizerMetadata(DateAndTime::class, 'nonExistentNormalizerMethod', 'virtualName', new Normalizer()));
+        $metadata->addNormalizer(new NormalizerMetadata(DateAndTime::class, 'nonExistentNormalizerMethod', [], new Normalizer(), 'virtualName'));
 
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Bad normalizer method call: Call to undefined method Zolex\VOM\Test\Fixtures\DateAndTime::nonExistentNormalizerMethod()');

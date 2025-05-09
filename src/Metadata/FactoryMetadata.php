@@ -18,7 +18,7 @@ class FactoryMetadata extends AbstractCallableMetadata
     public function __construct(
         string $class,
         string $method,
-        /* @var array|ArgumentMetadata[] $arguments */
+        /* @var array|ArgumentMetadata[][] $arguments */
         array $arguments = [],
         private int $priority = 0,
     ) {

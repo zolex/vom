@@ -49,12 +49,11 @@ class ZolexVOMBundleTest extends KernelTestCase
         }
     }
 
-    public function testParameterBagIsInDenormalizerDependencies(): void
+    public function testMissingConfiguredMethodDependencyThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Denormalizer dependency not found in container: blah');
-        $kernel = self::bootKernel(['environment' => 'dev', 'debug' => false]);
-        $container = $kernel->getContainer();
+        $this->expectExceptionMessage('Method dependency not found in container: blah');
+        self::bootKernel(['environment' => 'dev', 'debug' => false]);
     }
 
     public function testVomIntegratesWithSerializer(): void

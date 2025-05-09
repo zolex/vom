@@ -18,14 +18,14 @@ class DenormalizerMetadata extends AbstractCallableMetadata
     public function __construct(
         string $class,
         string $method,
-        /* @var array|ArgumentMetadata[] $arguments */
-        array $arguments,
-        private readonly string $virtualPropertyName,
+        /* @var array|ArgumentMetadata[][] $arguments */
+        array $arguments = [],
+        private readonly ?string $virtualPropertyName = null,
     ) {
         parent::__construct($class, $method, $arguments);
     }
 
-    public function getPropertyName(): string
+    public function getPropertyName(): ?string
     {
         return $this->virtualPropertyName;
     }

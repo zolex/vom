@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class DenormalizerMissingDependency
+class DependencyInDenormalizerMissing
 {
     public string $var;
 

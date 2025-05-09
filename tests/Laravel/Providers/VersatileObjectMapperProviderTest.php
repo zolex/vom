@@ -14,15 +14,12 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Laravel\Providers;
 
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Zolex\VOM\Laravel\Providers\VersatileObjectMapperProvider;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Laravel\Illuminate\Contracts\Foundation\DummyApplication;
 
 class VersatileObjectMapperProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSingletonIsRegistered(): void
     {
         $app = new DummyApplication();

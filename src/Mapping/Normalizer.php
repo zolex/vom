@@ -13,12 +13,14 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Mapping;
 
+use Zolex\VOM\Metadata\ModelMetadata;
+
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class Normalizer
 {
     public function __construct(
         private readonly ?string $accessor = null,
-        private readonly ?string $scenario = null,
+        private readonly ?string $scenario = ModelMetadata::DEFAULT_SCENARIO,
     ) {
     }
 

@@ -21,7 +21,7 @@ class NormalizerMetadataTest extends TestCase
 {
     public function testGetMethodAndPropertyName(): void
     {
-        $metadata = new NormalizerMetadata('class', 'getName', 'name', new Normalizer());
+        $metadata = new NormalizerMetadata('class', 'getName', [], new Normalizer(), 'name');
 
         $this->assertEquals('getName', $metadata->getMethod());
         $this->assertEquals('name', $metadata->getPropertyName());
@@ -29,7 +29,7 @@ class NormalizerMetadataTest extends TestCase
 
     public function testGetMethodAndPropertyNameWithNonCompliantName(): void
     {
-        $metadata = new NormalizerMetadata('class', 'somethingElse', 'somethingElse', new Normalizer());
+        $metadata = new NormalizerMetadata('class', 'somethingElse', [], new Normalizer(), 'somethingElse');
 
         $this->assertEquals('somethingElse', $metadata->getMethod());
         $this->assertEquals('somethingElse', $metadata->getPropertyName());

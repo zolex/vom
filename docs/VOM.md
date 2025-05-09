@@ -32,10 +32,10 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
   * [Constructor Property Promotion](#constructor-property-promotion)
   * [Factory Methods](#factory-methods)
     + [Factory in another class](#factory-in-another-class)
-  * [Method Calls](#method-calls)
-    + [Denormalizer Methods](#denormalizer-methods)
-      - [Denormalizer Dependencies](#denormalizer-dependencies)
-    + [Normalizer Methods](#normalizer-methods)
+  * [Denormalizer Methods](#denormalizer-methods)
+  * [Normalizer Methods](#normalizer-methods)
+  * [Custom serialization](#custom-serialization)
+  * [Method Dependencies](#method-dependencies)
   * [Disable Nesting](#disable-nesting)
   * [Root flag](#root-flag)
   * [Collections](#collections)
@@ -50,6 +50,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
     + [Booleans](#booleans)
     + [DateTime](#datetime)
   * [Value Map](#value-map)
+  * [Scenarios](#scenarios)
   * [Regular Expression Extractors](#regular-expression-extractors)
 - [Interfaces and Abstract Classes](#interfaces-and-abstract-classes)
 - [Context](#context)
@@ -470,9 +471,7 @@ class RepositoryWithFactory
 }
 ```
 
-### Method Calls
-
-#### Denormalizer Methods
+### Denormalizer Methods
 
 If your models don't follow the symfony conventions for mutators, VOM can call custom methods with arguments. 
 It will query the source data using the argument accessor (the same way as for VOM\Property) and call the method. 
@@ -554,58 +553,6 @@ class Calls
 $objectMapper->denormalize($data, Calls:class, context: ['groups' => ['one']]);
 ```
 
-##### Denormalizer Dependencies
-
-If you need any dependencies in addition to the source data to be mapped, it is possible to inject any object (like a symfony service) into the denormalizer methods.
-To do so, just typehint the dependency in the denormalizer method along with the VOM arguments. Additionally, you need to register the dependency.
-
-```php
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class DenormalizerDependency
-{
-    public string $var;
-
-    #[VOM\Denormalizer]
-    public function denormalizeData(
-        ParameterBagInterface $parameterBag,
-        #[VOM\Argument(...)]
-        int $something,
-        #[VOM\Argument(...)]
-        string $else
-    ): void {
-        $this->var = $parameterBag->get('foo') ? $something ? $else;
-    }
-}
-```
-
-To register the dependency in symfony framework, you can simply add any symfony service by adding it to the package config:
-
-_config/packages/zolex_vom.yaml_
-```yaml
-zolex_vom:
-  denormalizer:
-    dependencies:
-      - '@parameter_bag'
-      - '@serializer'
-```
-
-Without symfony, you simply call the respective method on the `ModelMetadataFactory`
-
-```php
-$factory = new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(/*...*/);
-$factory->injectDenormalizerDependency(new \Some\Dependency());
-```
-
-If you are using the `VersatileObjectMapperFactory` you can pass the dependencies to the `create` method.
-
-```php
-$vom = VersatileObjectMapperFactory::create(null, [new DependencyA(), new DependencyB()]);
-```
-
-
 ##### Non-Scalar Denormalizer Arguments
 
 To prevent unnecessary usage of denormalizers when dealing with arrays, the denormalizer methods only accept scalar arguments by default.
@@ -635,7 +582,7 @@ class BadHabits
 }
 ```
 
-#### Normalizer Methods
+### Normalizer Methods
 
 Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization. These methods must not have any required arguments. 
 Normalizer methods must be prefixed with `get`, `has`, `is` or `normalize`. Groups can be added on normalizer methods with the first three prefixes (virtual property) or on the related property when using the `normalize` prefix.
@@ -677,7 +624,7 @@ class Calls
 }
 ```
 
-##### Custom serialization
+### Custom serialization
 
 The normalizer attribute can be added on the `__toString()` method. Note that in this case it must be the only normalizer on the model and return a string representation of the object.
 
@@ -736,6 +683,125 @@ class Calls
               'NAME_FOR_ONE' => $this->data->getName(),
            ],
         ];
+    }
+}
+```
+
+### Method Dependencies
+
+If you need any dependencies in addition to the source data to be mapped, it is possible to inject any object (like a symfony service) into methods.
+To do so, just typehint the dependency in the method along with the VOM arguments. All dependencies must be explicitly registered.
+In symfony framework, you can simply add any symfony service by adding it to the package config:
+
+_config/packages/zolex_vom.yaml_
+```yaml
+zolex_vom:
+  method_dependencies:
+    - '@parameter_bag'
+```
+
+Without symfony, you simply call the respective method on the `ModelMetadataFactory`
+
+```php
+$factory = new \Zolex\VOM\Metadata\Factory\ModelMetadataFactory(/*...*/);
+$factory->injectMethodDependency(new \Some\Dependency());
+```
+
+If you are using the `VersatileObjectMapperFactory` you can pass the dependencies to the `create` method.
+
+```php
+$vom = VersatileObjectMapperFactory::create(null, [new DependencyA(), new DependencyB()]);
+```
+
+**Constructor Dependency**
+
+```php
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ConstructorDependency
+{
+    private string $foobar;
+
+    public function __construct(
+        #[VOM\Argument]
+        int $something,
+        ParameterBagInterface $parameterBag,
+        #[VOM\Argument]
+        string $else
+    ): self {
+        $this->foobar = $parameterBag->get('foobar');
+    }
+}
+```
+
+**Normalizer Dependency**
+
+```php
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class NormalizerDependency
+{
+    #[VOM\Normalizer]
+    public function getData(
+        #[VOM\Argument]
+        int $something,
+        ParameterBagInterface $parameterBag,
+        #[VOM\Argument]
+        string $else
+    ): array {
+        return [
+            'foo' => $parameterBag->get('foo')
+        ];
+    }
+}
+```
+
+**Denormalizer Dependency**
+
+```php
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class DenormalizerDependency
+{
+    public string $var;
+
+    #[VOM\Denormalizer]
+    public function denormalizeData(
+        #[VOM\Argument]
+        int $something,
+        ParameterBagInterface $parameterBag,
+        #[VOM\Argument]
+        string $else
+    ): void {
+        $this->var = $parameterBag->get('foo') ? $something ? $else;
+    }
+}
+```
+
+**Factory Dependency**
+
+```php
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class NormalizerDependency
+{
+    #[VOM\Factory]
+    public static function create(
+        #[VOM\Argument]
+        int $something,
+        ParameterBagInterface $parameterBag,
+        #[VOM\Argument]
+        string $else
+    ): self {
+        return new self($parameterBag->get('foo'));
     }
 }
 ```

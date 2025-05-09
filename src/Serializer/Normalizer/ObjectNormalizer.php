@@ -160,12 +160,8 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
             $context = $this->getAttributeDenormalizationContext($type, $attribute, $context);
             $methodArguments = [];
-            foreach ($denormalizer->getArguments($scenario) as $property) {
-                if ($property instanceof ArgumentMetadata) {
-                    $methodArguments[$property->getName()] = $this->denormalizeProperty($type, $data, $property, $format, $context);
-                } elseif ($property instanceof DependencyInjectionMetadata) {
-                    $methodArguments[$property->getName()] = $property->getValue();
-                }
+            foreach ($denormalizer->getArguments($scenario) as $argument) {
+                $methodArguments = $this->addMethodArgument($argument, $type, $data, $format, $context, $methodArguments);
             }
 
             if ($model::class !== $denormalizer->getClass()) {
@@ -211,6 +207,25 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     }
 
     /**
+     * Adds an argument to the given list of method arguments. Can either be a VOM\Argument or a Dependency.
+     */
+    private function addMethodArgument(DependencyInjectionMetadata|ArgumentMetadata $argument, ?string $class, mixed $data, ?string $format, array $context, array $methodArguments): array
+    {
+        if ($argument instanceof DependencyInjectionMetadata) {
+            $methodArguments[$argument->getName()] = $argument->getValue();
+        } else {
+            $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
+            if (null === $value && $argument->hasDefaultValue()) {
+                $value = $argument->getDefaultValue();
+            }
+
+            $methodArguments[$argument->getName()] = $value;
+        }
+
+        return $methodArguments;
+    }
+
+    /**
      * Tries to instantiate a model of the given class. If applicable the given data will be injected.
      * First try to instantiate it normally while nd injecting constructor arguments.
      * If that was not possible, iterate ove the model's factories until the first one succeeds.
@@ -247,12 +262,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             try {
                 $factoryArguments = [];
                 foreach ($factory->getArguments($scenario) as $argument) {
-                    $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
-                    if (null === $value && $argument->hasDefaultValue()) {
-                        $value = $argument->getDefaultValue();
-                    }
-
-                    $factoryArguments[$argument->getName()] = $value;
+                    $factoryArguments = $this->addMethodArgument($argument, $class, $data, $format, $context, $factoryArguments);
                 }
 
                 $callable = $factory->getCallable();
@@ -274,12 +284,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         if ($metadata->isInstantiable()) {
             $constructorArguments = [];
             foreach ($metadata->getConstructorArguments($scenario) as $argument) {
-                $value = $this->denormalizeProperty($class, $data, $argument, $format, $context);
-                if (null === $value && $argument->hasDefaultValue()) {
-                    $value = $argument->getDefaultValue();
-                }
-
-                $constructorArguments[$argument->getName()] = $value;
+                $constructorArguments = $this->addMethodArgument($argument, $class, $data, $format, $context, $constructorArguments);
             }
 
             return new $class(...$constructorArguments);
@@ -625,7 +630,11 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             try {
-                $normalized = $object->{$normalizer->getMethod()}();
+                $arguments = [];
+                foreach ($normalizer->getArguments() as $argument) {
+                    $arguments[$argument->getName()] = $argument->getValue();
+                }
+                $normalized = $object->{$normalizer->getMethod()}(...$arguments);
             } catch (\Throwable $e) {
                 throw new BadMethodCallException(\sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
             }

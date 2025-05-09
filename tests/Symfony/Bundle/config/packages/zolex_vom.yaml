@@ -1,10 +1,11 @@
 zolex_vom:
+  method_dependencies:
+    - '@serializer'
   denormalizer:
     dependencies:
       - '@serializer'
 
 when@dev:
   zolex_vom:
-    denormalizer:
-      dependencies:
-        - '@blah'
+    method_dependencies:
+      - '@blah'
