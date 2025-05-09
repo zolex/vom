@@ -17,14 +17,19 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class DenormalizerDependency
+class DependencyInConstructorPropertyPromotion
 {
-    public bool $example;
+    public function __construct(
+        #[VOM\Argument]
+        public string $type,
+        private ParameterBagInterface $parameterBag,
+        #[VOM\Argument]
+        public ?string $format,
+    ) {
+    }
 
-    #[VOM\Denormalizer]
-    public function denormalizeData(
-        ParameterBagInterface $parameterBag,
-    ): void {
-        $this->example = $parameterBag->get('example');
+    public function getExample(): bool
+    {
+        return $this->parameterBag->get('example');
     }
 }

@@ -29,6 +29,12 @@ final class ModelMetadata
      * @var array|ArgumentMetadata[][]
      */
     private array $constructorArguments = [];
+
+    /**
+     * @var array|DependencyInjectionMetadata[]
+     */
+    private array $constructorDependencies = [];
+
     private ?Model $attribute = null;
 
     /**
@@ -103,7 +109,7 @@ final class ModelMetadata
      */
     public function getConstructorArguments(string $scenario = self::DEFAULT_SCENARIO): array
     {
-        return $this->constructorArguments[$scenario] ?? [];
+        return array_merge($this->constructorArguments[$scenario] ?? [], $this->constructorDependencies);
     }
 
     /**
@@ -119,6 +125,14 @@ final class ModelMetadata
         }
 
         $this->constructorArguments[$scenario][$property->getName()] = $property;
+    }
+
+    /**
+     * Adds a constructor argument to the model, that is a registered dependency.
+     */
+    public function addConstructorDependency(DependencyInjectionMetadata $dependency): void
+    {
+        $this->constructorDependencies[$dependency->getName()] = $dependency;
     }
 
     /**

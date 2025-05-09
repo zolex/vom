@@ -20,10 +20,12 @@ class NormalizerMetadata extends AbstractCallableMetadata
     public function __construct(
         string $class,
         string $method,
-        private readonly ?string $virtualPropertyName,
+        /* @var array|ArgumentMetadata[][] $arguments */
+        array $arguments,
         private readonly Normalizer $attribute,
+        private readonly ?string $virtualPropertyName = null,
     ) {
-        parent::__construct($class, $method);
+        parent::__construct($class, $method, $arguments);
     }
 
     public function getPropertyName(): ?string

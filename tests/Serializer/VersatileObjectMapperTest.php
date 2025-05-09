@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Serializer;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
@@ -46,7 +46,16 @@ use Zolex\VOM\Test\Fixtures\CollectionWithAdderRemover;
 use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
-use Zolex\VOM\Test\Fixtures\DenormalizerMissingDependency;
+use Zolex\VOM\Test\Fixtures\DenormalizerWithoutArguments;
+use Zolex\VOM\Test\Fixtures\DependencyInConstructor;
+use Zolex\VOM\Test\Fixtures\DependencyInConstructorMissing;
+use Zolex\VOM\Test\Fixtures\DependencyInConstructorPropertyPromotion;
+use Zolex\VOM\Test\Fixtures\DependencyInDenormalizer;
+use Zolex\VOM\Test\Fixtures\DependencyInDenormalizerMissing;
+use Zolex\VOM\Test\Fixtures\DependencyInFactory;
+use Zolex\VOM\Test\Fixtures\DependencyInFactoryMissing;
+use Zolex\VOM\Test\Fixtures\DependencyInNormalizer;
+use Zolex\VOM\Test\Fixtures\DependencyInNormalizerMissing;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
@@ -92,7 +101,7 @@ class VersatileObjectMapperTest extends TestCase
     protected static VersatileObjectMapper $serializer;
     protected static ParameterBag $parameterBag;
 
-    public function __construct(string $name)
+    public function __construct(?string $name = null)
     {
         parent::__construct($name);
 
@@ -117,6 +126,13 @@ class VersatileObjectMapperTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The decorated serializer must implement the DenormalizerInterface');
         new VersatileObjectMapper(new DummyNormalizer());
+    }
+
+    public function testDenormalizerWithoutArgumentsThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Denormalizer method Zolex\VOM\Test\Fixtures\DenormalizerWithoutArguments::denormalizeNothing() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.');
+        self::$serializer->denormalize([], DenormalizerWithoutArguments::class);
     }
 
     public function testAccessor(): void
@@ -837,19 +853,70 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals($data, $normalized);
     }
 
-    /*
+    public function testNormalizerDependency(): void
+    {
+        $data = self::$serializer->normalize(new DependencyInNormalizer());
+        $this->assertTrue($data['example']);
+    }
+
+    public function testMissingNormalizerDependencyThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in method Zolex\VOM\Test\Fixtures\DependencyInNormalizerMissing::normalizeData() can not be injected. Did you forget to configure it as a method dependency?');
+        self::$serializer->denormalize([], DependencyInNormalizerMissing::class);
+    }
+
     public function testDenormalizerDependency(): void
     {
-        $model = self::$serializer->denormalize([], DenormalizerDependency::class);
+        $model = self::$serializer->denormalize(['type' => 'something', 'format' => '123'], DependencyInDenormalizer::class);
         $this->assertTrue($model->example);
+        $this->assertEquals('something', $model->type);
+        $this->assertEquals('123', $model->format);
     }
-    */
 
     public function testMissingDenormalizerDependencyThrowsException(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in denormalizer method Zolex\VOM\Test\Fixtures\DenormalizerMissingDependency::denormalizeData() can not be injected. Did you forget to configure it as a denormalizer dependency?');
-        self::$serializer->denormalize([], DenormalizerMissingDependency::class);
+        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in method Zolex\VOM\Test\Fixtures\DependencyInDenormalizerMissing::denormalizeData() can not be injected. Did you forget to configure it as a method dependency?');
+        self::$serializer->denormalize([], DependencyInDenormalizerMissing::class);
+    }
+
+    public function testConstructorDependency(): void
+    {
+        $model = self::$serializer->denormalize(['type' => 'something', 'format' => '123'], DependencyInConstructor::class);
+        $this->assertTrue($model->example);
+        $this->assertEquals('something', $model->type);
+        $this->assertEquals('123', $model->format);
+    }
+
+    public function testMissingConstructorDependencyThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in method Zolex\VOM\Test\Fixtures\DependencyInConstructorMissing::__construct() can not be injected. Did you forget to configure it as a method dependency?');
+        self::$serializer->denormalize([], DependencyInConstructorMissing::class);
+    }
+
+    public function testConstructorPropertyPromotionDependency(): void
+    {
+        $model = self::$serializer->denormalize(['type' => 'something', 'format' => '123'], DependencyInConstructorPropertyPromotion::class);
+        $this->assertTrue($model->getExample());
+        $this->assertEquals('something', $model->type);
+        $this->assertEquals('123', $model->format);
+    }
+
+    public function testFactoryDependency(): void
+    {
+        $model = self::$serializer->denormalize(['type' => 'something', 'format' => '123'], DependencyInFactory::class);
+        $this->assertTrue($model->example);
+        $this->assertEquals('something', $model->type);
+        $this->assertEquals('123', $model->format);
+    }
+
+    public function testMissingFactoryDependencyThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Argument logger of type Psr\Log\LoggerInterface in method Zolex\VOM\Test\Fixtures\DependencyInFactoryMissing::create() can not be injected. Did you forget to configure it as a method dependency?');
+        self::$serializer->denormalize([], DependencyInFactoryMissing::class);
     }
 
     public function testGoodDenormalizer(): void

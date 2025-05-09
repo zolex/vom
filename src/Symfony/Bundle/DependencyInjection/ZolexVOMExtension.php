@@ -41,14 +41,19 @@ class ZolexVOMExtension extends Extension implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         $factory = $container->getDefinition('zolex_vom.metadata.model_metadata_factory');
-        foreach ($this->config['denormalizer']['dependencies'] as $service) {
+
+        if (\count($this->config['denormalizer']['dependencies'])) {
+            trigger_deprecation('zolex/vom', '0.8.0', 'the config key "denormalizer.dependencies" is deprecated. Use method_dependencies instead.');
+        }
+
+        foreach (array_merge($this->config['method_dependencies'], $this->config['denormalizer']['dependencies']) as $service) {
             $service = ltrim($service, '@');
             if (!$container->hasDefinition($service)) {
-                throw new InvalidArgumentException('Denormalizer dependency not found in container: '.$service);
+                throw new InvalidArgumentException('Method dependency not found in container: '.$service);
             }
 
             $serviceDefinition = $container->getDefinition($service);
-            $factory->addMethodCall('injectDenormalizerDependency', [$serviceDefinition]);
+            $factory->addMethodCall('injectMethodDependency', [$serviceDefinition]);
         }
 
         if ($container->getParameter('kernel.debug')) {

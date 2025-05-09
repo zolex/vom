@@ -71,7 +71,7 @@ class VersatileObjectMapperFactory
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
         self::$metadataFactory = new ModelMetadataFactory($propertyInfo);
         foreach ($deps as $dep) {
-            self::$metadataFactory->injectDenormalizerDependency($dep);
+            self::$metadataFactory->injectMethodDependency($dep);
         }
         if ($cacheItemPool) {
             self::$metadataFactory = new CachedModelMetadataFactory($cacheItemPool, self::$metadataFactory);

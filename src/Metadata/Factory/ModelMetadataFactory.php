@@ -44,7 +44,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     /**
      * @var object[]
      */
-    private array $denormalizerDependencies = [];
+    private array $methodDependencies = [];
 
     public function __construct(
         private readonly PropertyInfoExtractorInterface $propertyInfoExtractor,
@@ -53,8 +53,14 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
     public function injectDenormalizerDependency(object $service): void
     {
-        if (!\in_array($service, $this->denormalizerDependencies)) {
-            $this->denormalizerDependencies[] = $service;
+        trigger_deprecation('zolex/vom', '0.8.0', 'The method "injectDenormalizerDependency" will be removed. Use "injectMethodDependency" instead.');
+        $this->injectMethodDependency($service);
+    }
+
+    public function injectMethodDependency(object $service): void
+    {
+        if (!\in_array($service, $this->methodDependencies)) {
+            $this->methodDependencies[] = $service;
         }
     }
 
@@ -104,18 +110,25 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     continue;
                 }
             }
-
-            if ($constructor = $class->getConstructor()) {
-                foreach ($constructor->getParameters() as $reflectionParameter) {
-                    foreach ($this->createPropertyMetadata($reflectionParameter, $class, $constructor) as $propertyMetadata) {
-                        $modelMetadata->addConstructorArgument($propertyMetadata);
-                    }
-                }
-            }
         }
 
         if (!$modelMetadata->hasAttribute()) {
             throw new MissingMetadataException(\sprintf('The class "%s" does not have the "VOM\Model" attribute.', $class->getName()));
+        }
+
+        if ($constructor = $class->getConstructor()) {
+            foreach ($constructor->getParameters() as $reflectionParameter) {
+                $hasPropertyMetadata = false;
+                foreach ($this->createPropertyMetadata($reflectionParameter, $class, $constructor) as $propertyMetadata) {
+                    $hasPropertyMetadata = true;
+                    $modelMetadata->addConstructorArgument($propertyMetadata);
+                }
+
+                if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
+                    $dependencies = $this->addDependencyInjectionArgument($type, $reflectionParameter, $class, $constructor, []);
+                    $modelMetadata->addConstructorDependency(reset($dependencies));
+                }
+            }
         }
 
         $hasSerializer = false;
@@ -195,7 +208,14 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             throw new MappingException(\sprintf('Normalizer on "%s::%s()" cannot be added. Normalizer can only be added on methods beginning with "get", "has", "is" or "normalize" or on the "__toString" method.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
-        return new NormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $virtualPropertyName, $normalizer);
+        $dependencyInjectionArguments = [];
+        foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+            if ($type = $reflectionParameter->getType()?->getName()) {
+                $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
+            }
+        }
+
+        return new NormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), [$normalizer->getScenario() => $dependencyInjectionArguments], $normalizer, $virtualPropertyName);
     }
 
     /**
@@ -223,7 +243,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         } else {
             throw new MappingException(\sprintf('Denormalizer on "%s::%s()" cannot be added. Denormalizer can only be added on methods beginning with "set" or "denormalize".', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
+
         $methodArguments = [];
+        $dependencyInjectionArguments = [];
+
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
             $hasPropertyMetadata = false;
             foreach ($this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod, $denormalizer->allowNonScalarArguments()) as $propertyMetadata) {
@@ -236,27 +259,16 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
 
             if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
-                $found = false;
-                foreach ($this->denormalizerDependencies as $dependency) {
-                    if ($dependency instanceof $type) {
-                        $found = true;
-                        foreach ($methodArguments as &$scenarioArgument) {
-                            $scenarioArgument[$reflectionParameter->getName()] = new DependencyInjectionMetadata($reflectionParameter->getName(), $dependency);
-                        }
-                        break;
-                    }
-                }
-
-                if (!$found) {
-                    throw new MappingException(\sprintf('Argument %s of type %s in denormalizer method %s::%s() can not be injected. Did you forget to configure it as a denormalizer dependency?', $reflectionParameter->getName(), $type, $reflectionClass->getName(), $reflectionMethod->getName()));
-                }
+                $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
             }
         }
 
-        foreach ($methodArguments as $scenarioArguments) {
-            if (!\count($scenarioArguments)) {
-                throw new MappingException(\sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
-            }
+        foreach ($methodArguments as &$scenarioArguments) {
+            $scenarioArguments = array_merge($scenarioArguments, $dependencyInjectionArguments);
+        }
+
+        if (!\count($methodArguments)) {
+            throw new MappingException(\sprintf('Denormalizer method %s::%s() without arguments is useless. Consider adding VOM\Argument or removing VOM\Denormalizer.', $reflectionClass->getName(), $reflectionMethod->getName()));
         }
 
         return new DenormalizerMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $methodArguments, $virtualPropertyName);
@@ -283,14 +295,26 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         }
 
         $methodArguments = [];
+        $dependencyInjectionArguments = [];
+
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
+            $hasPropertyMetadata = false;
             foreach ($this->createPropertyMetadata($reflectionParameter, $reflectionClass, $reflectionMethod) as $propertyMetadata) {
+                $hasPropertyMetadata = true;
                 $scenario = $propertyMetadata->getScenario();
                 if (!isset($methodArguments[$scenario])) {
                     $methodArguments[$scenario] = [];
                 }
                 $methodArguments[$scenario][$reflectionParameter->getName()] = $propertyMetadata;
             }
+
+            if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
+                $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
+            }
+        }
+
+        foreach ($methodArguments as &$scenarioArguments) {
+            $scenarioArguments = array_merge($scenarioArguments, $dependencyInjectionArguments);
         }
 
         return new FactoryMetadata($reflectionClass->getName(), $reflectionMethod->getName(), $methodArguments, $priority);
@@ -345,5 +369,33 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
             yield $propertyMetadata;
         }
+    }
+
+    /**
+     * Adds method dependency metadata to the list of dependency arguments.
+     *
+     * @throws MappingException when the dependency is not registered
+     */
+    protected function addDependencyInjectionArgument(
+        string $type,
+        \ReflectionParameter $reflectionParameter,
+        \ReflectionClass $reflectionClass,
+        \ReflectionMethod $reflectionMethod,
+        array $dependencyInjectionArguments,
+    ): array {
+        $found = false;
+        foreach ($this->methodDependencies as $dependency) {
+            if ($dependency instanceof $type) {
+                $found = true;
+                $dependencyInjectionArguments[$reflectionParameter->getName()] = new DependencyInjectionMetadata($reflectionParameter->getName(), $dependency);
+                break;
+            }
+        }
+
+        if (!$found) {
+            throw new MappingException(\sprintf('Argument %s of type %s in method %s::%s() can not be injected. Did you forget to configure it as a method dependency?', $reflectionParameter->getName(), $type, $reflectionClass->getName(), $reflectionMethod->getName()));
+        }
+
+        return $dependencyInjectionArguments;
     }
 }
