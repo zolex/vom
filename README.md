@@ -14,7 +14,11 @@
 ![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
 
 
-The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models, by simply adding PHP attributes to model classes.
+The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models (and back) by adding PHP 8 attributes to model classes.
+
+__The concept of this package is based on two principles:__
+1. Reuse existing functions of symfony/serializer to not reinvent the wheel (and optionally integrate seamlessly into the framework)
+2. All mapping configuration should be defined on the model itself, inspired by doctrine and API-Platform
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
@@ -29,36 +33,11 @@ VOM is available on packagist. To install, simply require it via composer.
 composer require zolex/vom ^0.9
 ```
 
-### Plain PHP
-
-When installed via composer or as a download from the releases page, you are ready to use [VOM without a framework](https://github.com/zolex/vom-examples/tree/main/without-framework).
-
-### Symfony
-
-When using symfony, the package also integrates as a bundle. With flex and autoconfiguration there is nothing else to do. You are ready to use the [VOM Symfony Service](https://github.com/zolex/vom-examples/tree/main/symfony-framework). For the best interoperability, VOM implements the Symfony normalizer and denormalizer interfaces.
-
-_Without autoconfiguration, or if you choose to not run symfony/flex recipe generation, you have to enable the bundle manually by adding it to `config/bundles.php`._
-
-```php
-<?php
-
-return [
-    // ...
-    Zolex\VOM\Symfony\Bundle\ZolexVOMBundle::class => ['all' => true],
-    // ...
-];
-```
-
-### Laravel
-
-VOM also comes with a Laravel Service Provider. After installing with composer, the `VersatileObjectMapper` class is registered for Dependency Injection and can also be accessed using `app()`, `resolve()` etc.
-See the example for [VOM in Laravel](https://github.com/zolex/vom-examples/tree/main/laravel).
-
 ## Quickstart
 
 To give you a basic idea of what VOM does, here is a first short example.
 
-Given, your application receives the following flat array of values from somewhere.
+Given, your application receives the following array of values from somewhere.
 
 ```php
 $data = [
@@ -149,3 +128,15 @@ The [full documentation](https://github.com/zolex/vom/wiki) is available in the 
 ## Examples
 
 The example from the quickstart and more can be found in the [VOM Examples repository](https://github.com/zolex/vom-examples).
+
+## Alternatives
+
+There are many Mapping/Transformation/Hydration libraries out there. In case you don't want to rely on `phpdocumentor/reflection-docblock`, `symfony/serializer` and `symfony/proerty-access` which VOM depends on, here are some alternative packages that cover the same topic with quite different approaches and features.
+
+- [jms/serializer](https://github.com/schmittjoh/serializer)
+- [CuyZ/Valinor](https://github.com/CuyZ/Valinor)
+- [rekalogika/mapper](https://github.com/rekalogika/mapper)
+- [Crell/Serde](https://github.com/Crell/Serde)
+- [thephpleague/object-mapper](https://github.com/thephpleague/object-mapper)
+- [eventsauce/object-hydrator](https://github.com/EventSaucePHP/ObjectHydrator)
+- [spatie/laravel-data](https://github.com/spatie/laravel-data)
