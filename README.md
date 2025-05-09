@@ -18,7 +18,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
-- [Documentation](./docs/VOM.md)
+- [Documentation](https://github.com/zolex/vom/wiki)
 - [Examples](#examples)
 
 ## Installation
@@ -26,7 +26,7 @@ The Versatile Object Mapper - or in short VOM - is a PHP library to transform an
 VOM is available on packagist. To install, simply require it via composer. 
 
 ```bash
-composer require zolex/vom ^0.6
+composer require zolex/vom ^0.8
 ```
 
 ### Plain PHP
@@ -133,7 +133,7 @@ To create instances of your models, you simply pass the data to the `denormalize
 $person = $objectMapper->denormalize($data, Person::class);
 ``` 
 
-You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](./docs/VOM.md).
+You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](https://github.com/zolex/vom/wiki).
 
 ### Now, do I need this?
 
@@ -144,7 +144,7 @@ If there is any difference between the data structure of your input and your app
 
 ## Documentation
 
-The [full documentation](./docs/VOM.md) is available in the docs folder of this repository.
+The [full documentation](https://github.com/zolex/vom/wiki) is available in the Wiki section of this repository.
 
 ## Examples
 

@@ -1,0 +1,1 @@
+The documentation is located in the [Wiki section](https://github.com/zolex/vom/wiki) of this  repository
