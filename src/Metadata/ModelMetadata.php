@@ -105,7 +105,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return PropertyMetadata[]
+     * @return ArgumentMetadata[]
      */
     public function getConstructorArguments(string $scenario = self::DEFAULT_SCENARIO): array
     {
