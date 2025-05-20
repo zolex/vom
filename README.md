@@ -14,11 +14,8 @@
 ![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
 
 
-The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models (and back) by adding PHP 8 attributes to model classes.
-
-__The concept of this package is based on two principles:__
-1. Reuse existing functions of symfony/serializer to not reinvent the wheel (and optionally integrate seamlessly into the framework)
-2. All mapping configuration should be defined on the model itself, inspired by doctrine and API-Platform
+The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models (and back) by adding PHP 8 attributes.
+It extends symfony/serializer functionality and is heavily inspired by doctrine and API-Platform, so that advanced mappings can simply be defined on the model classes instead of writing normalizer decorators.
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
