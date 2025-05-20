@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Serializer\Normalizer;
 
 use Symfony\Component\PropertyAccess\Exception\InvalidArgumentException as PropertyAccessInvalidArgumentException;
+use Symfony\Component\PropertyAccess\Exception\NoSuchIndexException;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -36,6 +37,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerAwareTrait;
+use Zolex\VOM\Metadata\AccessorListItemMetadata;
 use Zolex\VOM\Metadata\ArgumentMetadata;
 use Zolex\VOM\Metadata\DependencyInjectionMetadata;
 use Zolex\VOM\Metadata\Exception\FactoryException;
@@ -243,7 +245,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
      * @throws FactoryException              When at least one factory method is configured but failed to instantiate the model
      * @throws ExceptionInterface            For any other type of exception
      */
-    protected function createInstance(array|string &$data, string $class, array &$context, ?string $format): object
+    protected function createInstance(array|string|AccessorListItemMetadata &$data, string $class, array &$context, ?string $format): object
     {
         if (null !== $object = $this->extractObjectToPopulate($class, $context, self::OBJECT_TO_POPULATE)) {
             return $object;
@@ -332,7 +334,22 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 } else {
                     $context[self::NESTING_PATH] ??= [];
                     $context[self::NESTING_PATH][] = $accessor;
-                    $value = $this->propertyAccessor->getValue($data, $accessor);
+                    if (\is_array($accessor)) {
+                        $value = [];
+                        foreach ($accessor as $key => $itemAccessor) {
+                            $value[] = new AccessorListItemMetadata($key, $itemAccessor, $this->propertyAccessor->getValue($data, $itemAccessor));
+                        }
+                    } else {
+                        try {
+                            $value = $this->propertyAccessor->getValue($data, $accessor);
+                        } catch (NoSuchIndexException|NoSuchPropertyException $e) {
+                            if ($data instanceof AccessorListItemMetadata) {
+                                throw new MappingException(\sprintf('Model "%s" is wrapped in "%s". Only valid accessors are "key", "value" and "accessor".', $type, AccessorListItemMetadata::class));
+                            } else {
+                                throw $e;
+                            }
+                        }
+                    }
                 }
             } else {
                 $value = $data;

@@ -18,7 +18,10 @@ use Zolex\VOM\Metadata\ModelMetadata;
 abstract class AbstractProperty
 {
     public function __construct(
-        private string|bool $accessor = true,
+        /**
+         * @var string|string[]|bool
+         */
+        private string|bool|array $accessor = true,
         private ?string $field = null,
         private bool $root = false,
         private array $aliases = [],
@@ -39,7 +42,7 @@ abstract class AbstractProperty
         return $this->root;
     }
 
-    public function getAccessor(): string|bool
+    public function getAccessor(): string|array|bool
     {
         return $this->accessor;
     }

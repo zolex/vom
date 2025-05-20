@@ -74,7 +74,7 @@ class PropertyMetadata
         return $this->attribute->hasAccessor();
     }
 
-    public function getAccessor(): string|false
+    public function getAccessor(): string|array|false
     {
         $accessor = $this->attribute->getAccessor();
         if (false === $accessor = (true === $accessor ? '['.$this->name.']' : $accessor)) {
@@ -167,5 +167,10 @@ class PropertyMetadata
     public function getRelative(): ?int
     {
         return $this->attribute->getRelative();
+    }
+
+    public function getUseKey(): bool
+    {
+        return $this->attribute->getUseKey();
     }
 }

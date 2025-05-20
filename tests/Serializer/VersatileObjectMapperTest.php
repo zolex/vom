@@ -27,6 +27,9 @@ use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
+use Zolex\VOM\Test\Fixtures\AccessorList;
+use Zolex\VOM\Test\Fixtures\AccessorListGenericType;
+use Zolex\VOM\Test\Fixtures\AccessorListWithWrongAccessors;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\ArgumentOnProperty;
 use Zolex\VOM\Test\Fixtures\Arrays;
@@ -391,6 +394,30 @@ class VersatileObjectMapperTest extends TestCase
             },
         ]);
         $this->assertEquals($expected, $normalized);
+    }
+
+    public function testAccessorListItems(): void
+    {
+        $data = [
+            'ANOTHER_ACCESSOR' => 42,
+            'THIRD' => [
+                'ACCESSOR' => 'nested value',
+            ],
+            'ACCESSOR1' => 'something',
+        ];
+
+        $result = self::$serializer->denormalize($data, AccessorList::class);
+        $this->assertCount(3, $result->genericList);
+        $this->assertContainsEquals(new AccessorListGenericType('KeyForAcessor1', 'something'), $result->genericList);
+        $this->assertContainsEquals(new AccessorListGenericType('AnotherKey', 42), $result->genericList);
+        $this->assertContainsEquals(new AccessorListGenericType('ThridKey', 'nested value'), $result->genericList);
+    }
+
+    public function testAccessorListItemsWithWrongAccessorsThrowsException(): void
+    {
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessage('Model "Zolex\VOM\Test\Fixtures\AccessorListItemWithWrongAccessors" is wrapped in "Zolex\VOM\Metadata\AccessorListItemMetadata". Only valid accessors are "key", "value" and "accessor".');
+        self::$serializer->denormalize(['data' => 'asd'], AccessorListWithWrongAccessors::class);
     }
 
     public function testDenormalizePersonWithClassDiscriminator(): void
