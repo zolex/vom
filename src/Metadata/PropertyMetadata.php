@@ -168,9 +168,4 @@ class PropertyMetadata
     {
         return $this->attribute->getRelative();
     }
-
-    public function getUseKey(): bool
-    {
-        return $this->attribute->getUseKey();
-    }
 }
