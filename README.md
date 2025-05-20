@@ -27,7 +27,7 @@ It extends symfony/serializer functionality and is heavily inspired by doctrine 
 VOM is available on packagist. To install, simply require it via composer. 
 
 ```bash
-composer require zolex/vom ^0.9
+composer require zolex/vom ^0.10
 ```
 
 ## Quickstart
