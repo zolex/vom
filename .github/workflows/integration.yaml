@@ -42,7 +42,6 @@ jobs:
         run: |
           tools/psalm/vendor/bin/psalm --report=psalm-report.sarif
           tools/psalm/vendor/bin/sarif-to-md ./psalm-report.sarif ./psalm-report.md ${{ github.repository }} ${{ github.head_ref || github.ref_name }}
-        
 
       - uses: mshick/add-pr-comment@v2
         with:
