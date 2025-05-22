@@ -6,4 +6,5 @@
 /composer.lock
 /.php-cs-fixer.cache
 /.phpunit.result.cache
+/psalm-report.sarif
 /test-results

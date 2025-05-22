@@ -23,7 +23,7 @@ test-stable: test ## Run the tests with stable dependencies
 test-stable: COMPOSER_ARGS=--prefer-stable
 
 static-analysis: deps deps-static-analysis ## Run static code analysis
-	XDEBUG_MODE=off tools/psalm/vendor/bin/psalm
+	XDEBUG_MODE=off tools/psalm/vendor/bin/psalm  --output-format=xml > psalm-report.xml
 
 codestyle-fix: deps-codestyle ## Fix Codestyle issues
 	PHP_CS_FIXER_IGNORE_ENV=1 XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --show-progress=dots --ansi --verbose $(CS_FIXER_ARGS)

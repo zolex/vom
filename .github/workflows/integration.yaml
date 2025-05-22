@@ -39,7 +39,18 @@ jobs:
           working-directory: tools/psalm
 
       - name: Psalm
-        run: tools/psalm/vendor/bin/psalm
+        run: tools/psalm/vendor/bin/psalm --report=psalm-report.sarif
+
+      - run: |
+          wget https://github.com/zolex/go-sarif-to-markdown-table/raw/refs/heads/main/bin/sarif-to-markdown-table-linux-amd64
+          chmod +x ./sarif-to-markdown-table-linux-amd64
+          cat psalm-report.sarif | ./sarif-to-markdown-table-linux-amd64 > psalm-report.markdown
+
+      - uses: mshick/add-pr-comment@v2
+        with:
+          message-path: ./psalm-report.markdown
+          message-id: psalm
+          
 
   codestyle:
     name: Code Style
