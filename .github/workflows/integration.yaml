@@ -13,9 +13,79 @@ on:
       - 'README.md'
 
 jobs:
+  static-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: 'composer:v2, flex'
+
+      - name: Install Package Deps
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: --prefer-dist
+
+      - name: Install Psalm
+        uses: ramsey/composer-install@v2
+        with:
+          composer-options: --prefer-dist
+          working-directory: tools/psalm
+
+      - name: Psalm
+        run: tools/psalm/vendor/bin/psalm --report=psalm-report.sarif
+
+      - run: |
+          wget https://github.com/zolex/go-sarif-to-markdown-table/raw/refs/heads/main/bin/sarif-to-markdown-table-linux-amd64
+          chmod +x ./sarif-to-markdown-table-linux-amd64
+          cat psalm-report.sarif | ./sarif-to-markdown-table-linux-amd64 > psalm-report.markdown
+
+      - uses: mshick/add-pr-comment@v2
+        with:
+          message-path: ./psalm-report.markdown
+          message-id: psalm
+          
+
+  codestyle:
+    name: Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          coverage: xdebug
+          php-version: ${{ matrix.php }}
+          tools: 'composer:v2, flex'
+
+      - name: Install Package Deps
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: --prefer-dist
+
+      - name: Install PHP-CS-Fixer
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: --prefer-dist
+          working-directory: tools/php-cs-fixer
+
+      - name: PHP-CS-Fixer
+        run: PHP_CS_FIXER_IGNORE_ENV=1 tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
+
   tests:
     name: Test ${{ matrix.php }}, symfony=${{ matrix.symfony }}, deps=${{ matrix.deps }}
     runs-on: ubuntu-latest
+    needs: [ codestyle, static-analysis ]
     env:
       SYMFONY_DEPRECATIONS_HELPER: 'max[self]=0'
     strategy:
@@ -72,10 +142,10 @@ jobs:
       - name: Run tests
         run: tools/phpunit/vendor/bin/phpunit --colors=always --testdox
 
-  cs:
-    name: Code Style & Coverage
+  coverage:
+    name: Coverage Report
     runs-on: ubuntu-latest
-    needs: [ tests ]
+    needs: [ codestyle, static-analysis, tests ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -98,16 +168,6 @@ jobs:
         with:
           composer-options: --prefer-dist
           working-directory: tools/phpunit
-
-      - name: Install PHP-CS-Fixer
-        uses: ramsey/composer-install@v2
-        with:
-          dependency-versions: stable
-          composer-options: --prefer-dist
-          working-directory: tools/php-cs-fixer
-
-      - name: PHP-CS-Fixer
-        run: PHP_CS_FIXER_IGNORE_ENV=1 tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --dry-run --show-progress=dots --ansi --verbose
 
       - name: Create Coverage Report
         run: tools/phpunit/vendor/bin/phpunit --colors=always --coverage-text --coverage-clover=./clover.xml

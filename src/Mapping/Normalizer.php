@@ -20,7 +20,7 @@ final class Normalizer
 {
     public function __construct(
         private readonly ?string $accessor = null,
-        private readonly ?string $scenario = ModelMetadata::DEFAULT_SCENARIO,
+        private readonly string $scenario = ModelMetadata::DEFAULT_SCENARIO,
     ) {
     }
 
@@ -29,7 +29,7 @@ final class Normalizer
         return $this->accessor;
     }
 
-    public function getScenario(): ?string
+    public function getScenario(): string
     {
         return $this->scenario;
     }

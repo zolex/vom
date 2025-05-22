@@ -136,7 +136,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return DenormalizerMetadata[]
+     * @return \Generator<int, DenormalizerMetadata>
      */
     public function getDenormalizers(): iterable
     {
@@ -156,7 +156,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return NormalizerMetadata[]
+     * @return \Generator<int, NormalizerMetadata>
      */
     public function getNormalizers(string $scenario = self::DEFAULT_SCENARIO): iterable
     {
@@ -181,7 +181,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return FactoryMetadata[]
+     * @return \Generator<int, FactoryMetadata>
      */
     public function getFactories(): iterable
     {

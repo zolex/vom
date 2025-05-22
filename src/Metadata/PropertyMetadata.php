@@ -18,7 +18,7 @@ use Zolex\VOM\Mapping\AbstractProperty;
 
 class PropertyMetadata
 {
-    private readonly mixed $defaultValue;
+    private mixed $defaultValue;
     private bool $nullable = false;
 
     public function __construct(
@@ -56,7 +56,10 @@ class PropertyMetadata
         return $this->name;
     }
 
-    public function getField(): ?string
+    /**
+     * @return non-empty-array<int|string, string>|string|null
+     */
+    public function getField(): array|string|null
     {
         return $this->attribute->getField() ?? (($accessor = $this->getAccessor()) ? $accessor : null);
     }

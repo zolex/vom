@@ -35,6 +35,8 @@ class ZolexVOMBundleTest extends KernelTestCase
             $service = $container->get($id);
             $this->assertInstanceOf($class, $service);
         }
+
+        $kernel->shutdown();
     }
 
     public function testNonDebugServicesAreRegistered(): void
@@ -47,6 +49,8 @@ class ZolexVOMBundleTest extends KernelTestCase
             $service = $container->get($id);
             $this->assertInstanceOf($class, $service);
         }
+
+        $kernel->shutdown();
     }
 
     public function testMissingConfiguredMethodDependencyThrowsException(): void
@@ -75,5 +79,7 @@ class ZolexVOMBundleTest extends KernelTestCase
         $this->assertInstanceOf(Person::class, $person);
         $this->assertEquals('Peter', $person->firstname);
         $this->assertEquals('Parker', $person->lastname);
+
+        $kernel->shutdown();
     }
 }
