@@ -7,4 +7,5 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /psalm-report.sarif
+/psalm-report.md
 /test-results
