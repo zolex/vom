@@ -39,4 +39,9 @@ class AccessorListItemMetadata
     {
         return $this->value;
     }
+
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->value[$offset] ?? null;
+    }
 }

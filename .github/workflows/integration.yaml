@@ -13,9 +13,38 @@ on:
       - 'README.md'
 
 jobs:
+  static:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: 'composer:v2, flex'
+
+      - name: Install Package Deps
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: stable
+          composer-options: --prefer-dist
+
+      - name: Install Psalm
+        uses: ramsey/composer-install@v2
+        with:
+          composer-options: --prefer-dist
+          working-directory: tools/psalm
+
+      - name: Psalm
+        run: tools/psalm/vendor/bin/psalm
+
   tests:
     name: Test ${{ matrix.php }}, symfony=${{ matrix.symfony }}, deps=${{ matrix.deps }}
     runs-on: ubuntu-latest
+    needs: [ static ]
     env:
       SYMFONY_DEPRECATIONS_HELPER: 'max[self]=0'
     strategy:
@@ -75,7 +104,7 @@ jobs:
   cs:
     name: Code Style & Coverage
     runs-on: ubuntu-latest
-    needs: [ tests ]
+    needs: [ static, tests ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2

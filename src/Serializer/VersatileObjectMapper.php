@@ -20,7 +20,7 @@ use Zolex\VOM\Exception\InvalidArgumentException;
 
 final class VersatileObjectMapper implements NormalizerInterface, DenormalizerInterface, SerializerInterface
 {
-    public function __construct(private readonly SerializerInterface $decorated)
+    public function __construct(private readonly SerializerInterface|NormalizerInterface|DenormalizerInterface $decorated)
     {
         if (!$this->decorated instanceof NormalizerInterface) {
             throw new InvalidArgumentException('The decorated serializer must implement the NormalizerInterface');
@@ -75,11 +75,11 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         return $this->decorated->supportsDenormalization($data, $type, $format, $context);
     }
 
-    public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
+    public function normalize(mixed $data, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
         $context['vom'] = true;
 
-        return $this->decorated->normalize($object, $format, $context);
+        return $this->decorated->normalize($data, $format, $context);
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -89,6 +89,9 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
         return $this->decorated->supportsNormalization($data, $format, $context);
     }
 
+    /**
+     * @return array<class-string|'*'|'object'|string, bool|null>
+     */
     public function getSupportedTypes(?string $format): array
     {
         return $this->decorated->getSupportedTypes($format);

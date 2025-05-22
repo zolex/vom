@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
+use Generator;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
@@ -136,7 +137,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return DenormalizerMetadata[]
+     * @return Generator<int, DenormalizerMetadata>
      */
     public function getDenormalizers(): iterable
     {
@@ -156,7 +157,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return NormalizerMetadata[]
+     * @return Generator<int, NormalizerMetadata>
      */
     public function getNormalizers(string $scenario = self::DEFAULT_SCENARIO): iterable
     {
@@ -181,7 +182,7 @@ final class ModelMetadata
     }
 
     /**
-     * @return FactoryMetadata[]
+     * @return Generator<int, FactoryMetadata>
      */
     public function getFactories(): iterable
     {

@@ -99,6 +99,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         ClassMetadataFactoryInterface $classMetadataFactory,
         private readonly ClassDiscriminatorResolverInterface $classDiscriminatorResolver,
         array $defaultContext = [],
+        ?callable $objectClassResolver = null,
     ) {
         parent::__construct($classMetadataFactory, null, $defaultContext);
         $this->objectClassResolver = ($objectClassResolver ?? 'get_class')(...);
@@ -106,6 +107,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     /**
      * Returns the types potentially supported by this denormalizer.
+     * @return array<class-string|'*'|'object'|string, bool|null>
      */
     public function getSupportedTypes(?string $format): array
     {
@@ -566,21 +568,29 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
      * @throws MappingException                 When the mapping is not configured properly, but it could not be detected earlier
      * @throws ExceptionInterface               For all the other cases of errors
      */
-    public function normalize(mixed $object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
+    public function normalize(mixed $data, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-        if (!\is_object($object) || !$metadata = $this->modelMetadataFactory->getMetadataFor($object::class)) {
+        if (!$this->serializer instanceof NormalizerInterface) {
+            throw new InvalidArgumentException('The serializer must implement the NormalizerInterface');
+        }
+
+        if (!$this->serializer instanceof DenormalizerInterface) {
+            throw new InvalidArgumentException('The serializer must implement the DenormalizerInterface');
+        }
+
+        if (!\is_object($data) || !$metadata = $this->modelMetadataFactory->getMetadataFor($data::class)) {
             return null;
         }
 
         $scenario = $context['scenario'] ?? ModelMetadata::DEFAULT_SCENARIO;
-        $data = [];
+        $normalizedData = [];
         if (!isset($context[self::ROOT_DATA])) {
-            $context[self::ROOT_DATA] = &$data;
+            $context[self::ROOT_DATA] = &$normalizedData;
         }
 
-        if ($this->isCircularReference($object, $context)) {
+        if ($this->isCircularReference($data, $context)) {
             try {
-                return $this->handleCircularReference($object, $format, $context);
+                return $this->handleCircularReference($data, $format, $context);
             } catch (CircularReferenceException $e) {
                 if ($context[self::SKIP_CIRCULAR_REFERENCE] ?? $this->defaultContext[self::SKIP_CIRCULAR_REFERENCE] ?? false) {
                     throw new IgnoreCircularReferenceException();
@@ -590,17 +600,17 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
         }
 
-        $allowedAttributes = $this->getAllowedAttributes($object::class, $context, true);
+        $allowedAttributes = $this->getAllowedAttributes($data::class, $context, true);
         foreach ($metadata->getProperties($scenario) as $property) {
             if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                 continue;
             }
 
-            $context = $this->getAttributeNormalizationContext($object, $property->getName(), $context);
+            $context = $this->getAttributeNormalizationContext($data, $property->getName(), $context);
             try {
-                $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($object)?->getTypeProperty()
-                    ? $this->classDiscriminatorResolver?->getTypeForMappedObject($object)
-                    : $this->propertyAccessor->getValue($object, $property->getName());
+                $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
+                    ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
+                    : $this->propertyAccessor->getValue($data, $property->getName());
             } catch (UninitializedPropertyException|\Error $e) {
                 if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
                     continue;
@@ -633,7 +643,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             if ($property->isRoot()) {
                 $target = &$context[self::ROOT_DATA];
             } else {
-                $target = &$data;
+                $target = &$normalizedData;
             }
 
             if ($property->hasAccessor()) {
@@ -658,8 +668,8 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 continue;
             }
 
-            if ($object::class !== $normalizer->getClass()) {
-                throw new MappingException(\sprintf('Model class "%s" does not match the expected normalizer class "%s".', $object::class, $normalizer->getClass()));
+            if ($data::class !== $normalizer->getClass()) {
+                throw new MappingException(\sprintf('Model class "%s" does not match the expected normalizer class "%s".', $data::class, $normalizer->getClass()));
             }
 
             try {
@@ -667,7 +677,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 foreach ($normalizer->getArguments() as $argument) {
                     $arguments[$argument->getName()] = $argument->getValue();
                 }
-                $normalized = $object->{$normalizer->getMethod()}(...$arguments);
+                $normalized = $data->{$normalizer->getMethod()}(...$arguments);
             } catch (\Throwable $e) {
                 throw new BadMethodCallException(\sprintf('Bad normalizer method call: %s', $e->getMessage()), 0, $e);
             }
@@ -675,16 +685,16 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             if ('__toString' === $normalizer->getMethod()) {
                 return $normalized;
             } elseif (null !== $accessor = $normalizer->getAccessor()) {
-                $this->propertyAccessor->setValue($data, $accessor, $normalized);
+                $this->propertyAccessor->setValue($normalizedData, $accessor, $normalized);
             } else {
                 if (!\is_array($normalized)) {
                     throw new MappingException(\sprintf('Normalizer %s::%s() without accessor must return an array.', $metadata->getClass(), $normalizer->getMethod()));
                 }
-                $data = array_merge($data, $normalized);
+                $normalizedData = array_merge($normalizedData, $normalized);
             }
         }
 
-        return $data;
+        return $normalizedData;
     }
 
     /**

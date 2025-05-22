@@ -124,7 +124,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                     $modelMetadata->addConstructorArgument($propertyMetadata);
                 }
 
-                if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
+                $reflectionType = $reflectionParameter->getType();
+                if (!$hasPropertyMetadata && $reflectionType instanceof \ReflectionNamedType && ($type = $reflectionType->getName())) {
                     $dependencies = $this->addDependencyInjectionArgument($type, $reflectionParameter, $class, $constructor, []);
                     $modelMetadata->addConstructorDependency(reset($dependencies));
                 }
@@ -210,7 +211,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
         $dependencyInjectionArguments = [];
         foreach ($reflectionMethod->getParameters() as $reflectionParameter) {
-            if ($type = $reflectionParameter->getType()?->getName()) {
+            $reflectionType = $reflectionParameter->getType();
+            if ($reflectionType instanceof \ReflectionNamedType && ($type = $reflectionType->getName())) {
                 $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
             }
         }
@@ -258,7 +260,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 $methodArguments[$scenario][$reflectionParameter->getName()] = $propertyMetadata;
             }
 
-            if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
+            $reflectionType = $reflectionParameter->getType();
+            if (!$hasPropertyMetadata && $reflectionType instanceof \ReflectionNamedType && ($type = $reflectionType->getName())) {
                 $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
             }
         }
@@ -308,7 +311,8 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
                 $methodArguments[$scenario][$reflectionParameter->getName()] = $propertyMetadata;
             }
 
-            if (!$hasPropertyMetadata && ($type = $reflectionParameter->getType()?->getName())) {
+            $reflectionType = $reflectionParameter->getType();
+            if (!$hasPropertyMetadata && $reflectionType instanceof \ReflectionNamedType && ($type = $reflectionType->getName())) {
                 $dependencyInjectionArguments = $this->addDependencyInjectionArgument($type, $reflectionParameter, $reflectionClass, $reflectionMethod, $dependencyInjectionArguments);
             }
         }

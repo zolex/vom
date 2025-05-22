@@ -40,7 +40,7 @@ class VersatileObjectMapperFactory
     private static ?ObjectNormalizer $objectNormalizer = null;
     private static ?ModelMetadataFactoryInterface $metadataFactory = null;
 
-    public static function destroy()
+    public static function destroy(): void
     {
         self::$metadataFactory = null;
         self::$objectNormalizer = null;
@@ -83,7 +83,7 @@ class VersatileObjectMapperFactory
         return new ObjectNormalizer(self::$metadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver);
     }
 
-    public static function getObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null): ObjectNormalizer
+    public static function getObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null): ?ObjectNormalizer
     {
         if (!self::$objectNormalizer) {
             self::create($cacheItemPool);
@@ -92,7 +92,7 @@ class VersatileObjectMapperFactory
         return self::$objectNormalizer;
     }
 
-    public static function getMetadataFactory(?CacheItemPoolInterface $cacheItemPool = null): ModelMetadataFactoryInterface
+    public static function getMetadataFactory(?CacheItemPoolInterface $cacheItemPool = null): ?ModelMetadataFactoryInterface
     {
         if (!self::$objectNormalizer) {
             self::create($cacheItemPool);

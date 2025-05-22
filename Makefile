@@ -1,4 +1,4 @@
-.PHONY: deps deps-test deps-codestyle test test-lowest test-stable codestyle-fix codestyle help
+.PHONY: deps deps-test deps-codestyle deps-static-analysis test test-lowest test-stable static-analysis codestyle-fix codestyle help
 .DEFAULT_GOAL:=help
 
 deps: ## Install project dependencies
@@ -10,6 +10,9 @@ deps-test: ## Install PHPUnit dependencies
 deps-codestyle: ## Install PHP-CS-Fixer dependencies
 	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/php-cs-fixer
 
+deps-static-analysis: ## Install dependencies for psalm
+	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/psalm
+
 test: deps deps-test ## Run the test with locked dependencies
 	XDEBUG_MODE=coverage tools/phpunit/vendor/bin/phpunit --colors=always --coverage-text --testdox
 
@@ -18,6 +21,9 @@ test-lowest: COMPOSER_ARGS=--prefer-lowest
 
 test-stable: test ## Run the tests with stable dependencies
 test-stable: COMPOSER_ARGS=--prefer-stable
+
+static-analysis: deps deps-static-analysis ## Run static code analysis
+	XDEBUG_MODE=off tools/psalm/vendor/bin/psalm
 
 codestyle-fix: deps-codestyle ## Fix Codestyle issues
 	PHP_CS_FIXER_IGNORE_ENV=1 XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --show-progress=dots --ansi --verbose $(CS_FIXER_ARGS)

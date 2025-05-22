@@ -15,6 +15,9 @@ namespace Zolex\VOM\Mapping;
 
 use Zolex\VOM\Metadata\ModelMetadata;
 
+/**
+ * @psalm-inheritors Property|Argument
+ */
 abstract class AbstractProperty
 {
     public function __construct(
@@ -32,7 +35,7 @@ abstract class AbstractProperty
         private ?array $map = null,
         private bool $serialized = false,
         private ?string $extractor = null,
-        private ?string $scenario = ModelMetadata::DEFAULT_SCENARIO,
+        private string $scenario = ModelMetadata::DEFAULT_SCENARIO,
         private ?int $relative = null,
     ) {
     }
