@@ -107,6 +107,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
 
     /**
      * Returns the types potentially supported by this denormalizer.
+     *
      * @return array<class-string|'*'|'object'|string, bool|null>
      */
     public function getSupportedTypes(?string $format): array
