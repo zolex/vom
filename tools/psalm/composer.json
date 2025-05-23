@@ -1,6 +1,6 @@
 {
   "require": {
     "vimeo/psalm": "^6.11",
-    "zolex/sarif-to-markdown": "^1.0"
+    "zolex/psalm-markdown-report": "^1.0"
   }
 }

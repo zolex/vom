@@ -24,7 +24,6 @@ test-stable: COMPOSER_ARGS=--prefer-stable
 
 static-analysis: deps deps-static-analysis ## Run static code analysis
 	XDEBUG_MODE=off tools/psalm/vendor/bin/psalm --report=psalm-report.sarif
-	#XDEBUG_MODE=off tools/psalm/vendor/bin/sarif-to-md ./psalm-report.sarif ./psalm-report.md zolex/vom master
 
 codestyle-fix: deps-codestyle ## Fix Codestyle issues
 	PHP_CS_FIXER_IGNORE_ENV=1 XDEBUG_MODE=off tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --show-progress=dots --ansi --verbose $(CS_FIXER_ARGS)
