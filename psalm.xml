@@ -11,14 +11,17 @@
         ensureOverrideAttribute="false"
 >
     <projectFiles>
-        <directory name="src" />
+        <directory name="src"/>
         <ignoreFiles>
-            <directory name="vendor" />
-            <file name="src/Symfony/Bundle/DependencyInjection/Configuration.php" />
+            <directory name="vendor"/>
+            <file name="src/Symfony/Bundle/DependencyInjection/Configuration.php"/>
         </ignoreFiles>
     </projectFiles>
 
     <forbiddenFunctions>
         <function name="empty"/>
     </forbiddenFunctions>
+    <plugins>
+        <pluginClass class="Zolex\PsalmMarkdownReport\Plugin"/>
+    </plugins>
 </psalm>

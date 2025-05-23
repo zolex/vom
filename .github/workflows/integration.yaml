@@ -38,13 +38,14 @@ jobs:
           composer-options: --prefer-dist
           working-directory: tools/psalm
 
-      - name: Psalm
+      - name: Run static code analysis
+        env:
+          MARKDOWN_LINK_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          tools/psalm/vendor/bin/psalm --report=psalm-report.sarif
-          tools/psalm/vendor/bin/sarif-to-md ./psalm-report.sarif ./psalm-report.md ${{ github.repository }} ${{ github.head_ref || github.ref_name }}
-        
+          tools/psalm/vendor/bin/psalm
 
-      - uses: mshick/add-pr-comment@v2
+      - name: Publish report in PR
+        uses: mshick/add-pr-comment@v2
         with:
           message-path: ./psalm-report.md
           message-id: psalm
