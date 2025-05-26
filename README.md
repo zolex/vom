@@ -17,10 +17,8 @@
 The Versatile Object Mapper - or in short VOM - is a PHP library to transform any data structure into strictly typed models (and back) by adding PHP 8 attributes.
 It extends symfony/serializer functionality and is heavily inspired by doctrine and API-Platform, so that advanced mappings can simply be defined on the model classes instead of writing normalizer decorators.
 
-- [Installation](#installation)
-- [Quickstart](#quickstart)
 - [Documentation](https://zolex.github.io/vom/)
-- [Examples](#examples)
+- [Examples repository](https://github.com/zolex/vom-examples).
 
 ## Installation
 
@@ -111,35 +109,32 @@ $person = $objectMapper->denormalize($data, Person::class);
 
 You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](https://zolex.github.io/vom/).
 
-## Documentation
+## License
 
-The [full documentation](https://zolex.github.io/vom/) is available on github pages.
-
-## Examples
-
-The example from the quickstart and more can be found in the [VOM Examples repository](https://github.com/zolex/vom-examples).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributors
 
-<!-- readme: collaborators,contributors -start -->
 <table>
 	<tbody>
 		<tr>
             <td align="center">
                 <a href="https://github.com/zolex">
-                    <img src="https://avatars.githubusercontent.com/u/398739?v=4" width="50;" alt="zolex"/>
+                    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/398739?v=4&h=75&w=75&fit=cover&mask=circle&maxage=7d" width="75;" alt="zolex"/>
                     <br />
                     <sub><b>Andreas Linden</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/sengaigibon">
+                    <img src="https://images.weserv.nl/?url=avatars.githubusercontent.com/u/16040734?v=4&h=75&w=75&fit=cover&mask=circle&maxage=7d" width="75;" alt="zolex"/>
+                    <br />
+                    <sub><b>Javier Caballero </b></sub>
                 </a>
             </td>
 		</tr>
 	<tbody>
 </table>
-<!-- readme: collaborators,contributors -end -->
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Alternatives
 
