@@ -122,6 +122,19 @@ The example from the quickstart and more can be found in the [VOM Examples repos
 ## Contributors
 
 <!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/zolex">
+                    <img src="https://avatars.githubusercontent.com/u/398739?v=4" width="50;" alt="zolex"/>
+                    <br />
+                    <sub><b>Andreas Linden</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: collaborators,contributors -end -->
 
 ## License
