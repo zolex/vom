@@ -80,6 +80,10 @@ use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorModel;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorProperty;
+use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel0;
+use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel1;
+use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel2;
+use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel3;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel0;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel2;
@@ -1371,6 +1375,36 @@ class VersatileObjectMapperTest extends TestCase
 
         $this->assertInstanceOf(RelativeNestingLevel4::class, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->LEVEL_FOUR);
         $this->assertEquals(1, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->LEVEL_FOUR->LEVEL_FOUR_VALUE);
+    }
+
+    public function testRelativeAccessorSyntax(): void
+    {
+        $data = [
+            'LEVEL_ZERO_VALUE' => 0,
+            'LEVEL_ONE' => [
+                'LEVEL_ONE_VALUE' => 1,
+                'LEVEL_TWO' => [
+                    'LEVEL_TWO_VALUE' => 2,
+                    'LEVEL_THREE' => [
+                        'LEVEL_THREE_VALUE' => 3,
+                    ],
+                ],
+            ],
+        ];
+
+        $relativeBrainfuck = self::$serializer->denormalize($data, RelativeAccessorSyntaxLevel0::class);
+
+        $this->assertInstanceOf(RelativeAccessorSyntaxLevel0::class, $relativeBrainfuck);
+        $this->assertEquals(0, $relativeBrainfuck->LEVEL_ZERO_VALUE);
+
+        $this->assertInstanceOf(RelativeAccessorSyntaxLevel1::class, $relativeBrainfuck->LEVEL_ONE);
+        $this->assertEquals(0, $relativeBrainfuck->LEVEL_ONE->LEVEL_ONE_VALUE);
+
+        $this->assertInstanceOf(RelativeAccessorSyntaxLevel2::class, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO);
+        $this->assertEquals(1, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_TWO_VALUE);
+
+        $this->assertInstanceOf(RelativeAccessorSyntaxLevel3::class, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE);
+        $this->assertEquals(0, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->LEVEL_THREE_VALUE);
     }
 
     public function testObjectToPopulate(): void

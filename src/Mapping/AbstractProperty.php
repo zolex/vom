@@ -38,6 +38,30 @@ abstract class AbstractProperty
         private string $scenario = ModelMetadata::DEFAULT_SCENARIO,
         private ?int $relative = null,
     ) {
+        $this->applyRelativePropertyAccessSyntax();
+    }
+
+    /**
+     * Applies the custom property-access syntax prefix
+     * e.g. `[..][..]` as an alternative to `relative: 2`
+     */
+    private function applyRelativePropertyAccessSyntax(): void
+    {
+        if (!is_string($this->accessor)) {
+            return;
+        }
+
+        $relative = 0;
+        while (str_starts_with($this->accessor, '[..]')) {
+            $relative++;
+            $this->accessor = substr($this->accessor, 4);
+        }
+
+        if (0 === $relative) {
+            return;
+        }
+
+        $this->relative = null === $this->relative ? $relative : $this->relative + $relative;
     }
 
     public function isRoot(): bool
