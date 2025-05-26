@@ -111,13 +111,6 @@ $person = $objectMapper->denormalize($data, Person::class);
 
 You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](https://zolex.github.io/vom/).
 
-### Now, do I need this?
-
-If there is any difference between the data structure of your input and your application's models, VOM may be a good choice to avoid writing and maintaining code, but instead just add some PHP attributes.
-
-> [!NOTE]
-> If you need to inject data into your entities that already is in a structure matching your models, this library can be used but may be an overhead. In this scenario you could simply utilize a standard [Symfony normalizer](https://symfony.com/doc/current/components/serializer.html#normalizers).
-
 ## Documentation
 
 The [full documentation](https://zolex.github.io/vom/) is available on github pages.
@@ -125,6 +118,15 @@ The [full documentation](https://zolex.github.io/vom/) is available on github pa
 ## Examples
 
 The example from the quickstart and more can be found in the [VOM Examples repository](https://github.com/zolex/vom-examples).
+
+## Contributors
+
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Alternatives
 
