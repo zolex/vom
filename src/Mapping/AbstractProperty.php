@@ -43,17 +43,17 @@ abstract class AbstractProperty
 
     /**
      * Applies the custom property-access syntax prefix
-     * e.g. `[..][..]` as an alternative to `relative: 2`
+     * e.g. `[..][..]` as an alternative to `relative: 2`.
      */
     private function applyRelativePropertyAccessSyntax(): void
     {
-        if (!is_string($this->accessor)) {
+        if (!\is_string($this->accessor)) {
             return;
         }
 
         $relative = 0;
         while (str_starts_with($this->accessor, '[..]')) {
-            $relative++;
+            ++$relative;
             $this->accessor = substr($this->accessor, 4);
         }
 
