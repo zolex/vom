@@ -19,7 +19,7 @@ It extends symfony/serializer functionality and is heavily inspired by doctrine 
 
 - [Installation](#installation)
 - [Quickstart](#quickstart)
-- [Documentation](https://github.com/zolex/vom/wiki)
+- [Documentation](https://zolex.github.io/vom/)
 - [Examples](#examples)
 
 ## Installation
@@ -120,7 +120,7 @@ If there is any difference between the data structure of your input and your app
 
 ## Documentation
 
-The [full documentation](https://github.com/zolex/vom/wiki) is available in the Wiki section of this repository.
+The [full documentation](https://zolex.github.io/vom/) is available on github pages.
 
 ## Examples
 
