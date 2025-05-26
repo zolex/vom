@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/packagist/l/zolex/vom)](./LICENSE)
 [![Downloads](https://img.shields.io/packagist/dt/zolex/vom)](https://packagist.org/packages/zolex/vom)
 
-![VOM](https://raw.githubusercontent.com/zolex/vom/refs/heads/docs/logo.png)
+![VOM](logo.png)
 
 ![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
 ![Symfony](https://img.shields.io/badge/symfony-%23000000.svg?style=for-the-badge&logo=symfony&logoColor=white)
