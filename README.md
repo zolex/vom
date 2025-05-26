@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/packagist/l/zolex/vom)](./LICENSE)
 [![Downloads](https://img.shields.io/packagist/dt/zolex/vom)](https://packagist.org/packages/zolex/vom)
 
-![VOM](docs/logo.png)
+![VOM](https://raw.githubusercontent.com/zolex/vom/refs/heads/docs/logo.png)
 
 ![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
 ![Symfony](https://img.shields.io/badge/symfony-%23000000.svg?style=for-the-badge&logo=symfony&logoColor=white)
@@ -109,7 +109,7 @@ To create instances of your models, you simply pass the data to the `denormalize
 $person = $objectMapper->denormalize($data, Person::class);
 ``` 
 
-You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](https://github.com/zolex/vom/wiki).
+You may have noticed, that some property attributes have arguments while others don't. For all details on that, head to the [full documentation](https://zolex.github.io/vom/).
 
 ### Now, do I need this?
 
