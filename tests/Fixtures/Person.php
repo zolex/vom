@@ -18,7 +18,7 @@ use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 
 #[Model]
-class Person extends Thing
+class Person extends Thing implements SomeInterface
 {
     use GenericFactoryTrait;
 

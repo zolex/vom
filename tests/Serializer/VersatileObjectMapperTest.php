@@ -89,6 +89,10 @@ use Zolex\VOM\Test\Fixtures\RelativeNestingLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel2;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel3;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel4;
+use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel0;
+use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel1;
+use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel2;
+use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel3;
 use Zolex\VOM\Test\Fixtures\ScenarioConstructorArguments;
 use Zolex\VOM\Test\Fixtures\ScenarioConstructorPropertyPromotion;
 use Zolex\VOM\Test\Fixtures\ScenarioDenormalizer;
@@ -435,7 +439,7 @@ class VersatileObjectMapperTest extends TestCase
             ],
         ];
 
-        $thing = self::$serializer->denormalize($data, Thing::class);
+        $thing = self::$serializer->denormalize($data, Thing::class, null, ['skip_null_values' => true]);
         $this->assertInstanceOf(Person::class, $thing);
 
         $normalized = self::$serializer->normalize($thing);
@@ -1405,6 +1409,26 @@ class VersatileObjectMapperTest extends TestCase
 
         $this->assertInstanceOf(RelativeAccessorSyntaxLevel3::class, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE);
         $this->assertEquals(0, $relativeBrainfuck->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->LEVEL_THREE_VALUE);
+    }
+
+    public function testDenormalizeRelativeAccessorWithoutNestedStructureInSourceData(): void
+    {
+        $data = [
+            'VALUE_A' => 0,
+            'VALUE_B' => 1,
+            'VALUE_C' => 2,
+            'VALUE_D' => 3,
+        ];
+
+        $model = self::$serializer->denormalize($data, RelativeNormalizationLevel0::class);
+        $this->assertInstanceOf(RelativeNormalizationLevel0::class, $model);
+        $this->assertEquals(0, $model->VALUE_A);
+        $this->assertInstanceOf(RelativeNormalizationLevel1::class, $model->LEVEL_ONE);
+        $this->assertEquals(1, $model->LEVEL_ONE->VALUE);
+        $this->assertInstanceOf(RelativeNormalizationLevel2::class, $model->LEVEL_ONE->LEVEL_TWO);
+        $this->assertEquals(2, $model->LEVEL_ONE->LEVEL_TWO->VALUE);
+        $this->assertInstanceOf(RelativeNormalizationLevel3::class, $model->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE);
+        $this->assertEquals(3, $model->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->VALUE);
     }
 
     public function testObjectToPopulate(): void

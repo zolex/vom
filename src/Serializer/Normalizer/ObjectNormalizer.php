@@ -346,6 +346,14 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     } else {
                         try {
                             $value = $this->propertyAccessor->getValue($data, $accessor);
+                            // allow normalizer to continue with nested models when data structure does not exist in source
+                            if (null === $value && null !== $property->getClass() && false === ($context[self::SKIP_NULL_VALUES] ?? false)) {
+                                try {
+                                    $this->modelMetadataFactory->getMetadataFor($property->getClass());
+                                    $value = [];
+                                } catch (MissingMetadataException) {
+                                }
+                            }
                         } catch (NoSuchIndexException|NoSuchPropertyException $e) {
                             if ($data instanceof AccessorListItemMetadata) {
                                 throw new MappingException(\sprintf('Model "%s" is wrapped in "%s". Only valid accessors are "key", "value" and "accessor".', $type, AccessorListItemMetadata::class));
