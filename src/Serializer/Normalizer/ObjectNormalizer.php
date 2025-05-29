@@ -617,6 +617,16 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             $context = $this->getAttributeNormalizationContext($data, $property->getName(), $context);
+
+            if (($accessor = $property->getAccessor()) && ($class = $property->getClass())) {
+                try {
+                    $this->modelMetadataFactory->getMetadataFor($class);
+                    $context[self::NESTING_PATH] ??= [];
+                    $context[self::NESTING_PATH][] = $accessor;
+                } catch (MissingMetadataException) {
+                }
+            }
+
             try {
                 $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
                     ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
@@ -650,6 +660,10 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                 continue;
             }
 
+            if (\is_array($normalizedValue) && 0 === \count($normalizedValue)) {
+                continue;
+            }
+
             if ($property->isRoot()) {
                 $target = &$context[self::ROOT_DATA];
             } else {
@@ -657,8 +671,15 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             if ($property->hasAccessor()) {
+                $accessor = $property->getAccessor();
+                if (($relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
+                    $parts = \array_slice($context[self::NESTING_PATH], 0, -$relative);
+                    $parts[] = $accessor;
+                    $accessor = implode('', $parts);
+                    $target = &$context[self::ROOT_DATA];
+                }
+
                 try {
-                    $accessor = $property->getAccessor();
                     $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
                 } catch (\Throwable $e) {
                     if (preg_match('/^Cannot write property "[^"]+" to an array./', $e->getMessage())) {

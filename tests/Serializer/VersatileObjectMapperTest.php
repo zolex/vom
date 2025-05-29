@@ -89,6 +89,7 @@ use Zolex\VOM\Test\Fixtures\RelativeNestingLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel2;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel3;
 use Zolex\VOM\Test\Fixtures\RelativeNestingLevel4;
+use Zolex\VOM\Test\Fixtures\RelativeNormalization2Level0;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel0;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel2;
@@ -1429,6 +1430,36 @@ class VersatileObjectMapperTest extends TestCase
         $this->assertEquals(2, $model->LEVEL_ONE->LEVEL_TWO->VALUE);
         $this->assertInstanceOf(RelativeNormalizationLevel3::class, $model->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE);
         $this->assertEquals(3, $model->LEVEL_ONE->LEVEL_TWO->LEVEL_THREE->VALUE);
+    }
+
+    public function testNormalizeRelativeAccessor(): void
+    {
+        $data = [
+            'VALUE_A' => 4,
+            'VALUE_B' => 5,
+            'VALUE_C' => 6,
+            'VALUE_D' => 7,
+        ];
+
+        $model = self::$serializer->denormalize($data, RelativeNormalizationLevel0::class);
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
+    }
+
+    public function testNormalizeRelativeAccessor2(): void
+    {
+        $data = [
+            'VALUE_A' => 8,
+            'VALUE_B' => 9,
+            'LEVEL_ONE' => [
+                'VALUE_C' => 10,
+                'VALUE_D' => 11,
+            ],
+        ];
+
+        $model = self::$serializer->denormalize($data, RelativeNormalization2Level0::class);
+        $normalized = self::$serializer->normalize($model);
+        $this->assertEquals($data, $normalized);
     }
 
     public function testObjectToPopulate(): void
