@@ -439,6 +439,43 @@ $objectMapper->denormalize($data, LevelZero::class);
 > [!NOTE]
 > A combination of actual accessors, `accessor: false`, `root: true` and `relative: {int}` gives you full control over the data mapping. Some results can be achieved with different combinations of these settings, but there are usecases which can only be achieved with a clever combination of all of them.
 
+# Data Types
+
+## Strict Types
+
+By default, VOM will throw an exception if you are trying to denormalize a value that does not match the expected type. It is possible to [disable strict type checking](#disable-type-enforcement) using the context.
+
+## Union Types
+
+By utilizing union types, you can work with strict typing and still allow several types to be denormalized.
+
+```php
+#[VOM\Property]
+public int|float|null $value;
+```
+
+## Booleans
+
+In an arbitrary data structure, several values may represent a boolean value. If a property is a strictly typed boolean, VOM makes a handy decision whether a value is mapped to true or false.
+
+```php
+#[VOM\Property]
+public bool $state;
+```
+
+The following values are considered to be `true`
+
+```php
+    true, 1, '1', 'on', 'ON', 'yes', 'YES', 'y', 'Y'
+```
+
+The following values are considered to be `false`
+
+```php
+    false, 0, '0', 'off', 'OFF', 'no', 'NO', 'n', 'N'
+```
+
+If your boolean is nullable, any value that does not match either the true or false list, the value will become null if it was uninitialized and stay null if it already was.
 
 ```php
 #[VOM\Property]
