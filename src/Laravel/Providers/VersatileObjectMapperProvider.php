@@ -17,8 +17,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
-use Zolex\VOM\Test\Laravel\Illuminate\Contracts\Foundation\DummyApplication;
-use Zolex\VOM\Test\Laravel\Illuminate\Support\DummyServiceProvider;
+use Zolex\VOM\Test\Unit\Laravel\Illuminate\Contracts\Foundation\DummyApplication;
+use Zolex\VOM\Test\Unit\Laravel\Illuminate\Support\DummyServiceProvider;
 
 // @codeCoverageIgnoreStart
 if (!class_exists('Illuminate\Support\ServiceProvider')) {

@@ -46,7 +46,7 @@ use Zolex\VOM\Metadata\Exception\MissingMetadataException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
-use Zolex\VOM\Test\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
+use Zolex\VOM\Serializer\Normalizer\Exception\IgnoreCircularReferenceException;
 
 /**
  * Normalizes and denormalizes VOM models and their attributes.
