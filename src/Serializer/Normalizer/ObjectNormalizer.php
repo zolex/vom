@@ -306,67 +306,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         throw new NotNormalizableValueException(\sprintf('Can not create model metadata for "%s" because is is a non-instantiable type. Consider to add at least one instantiable type.', $metadata->getClass()));
     }
 
-    /**
-     * Denormalizes a single property of VOM model.
-     *
-     * @throws ExceptionInterface
-     */
     private function denormalizeProperty(string $type, mixed $data, PropertyMetadata $property, ?string $format = null, array $context = []): mixed
     {
         if ($property->isRoot()) {
             $data = &$context[self::ROOT_DATA];
         }
 
-        if (\is_string($data)) {
-            if ($property->isSerialized()) {
-                return $data;
-            }
-
-            if ($extractor = $property->getExtractor()) {
-                if (!preg_match($extractor, $data, $matches)) {
-                    throw new MappingException(\sprintf('Extractor "%s" on "%s::$%s" does not match the data "%s"', $extractor, $type, $property->getName(), $data));
-                }
-                $value = $matches[1] ?? null;
-            }
-        } else {
-            if ($accessor = $property->getAccessor()) {
-                if (($relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
-                    $parts = \array_slice($context[self::NESTING_PATH], 0, -$relative);
-                    $parts[] = $accessor;
-                    $fromTheRoot = implode('', $parts);
-                    $value = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $fromTheRoot);
-                } else {
-                    $context[self::NESTING_PATH] ??= [];
-                    $context[self::NESTING_PATH][] = $accessor;
-                    if (\is_array($accessor)) {
-                        $value = [];
-                        foreach ($accessor as $key => $itemAccessor) {
-                            $value[] = new AccessorListItemMetadata($key, $itemAccessor, $this->propertyAccessor->getValue($data, $itemAccessor));
-                        }
-                    } else {
-                        try {
-                            $value = $this->propertyAccessor->getValue($data, $accessor);
-                            // allow normalizer to continue with nested models when data structure does not exist in source
-                            if (null === $value && null !== $property->getClass() && false === ($context[self::SKIP_NULL_VALUES] ?? false)) {
-                                try {
-                                    $this->modelMetadataFactory->getMetadataFor($property->getClass());
-                                    $value = [];
-                                } catch (MissingMetadataException) {
-                                }
-                            }
-                        } catch (NoSuchIndexException|NoSuchPropertyException $e) {
-                            if ($data instanceof AccessorListItemMetadata) {
-                                throw new MappingException(\sprintf('Model "%s" is wrapped in "%s". Only valid accessors are "key", "value" and "accessor".', $type, AccessorListItemMetadata::class));
-                            } else {
-                                throw $e;
-                            }
-                        }
-                    }
-                }
-            } else {
-                $value = $data;
-            }
-        }
+        $value = $this->extractValue($type, $data, $property, $context);
 
         if ($property->hasMap()) {
             $value = $property->getMappedValue($value);
@@ -377,6 +323,103 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         return $this->validateAndDenormalize($type, $property, $value, $format, $context);
+    }
+
+    private function extractValue(string $type, mixed $data, PropertyMetadata $property, array &$context): mixed
+    {
+        if (\is_string($data)) {
+            return $this->extractFromString($type, $data, $property);
+        }
+
+        if (!$accessor = $property->getAccessor()) {
+            return $data;
+        }
+
+        if ((null !== $relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
+            return $this->resolveRelativeAccessor($context, $data, $property, $accessor, $relative);
+        }
+
+        return $this->resolveStandardAccessor($context, $data, $property, $accessor, $type);
+    }
+
+    private function extractFromString(string $type, string $data, PropertyMetadata $property): mixed
+    {
+        if ($property->isSerialized()) {
+            return $data;
+        }
+
+        if ($extractor = $property->getExtractor()) {
+            if (!preg_match($extractor, $data, $matches)) {
+                throw new MappingException(\sprintf('Extractor "%s" on "%s::$%s" does not match the data "%s"', $extractor, $type, $property->getName(), $data));
+            }
+
+            return $matches[1] ?? null;
+        }
+
+        return null;
+    }
+
+    private function resolveRelativeAccessor(array &$context, mixed $data, PropertyMetadata $property, mixed $accessor, mixed $relative): mixed
+    {
+        if (\is_array($relative) && \is_array($accessor)) {
+            $value = [];
+            foreach ($accessor as $key => $itemAccessor) {
+                if (isset($relative[$key])) {
+                    $path = \array_slice($context[self::NESTING_PATH], 0, -$relative[$key]);
+                    $path[] = $itemAccessor;
+                    $fromRoot = implode('', $path);
+                    $val = $this->propertyAccessor->getValue($context[self::ROOT_DATA], $fromRoot);
+                } else {
+                    $val = $this->propertyAccessor->getValue($data, $itemAccessor);
+                }
+                $value[] = new AccessorListItemMetadata($key, $itemAccessor, $val);
+            }
+
+            return $value;
+        }
+
+        $path = \array_slice($context[self::NESTING_PATH], 0, -$relative);
+        $path[] = $accessor;
+        $fromRoot = implode('', $path);
+
+        return $this->propertyAccessor->getValue($context[self::ROOT_DATA], $fromRoot);
+    }
+
+    private function resolveStandardAccessor(array &$context, mixed $data, PropertyMetadata $property, mixed $accessor, string $type): mixed
+    {
+        $context[self::NESTING_PATH] ??= [];
+        $context[self::NESTING_PATH][] = $accessor;
+
+        if (\is_array($accessor)) {
+            $value = [];
+            foreach ($accessor as $key => $itemAccessor) {
+                $val = $this->propertyAccessor->getValue($data, $itemAccessor);
+                $value[] = new AccessorListItemMetadata($key, $itemAccessor, $val);
+            }
+
+            return $value;
+        }
+
+        try {
+            $value = $this->propertyAccessor->getValue($data, $accessor);
+
+            if (null === $value && null !== $property->getClass() && !($context[self::SKIP_NULL_VALUES] ?? false)) {
+                try {
+                    $this->modelMetadataFactory->getMetadataFor($property->getClass());
+
+                    return [];
+                } catch (MissingMetadataException) {
+                    // Proceed with null
+                }
+            }
+
+            return $value;
+        } catch (NoSuchIndexException|NoSuchPropertyException $e) {
+            if ($data instanceof AccessorListItemMetadata) {
+                throw new MappingException(\sprintf('Model "%s" is wrapped in "%s". Only valid accessors are "key", "value" and "accessor".', $type, AccessorListItemMetadata::class));
+            }
+            throw $e;
+        }
     }
 
     /**
