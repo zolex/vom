@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Functional;
 
 use PHPUnit\Framework\TestCase;
+use Zolex\VOM\Test\Fixtures\RelativeAccessorListLevel0;
 use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel0;
 use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeAccessorSyntaxLevel2;
@@ -149,5 +150,23 @@ class RelativeAccessorTestCase extends TestCase
         $model = static::$serializer->denormalize($data, RelativeNormalization2Level0::class);
         $normalized = static::$serializer->normalize($model);
         $this->assertEquals($data, $normalized);
+    }
+
+    public function testRelativeAccessorList(): void
+    {
+        $data = [
+            'LEVEL_ZERO_VALUE' => 666,
+            'LEVEL_ONE' => [
+                'LEVEL_ONE_VALUE' => 1337,
+                'LEVEL_TWO' => [
+                    'LEVEL_TWO_VALUE' => 3886,
+                ],
+            ],
+        ];
+
+        $model = static::$serializer->denormalize($data, RelativeAccessorListLevel0::class);
+        $this->assertEquals(1337, $model->LEVEL_ONE->LEVEL_TWO->genericList[0]->theActualValue);
+        $this->assertEquals(666, $model->LEVEL_ONE->LEVEL_TWO->genericList[1]->theActualValue);
+        $this->assertEquals(3886, $model->LEVEL_ONE->LEVEL_TWO->genericList[2]->theActualValue);
     }
 }

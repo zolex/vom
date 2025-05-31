@@ -36,7 +36,7 @@ abstract class AbstractProperty
         private bool $serialized = false,
         private ?string $extractor = null,
         private string $scenario = ModelMetadata::DEFAULT_SCENARIO,
-        private ?int $relative = null,
+        private int|array|null $relative = null,
     ) {
         $this->applyRelativePropertyAccessSyntax();
     }
@@ -47,21 +47,46 @@ abstract class AbstractProperty
      */
     private function applyRelativePropertyAccessSyntax(): void
     {
+        if (\is_array($this->accessor)) {
+            $this->relative = [];
+            foreach ($this->accessor as $index => &$accessor) {
+                if (!\is_string($accessor)) {
+                    continue;
+                }
+
+                $relativeCount = $this->consumeRelativePrefix($accessor);
+
+                if ($relativeCount > 0) {
+                    $this->relative[$index] = ($this->relative[$index] ?? 0) + $relativeCount;
+                }
+            }
+
+            return;
+        }
+
         if (!\is_string($this->accessor)) {
             return;
         }
 
-        $relative = 0;
-        while (str_starts_with($this->accessor, '[..]')) {
-            ++$relative;
-            $this->accessor = substr($this->accessor, 4);
+        $relativeCount = $this->consumeRelativePrefix($this->accessor);
+
+        if ($relativeCount > 0) {
+            $this->relative = ($this->relative ?? 0) + $relativeCount;
+        }
+    }
+
+    /**
+     * Removes all leading `[..]` from the accessor and returns how many were removed.
+     */
+    private function consumeRelativePrefix(string &$accessor): int
+    {
+        $count = 0;
+        while (str_starts_with($accessor, '[..]')) {
+            ++$count;
+            $accessor = substr($accessor, 4);
         }
 
-        if (0 === $relative) {
-            return;
-        }
-
-        $this->relative = null === $this->relative ? $relative : $this->relative + $relative;
+        return $count;
     }
 
     public function isRoot(): bool
@@ -139,7 +164,7 @@ abstract class AbstractProperty
         return $this->scenario;
     }
 
-    public function getRelative(): ?int
+    public function getRelative(): int|array|null
     {
         return $this->relative;
     }

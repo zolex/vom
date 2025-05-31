@@ -16,14 +16,15 @@ namespace Zolex\VOM\Test\Fixtures;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]
-class AccessorListGenericType
+class RelativeAccessorListLevel2
 {
-    public function __construct(
-        #[VOM\Argument(accessor: 'key')]
-        public string|int|null $typeFromAccessorListKey,
-
-        #[VOM\Argument(accessor: 'value')]
-        public string|int|null $theActualValue,
-    ) {
-    }
+    /**
+     * @var AccessorListGenericType[]
+     */
+    #[VOM\Property(accessor: [
+        '[..][LEVEL_ONE_VALUE]',
+        '[..][..][LEVEL_ZERO_VALUE]',
+        '[LEVEL_TWO_VALUE]',
+    ])]
+    public array $genericList;
 }
