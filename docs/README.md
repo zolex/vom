@@ -525,6 +525,70 @@ For normalization purpose, the `dateTimeFormat` argument can be specified on the
 public \DateTime $createdAt;
 ```
 
+## Enums
+
+VOM is able to handle pure and backed enums by mapping the input value to the case names and backed values.
+
+### Pure Enums
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+enum PureEnum
+{
+    case TypeA;
+    case TypeB;
+}
+
+#[VOM\Model]
+class PureEnumEample
+{
+    public function __construct(
+        #[VOM\Argument]
+        public PureEnum $type,
+    ) {
+    }
+}
+```
+
+```php
+$data = [
+    'type' => 'TypeA',
+];
+
+$pureEnumExample = $objectMapper->denormalize($data, PureEnumExample::class);
+```
+
+### Backed Enums
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+enum BackedEnum: string
+{
+    case TypeA = 'TYPA-A';
+    case TypeB = 'TYPA-B';
+}
+
+#[VOM\Model]
+class BackedEnumEample
+{
+    public function __construct(
+        #[VOM\Argument]
+        public BackedEnum $type,
+    ) {
+    }
+}
+```
+
+```php
+$data = [
+    'type' => 'TYPA-A',
+];
+
+$backedEnumExample = $objectMapper->denormalize($data, BackedEnumExample::class);
+```
+
 ## Value Maps
 
 A common task is to map single values. To do so you can specify a map in the VOM Property. The keys of the map represent the source values.
