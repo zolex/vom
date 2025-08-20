@@ -488,6 +488,28 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     $class = $type->getClassName();
                 }
 
+                if (Type::BUILTIN_TYPE_OBJECT === $builtinType && null !== $class && enum_exists($class)) {
+                    $className = $type->getClassName();
+                    $refEnum = new \ReflectionEnum($className);
+                    $value = \is_array($data) && 1 === \count($data) ? $data[0] : $data;
+                    if ($refEnum->isBacked()) {
+                        $backed = $className::tryFrom($value);
+                        if (null === $backed) {
+                            throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('Failed to create backed enum because the enum "%s" has no case "%s".', $className, $value), $data, ['unknown'], $context['deserialization_path'] ?? null);
+                        }
+
+                        return $backed;
+                    } else {
+                        foreach ($className::cases() as $case) {
+                            if ($case->name === $value) {
+                                return $case;
+                            }
+                        }
+
+                        throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('Failed to create pure enum because the enum "%s" has no case "%s".', $className, $value), $data, ['unknown'], $context['deserialization_path'] ?? null);
+                    }
+                }
+
                 $expectedTypes[Type::BUILTIN_TYPE_OBJECT === $builtinType && $class ? $class : $builtinType] = true;
 
                 if (Type::BUILTIN_TYPE_OBJECT === $builtinType && null !== $class) {

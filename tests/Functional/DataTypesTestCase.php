@@ -16,11 +16,15 @@ namespace Zolex\VOM\Test\Functional;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Zolex\VOM\Metadata\Exception\MissingTypeException;
+use Zolex\VOM\Test\Fixtures\BackedEnum;
+use Zolex\VOM\Test\Fixtures\BackedEnumExample;
 use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\Floats;
 use Zolex\VOM\Test\Fixtures\MixedProperty;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
+use Zolex\VOM\Test\Fixtures\PureEnum;
+use Zolex\VOM\Test\Fixtures\PureEnumExample;
 use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
 
 /**
@@ -55,8 +59,7 @@ class DataTypesTestCase extends TestCase
     }
 
     /**
-     * @dataProvider provideBooleans
-     */
+     * @dataProvider provideBooleans     */
     public function testBooleans($data, $expected): void
     {
         /* @var Booleans $booleans */
@@ -183,5 +186,55 @@ class DataTypesTestCase extends TestCase
                 'nullableBool' => null,
             ],
         ];
+    }
+
+    public function testBackedEnum(): void
+    {
+        $data = [
+            'type' => 'TYPA-A',
+        ];
+
+        /* @var BackedEnum $backedEnum */
+        $backedEnum = static::$serializer->denormalize($data, BackedEnum::class);
+        $this->assertInstanceOf(BackedEnum::class, $backedEnum);
+        $this->assertEquals(BackedEnumExample::TypeA, $backedEnum->type);
+    }
+
+    public function testBackedEnumWithWrongValuesThrowsException(): void
+    {
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('Failed to create backed enum because the enum "Zolex\VOM\Test\Fixtures\BackedEnumExample" has no case "TYPA-666".');
+
+        $data = [
+            'type' => 'TYPA-666',
+        ];
+
+        /* @var BackedEnum $backedEnum */
+        static::$serializer->denormalize($data, BackedEnum::class);
+    }
+
+    public function testPureEnum(): void
+    {
+        $data = [
+            'type' => 'TYPE_A',
+        ];
+
+        /* @var PureEnum $pureEnum */
+        $pureEnum = static::$serializer->denormalize($data, PureEnum::class);
+        $this->assertInstanceOf(PureEnum::class, $pureEnum);
+        $this->assertEquals(PureEnumExample::TYPE_A, $pureEnum->type);
+    }
+
+    public function testPureEnumWithWrongValuesThrowsException(): void
+    {
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('Failed to create pure enum because the enum "Zolex\VOM\Test\Fixtures\PureEnumExample" has no case "TYPA-666".');
+
+        $data = [
+            'type' => 'TYPA-666',
+        ];
+
+        /* @var BackedEnum $backedEnum */
+        static::$serializer->denormalize($data, PureEnum::class);
     }
 }
