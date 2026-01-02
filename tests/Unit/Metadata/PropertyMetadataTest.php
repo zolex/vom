@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Unit\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\PropertyMetadata;
 
@@ -31,7 +32,7 @@ class PropertyMetadataTest extends TestCase
             'desc',
             \DateTime::W3C,
         );
-        $metadata = new PropertyMetadata('name', [], $attribute);
+        $metadata = new PropertyMetadata('name', Type::mixed(), $attribute);
 
         $this->assertEquals('name', $metadata->getName());
         $this->assertEquals('[accessor]', $metadata->getAccessor());

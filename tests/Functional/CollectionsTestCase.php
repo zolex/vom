@@ -29,6 +29,8 @@ use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
  */
 class CollectionsTestCase extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testArrayOfModels(): void
     {
         $data = [

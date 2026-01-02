@@ -113,9 +113,6 @@ class AnySymfonyService
 }
 ```
 
-> [!TIP]
-> The `PropertyInfoExtractorFactory` creates a default set of extractors utilizing Reflection and PhpDoc. Several other extractors are available in Symfony, such as PHPStan and Doctrine. You can also write a custom extractor to give VOM additional information on your model's properties.
-
 ## Run the ObjectMapper
 
 ### Denormalization
@@ -644,7 +641,7 @@ $object = $objectMapper->denormalize(['color' => 'RAINBOW'], ValueMap::class);
 
 # Collections
 
-VOM can process several types of collections, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by the `PropertyInfoExtractor`.
+VOM can process several types of collections, like native arrays or ArrayObject (including doctrine collections), basically any iterable that can be detected as such by symfon's `TypeInfo` component.
 To tell VOM what types sit in a collection you have to add PhpDoc tags and use the [phpdoc array or collection syntax](https://symfony.com/doc/current/components/property_info.html#type-iscollection) as shown in the following example.
 
 ## Denormalize a Collection
@@ -744,7 +741,6 @@ class RootClass
 ## Doctrine Collections
 
 If you are working with symfony and create doctrine entities using the maker-bundle, all of this will be generated automatically. The following example is only here to show the extra `VOM\Model` and `VOM\Property` attributes you have to add.
-You don't even need to add the `@var` PhpDoc for the collection value type because VOM can determine it by looking at the doctrine entity associations.
 
 ```php
 use Doctrine\ORM\Mapping as ORM;
@@ -786,6 +782,11 @@ class DoctrinePerson
     #[VOM\Property]
     private ?string $name = null;
 
+    /**
+     * Collection type must be configured explicitly since symfony type-info does not have a doctrine resolver.
+     *  
+     * @var Collection<int, DoctrineAddress> 
+     */
     #[ORM\OneToMany(targetEntity: DoctrineAddress::class)]
     #[VOM\Property]
     private Collection $addresses;
@@ -1874,7 +1875,7 @@ $someModel = $objectMapper->denormalize($data, SomeModel::class, context: ['obje
 ## Groups
 
 ```php
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping as VOM;
 
 #[VOM\Model]

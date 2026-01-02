@@ -13,17 +13,16 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\TypeInfo\Type;
 use Zolex\VOM\Mapping\Argument;
 
 class ArgumentMetadata extends PropertyMetadata
 {
     public function __construct(
         string $name,
-        /* @var array|Type[] $types */
-        array $types,
+        Type $type,
         Argument $attribute,
     ) {
-        parent::__construct($name, $types, $attribute);
+        parent::__construct($name, $type, $attribute);
     }
 }

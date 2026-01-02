@@ -13,7 +13,12 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata\Factory;
 
-use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
+use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type\BuiltinType;
+use Symfony\Component\TypeInfo\Type\ObjectType;
+use Symfony\Component\TypeInfo\Type\WrappingTypeInterface;
+use Symfony\Component\TypeInfo\TypeIdentifier;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolverInterface;
 use Zolex\VOM\Mapping\AbstractProperty;
 use Zolex\VOM\Mapping\Argument;
 use Zolex\VOM\Mapping\Denormalizer;
@@ -47,7 +52,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     private array $methodDependencies = [];
 
     public function __construct(
-        private readonly PropertyInfoExtractorInterface $propertyInfoExtractor,
+        private readonly TypeResolverInterface $typeResolver,
     ) {
     }
 
@@ -350,20 +355,27 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
             $class = $reflectionProperty->getDeclaringClass()->getName();
             $property = $reflectionProperty->name;
-            $types = $this->propertyInfoExtractor->getTypes($class, $property, [
-                'reflection_class' => $reflectionClass,
-                'reflection_method' => $reflectionMethod,
-                'allow_non_scalar' => $allowNonScalarArguments,
-            ]);
 
-            if (null === $types) {
+            // Resolve type using Symfony TypeInfo
+            try {
+                $resolvedType = $this->typeResolver->resolve($reflectionProperty);
+            } catch (\Throwable) {
+                $resolvedType = null;
+            }
+
+            if (null === $resolvedType) {
                 throw new MissingTypeException(\sprintf('Could not determine the type of property "%s" on class "%s".', $property, $class));
             }
 
+            // Validate argument types for method calls (denormalizers, factories, etc.)
+            if ($reflectionProperty instanceof \ReflectionParameter && null !== $reflectionMethod) {
+                $this->validateArgumentType($resolvedType, $reflectionClass, $reflectionMethod, $allowNonScalarArguments);
+            }
+
             if ($reflectionProperty instanceof \ReflectionProperty) {
-                $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $types, $attribute);
+                $propertyMetadata = new PropertyMetadata($reflectionProperty->getName(), $resolvedType, $attribute);
             } else {
-                $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $types, $attribute);
+                $propertyMetadata = new ArgumentMetadata($reflectionProperty->getName(), $resolvedType, $attribute);
             }
 
             try {
@@ -372,6 +384,40 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
 
             yield $propertyMetadata;
+        }
+    }
+
+    /**
+     * Validates that the argument type is allowed for the method call.
+     *
+     * @throws MappingException when the type is not supported
+     */
+    private function validateArgumentType(
+        Type $type,
+        \ReflectionClass $reflectionClass,
+        \ReflectionMethod $reflectionMethod,
+        bool $allowNonScalarArguments,
+    ): void {
+        $className = $reflectionClass->getName();
+        $methodName = $reflectionMethod->getName();
+
+        // Unwrap to get the base type
+        $t = $type;
+        while ($t instanceof WrappingTypeInterface) {
+            $t = $t->getWrappedType();
+        }
+
+        // Check if it's an object type (class)
+        if ($t instanceof ObjectType && !enum_exists($t->getClassName())) {
+            throw new MappingException(\sprintf('Only builtin types are supported for method call %s::%s().', $className, $methodName));
+        }
+
+        // Check if non-scalar types are allowed
+        if (!$allowNonScalarArguments && $t instanceof BuiltinType) {
+            $typeId = $t->getTypeIdentifier();
+            if ($typeId === TypeIdentifier::ARRAY || $typeId === TypeIdentifier::OBJECT) {
+                throw new MappingException(\sprintf('Only scalars are allowed for method call %s::%s(). Consider using collection attributes.', $className, $methodName));
+            }
         }
     }
 

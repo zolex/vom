@@ -33,6 +33,9 @@ class DoctrinePerson
     #[VOM\Property]
     private ?string $name = null;
 
+    /**
+     * @var Collection<int, DoctrineAddress>
+     */
     #[ORM\OneToMany(targetEntity: DoctrineAddress::class, mappedBy: 'person')]
     #[VOM\Property]
     private Collection $addresses;

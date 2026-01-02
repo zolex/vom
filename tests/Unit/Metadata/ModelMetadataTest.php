@@ -15,6 +15,7 @@ namespace Zolex\VOM\Test\Unit\Metadata;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\DependencyInjectionMetadata;
@@ -22,7 +23,7 @@ use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
-use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
+use Symfony\Component\TypeInfo\Type;
 use Zolex\VOM\Test\Fixtures\DependencyInConstructor;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 
@@ -34,7 +35,7 @@ class ModelMetadataTest extends TestCase
 
         $metadata = new ModelMetadata('class');
         $metadata->setAttribute($model);
-        $prop = new PropertyMetadata('name', [], new Property());
+        $prop = new PropertyMetadata('name', Type::mixed(), new Property());
         $metadata->addProperty($prop);
         $properties = $metadata->getProperties();
 
@@ -47,7 +48,7 @@ class ModelMetadataTest extends TestCase
 
     public function testGetNestedMetadata(): void
     {
-        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $factory = new ModelMetadataFactory(TypeResolver::create());
         $metadata = $factory->getMetadataFor(NestingRoot::class);
 
         $levelTwo = $metadata->find('levelOne.levelTwo', $factory);
@@ -62,7 +63,7 @@ class ModelMetadataTest extends TestCase
 
     public function testDeprecatedInjectDenormalizerDependency(): void
     {
-        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $factory = new ModelMetadataFactory(TypeResolver::create());
         $factory->injectDenormalizerDependency(new ParameterBag());
         $metaData = $factory->getMetadataFor(DependencyInConstructor::class);
         $args = $metaData->getConstructorArguments();

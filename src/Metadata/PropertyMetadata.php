@@ -13,38 +13,46 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Metadata;
 
-use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type\ObjectType;
+use Symfony\Component\TypeInfo\Type\UnionType;
+use Symfony\Component\TypeInfo\Type\WrappingTypeInterface;
 use Zolex\VOM\Mapping\AbstractProperty;
 
 class PropertyMetadata
 {
     private mixed $defaultValue;
-    private bool $nullable = false;
 
     public function __construct(
         private readonly string $name,
-        /* @var array|Type[] */
-        private array $types,
+        private readonly Type $type,
         private readonly AbstractProperty $attribute,
     ) {
-        foreach ($this->types as $type) {
-            if ($type->isNullable()) {
-                $this->nullable = true;
-                break;
-            }
-        }
     }
 
     public function isNullable(): bool
     {
-        return $this->nullable;
+        return $this->type->isNullable();
     }
 
     public function getClass(): ?string
     {
-        foreach ($this->types as $type) {
-            if ($class = $type->getClassName()) {
-                return $class;
+        $t = $this->type;
+        // Unwrap wrappers until we reach a base or union type
+        while ($t instanceof WrappingTypeInterface) {
+            $t = $t->getWrappedType();
+        }
+        if ($t instanceof ObjectType) {
+            return $t->getClassName();
+        }
+        if ($t instanceof UnionType) {
+            foreach ($t->getTypes() as $u) {
+                while ($u instanceof WrappingTypeInterface) {
+                    $u = $u->getWrappedType();
+                }
+                if ($u instanceof ObjectType) {
+                    return $u->getClassName();
+                }
             }
         }
 
@@ -64,12 +72,9 @@ class PropertyMetadata
         return $this->attribute->getField() ?? (($accessor = $this->getAccessor()) ? $accessor : null);
     }
 
-    /**
-     * @return array|Type[]
-     */
-    public function getTypes(): array
+    public function getType(): Type
     {
-        return $this->types;
+        return $this->type;
     }
 
     public function hasAccessor(): bool

@@ -25,10 +25,10 @@ use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer as SymfonyObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
-use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 
@@ -67,9 +67,9 @@ class VersatileObjectMapperFactory
 
     public static function createObjectNormalizer(?CacheItemPoolInterface $cacheItemPool = null, array $deps = []): ObjectNormalizer
     {
-        $propertyInfo = PropertyInfoExtractorFactory::create();
+        $typeResolver = TypeResolver::create();
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
-        self::$metadataFactory = new ModelMetadataFactory($propertyInfo);
+        self::$metadataFactory = new ModelMetadataFactory($typeResolver);
         foreach ($deps as $dep) {
             self::$metadataFactory->injectMethodDependency($dep);
         }
