@@ -415,7 +415,7 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         // Check if non-scalar types are allowed
         if (!$allowNonScalarArguments && $t instanceof BuiltinType) {
             $typeId = $t->getTypeIdentifier();
-            if ($typeId === TypeIdentifier::ARRAY || $typeId === TypeIdentifier::OBJECT) {
+            if (TypeIdentifier::ARRAY === $typeId || TypeIdentifier::OBJECT === $typeId) {
                 throw new MappingException(\sprintf('Only scalars are allowed for method call %s::%s(). Consider using collection attributes.', $className, $methodName));
             }
         }

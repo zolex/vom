@@ -25,8 +25,6 @@ class ZolexVOMExtension extends Extension implements CompilerPassInterface
     private array $config;
 
     /**
-     * @return void
-     *
      * @throws \Exception
      */
     public function load(array $configs, ContainerBuilder $container): void

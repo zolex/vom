@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
-use ReflectionException;
 use Symfony\Component\PropertyAccess\Exception\InvalidArgumentException as PropertyAccessInvalidArgumentException;
 use Symfony\Component\PropertyAccess\Exception\NoSuchIndexException;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
@@ -33,7 +32,6 @@ use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorResolverInterface;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectToPopulateTrait;
@@ -442,13 +440,9 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     }
 
     /**
-     * @param Type $type
-     * @param string $currentClass
+     * @param Type   $type
      * @param string $attribute
-     * @param mixed $data
-     * @param string|null $format
-     * @param array $context
-     * @return mixed
+     *
      * @throws ExceptionInterface
      */
     private function validateAndDenormalize(PropertyMetadata $property, string $currentClass, mixed $data, ?string $format, array $context): mixed
@@ -686,6 +680,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                         if (null === $backed) {
                             throw NotNormalizableValueException::createForUnexpectedDataType(\sprintf('Failed to create backed enum because the enum "%s" has no case "%s".', $className, $value), $data, ['unknown'], $context['deserialization_path'] ?? null);
                         }
+
                         return $backed;
                     }
 
@@ -997,11 +992,13 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
                     return true;
                 }
             }
+
             return false;
         }
         while ($t instanceof WrappingTypeInterface) {
             $t = $t->getWrappedType();
         }
+
         return method_exists($t, 'getTypeIdentifier') && TypeIdentifier::BOOL === $t->getTypeIdentifier();
     }
 }

@@ -15,6 +15,7 @@ namespace Zolex\VOM\Test\Unit\Metadata;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
@@ -23,7 +24,6 @@ use Zolex\VOM\Metadata\Exception\RuntimeException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
-use Symfony\Component\TypeInfo\Type;
 use Zolex\VOM\Test\Fixtures\DependencyInConstructor;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 
