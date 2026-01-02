@@ -23,7 +23,7 @@ jobs:
       - name: Install PHP with extensions
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.4'
           tools: 'composer:v2, flex'
 
       - name: Install Package Deps
