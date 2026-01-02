@@ -15,11 +15,11 @@ namespace Zolex\VOM\Test\Functional;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Zolex\VOM\Metadata\Exception\FactoryException;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\ModelMetadata;
-use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\ConstructorArguments;
 use Zolex\VOM\Test\Fixtures\Instantiable;
 use Zolex\VOM\Test\Fixtures\InstantiableWithDocTag;
@@ -39,7 +39,7 @@ class InstanciationTestCase extends TestCase
 {
     public function testInstantiableNestedObject(): void
     {
-        $factory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $factory = new ModelMetadataFactory(TypeResolver::create());
 
         $metadata = $factory->getMetadataFor(Instantiable::class);
         $this->assertInstanceOf(ModelMetadata::class, $metadata);

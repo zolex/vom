@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Fixtures;
 
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Zolex\VOM\Mapping\Model;
 use Zolex\VOM\Mapping\Property;
 

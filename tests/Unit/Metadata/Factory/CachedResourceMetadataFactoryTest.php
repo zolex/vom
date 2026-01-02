@@ -15,9 +15,9 @@ namespace Zolex\VOM\Test\Unit\Metadata\Factory;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
-use Zolex\VOM\PropertyInfo\Extractor\PropertyInfoExtractorFactory;
 use Zolex\VOM\Test\Fixtures\Person;
 
 class CachedResourceMetadataFactoryTest extends TestCase
@@ -25,7 +25,7 @@ class CachedResourceMetadataFactoryTest extends TestCase
     public function testLocalCache()
     {
         $cachePool = new ArrayAdapter();
-        $resourceMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $resourceMetadataFactory = new ModelMetadataFactory(TypeResolver::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $resourceMetadataFactory, true);
 
         $metadata = $cachedResourceMetadataFactory->getMetadataFor(Person::class);
@@ -36,14 +36,14 @@ class CachedResourceMetadataFactoryTest extends TestCase
     public function testPSRCache()
     {
         $cachePool = new ArrayAdapter();
-        $modelMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $modelMetadataFactory = new ModelMetadataFactory(TypeResolver::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $modelMetadataFactory, true);
 
         $metadata = $cachedResourceMetadataFactory->getMetadataFor(Person::class);
         $cachedMetadata = $cachePool->getItem(CachedModelMetadataFactory::CACHE_KEY_PREFIX.md5(Person::class))->get();
         $this->assertEquals($metadata, $cachedMetadata);
 
-        $modelMetadataFactory = new ModelMetadataFactory(PropertyInfoExtractorFactory::create());
+        $modelMetadataFactory = new ModelMetadataFactory(TypeResolver::create());
         $cachedResourceMetadataFactory = new CachedModelMetadataFactory($cachePool, $modelMetadataFactory, true);
 
         $metadata2 = $cachedResourceMetadataFactory->getMetadataFor(Person::class);

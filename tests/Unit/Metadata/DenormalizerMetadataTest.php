@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Unit\Metadata;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 use Zolex\VOM\Mapping\Property;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\PropertyMetadata;
@@ -24,8 +25,8 @@ class DenormalizerMetadataTest extends TestCase
     {
         $args = [
             'default' => [
-                new PropertyMetadata('id', [], new Property()),
-                new PropertyMetadata('name', [], new Property()),
+                new PropertyMetadata('id', Type::mixed(), new Property()),
+                new PropertyMetadata('name', Type::mixed(), new Property()),
             ],
         ];
 
@@ -40,8 +41,8 @@ class DenormalizerMetadataTest extends TestCase
     {
         $args = [
             'default' => [
-                new PropertyMetadata('id', [], new Property()),
-                new PropertyMetadata('name', [], new Property()),
+                new PropertyMetadata('id', Type::mixed(), new Property()),
+                new PropertyMetadata('name', Type::mixed(), new Property()),
             ],
         ];
 
