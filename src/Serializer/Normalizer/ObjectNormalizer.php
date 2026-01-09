@@ -970,6 +970,23 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     }
 
     /**
+     * Checks whether the given attribute is allowed for the given class or object.
+     * This implementation adds Symfony 8.0 improvements with discriminator property handling.
+     *
+     * @protected (called from parent class)
+     */
+    protected function isAllowedAttribute($classOrObject, string $attribute, ?string $format = null, array $context = []): bool
+    {
+        // Check if this is the discriminator type property - if so, it's always allowed
+        if ($this->classDiscriminatorResolver?->getMappingForMappedObject($classOrObject)?->getTypeProperty() === $attribute) {
+            return true;
+        }
+
+        // Delegate to parent implementation for standard checks
+        return parent::isAllowedAttribute($classOrObject, $attribute, $format, $context);
+    }
+
+    /**
      * This error may occur when specific object normalizer implementation gets attribute value
      * by accessing a public uninitialized property or by calling a method accessing such property.
      */
