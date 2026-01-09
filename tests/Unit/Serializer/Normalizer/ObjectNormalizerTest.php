@@ -145,4 +145,63 @@ class ObjectNormalizerTest extends TestCase
         $this->expectExceptionMessage('because injected serializer is not a denormalizer');
         $objectNormalizer->denormalize($data, NestingRoot::class);
     }
+
+    public function testSupportsNormalizationWithNonObject(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $this->assertFalse($objectNormalizer->supportsNormalization('string', null, ['vom' => true]));
+        $this->assertFalse($objectNormalizer->supportsNormalization(123, null, ['vom' => true]));
+        $this->assertFalse($objectNormalizer->supportsNormalization([], null, ['vom' => true]));
+    }
+
+    public function testSupportsNormalizationWithoutVomContext(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $this->assertFalse($objectNormalizer->supportsNormalization(new DateAndTime(), null, []));
+        $this->assertFalse($objectNormalizer->supportsNormalization(new DateAndTime(), null, ['vom' => false]));
+    }
+
+    public function testSupportsDenormalizationWithString(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $this->assertTrue($objectNormalizer->supportsDenormalization('some string data', DateAndTime::class, null, ['vom' => true]));
+    }
+
+    public function testSupportsDenormalizationWithObject(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $this->assertTrue($objectNormalizer->supportsDenormalization(new \stdClass(), DateAndTime::class, null, ['vom' => true]));
+    }
+
+    public function testSupportsDenormalizationWithoutVomContext(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $this->assertFalse($objectNormalizer->supportsDenormalization([], DateAndTime::class, null, []));
+        $this->assertFalse($objectNormalizer->supportsDenormalization([], DateAndTime::class, null, ['vom' => false]));
+    }
+
+    public function testSupportsDenormalizationWithInvalidType(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        // Class that has no metadata should not be supported
+        $this->assertFalse($objectNormalizer->supportsDenormalization([], 'NonExistentClass', null, ['vom' => true]));
+    }
+
+    public function testGetSupportedTypes(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $types = $objectNormalizer->getSupportedTypes(null);
+        $this->assertIsArray($types);
+        $this->assertArrayHasKey('object', $types);
+        $this->assertArrayHasKey('*', $types);
+        $this->assertTrue($types['object']);
+        $this->assertTrue($types['*']);
+    }
 }
