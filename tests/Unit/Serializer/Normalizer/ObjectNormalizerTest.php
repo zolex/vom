@@ -17,13 +17,19 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\BadMethodCallException;
 use Symfony\Component\Serializer\Exception\LogicException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\PropertyAccess\Exception\InvalidTypeException;
+use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Metadata\NormalizerMetadata;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;
+use Zolex\VOM\Test\Fixtures\Booleans;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\DummySerializer;
+use Zolex\VOM\Test\Fixtures\Floats;
+use Zolex\VOM\Test\Fixtures\IntProperty;
+use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\Thing;
 
@@ -203,5 +209,146 @@ class ObjectNormalizerTest extends TestCase
         $this->assertArrayHasKey('*', $types);
         $this->assertTrue($types['object']);
         $this->assertTrue($types['*']);
+    }
+
+    public function testNormalizeThrowsWithNonNormalizerSerializer(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+        $objectNormalizer->setSerializer(new DummySerializer());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The serializer must implement the NormalizerInterface');
+        $objectNormalizer->normalize(new DateAndTime());
+    }
+
+    public function testDenormalizeXmlBoolFromString(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $result = $objectNormalizer->denormalize(['bool' => '1', 'nullableBool' => '0'], Booleans::class, 'xml');
+        $this->assertTrue($result->bool);
+        $this->assertFalse($result->nullableBool);
+    }
+
+    public function testDenormalizeXmlBoolFromTrueFalseWords(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $result = $objectNormalizer->denormalize(['bool' => 'true', 'nullableBool' => 'false'], Booleans::class, 'xml');
+        $this->assertTrue($result->bool);
+        $this->assertFalse($result->nullableBool);
+    }
+
+    public function testDenormalizeXmlInvalidBoolThrowsException(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('The type of the "bool" attribute for class "Zolex\VOM\Test\Fixtures\Booleans" must be bool');
+        $objectNormalizer->denormalize(['bool' => 'not-a-bool'], Booleans::class, 'xml');
+    }
+
+    public function testDenormalizeXmlFloatFromString(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $result = $objectNormalizer->denormalize(['value' => '3.14'], Floats::class, 'xml');
+        $this->assertEqualsWithDelta(3.14, $result->value, 0.001);
+    }
+
+    public function testDenormalizeXmlSpecialFloatValues(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $nan = $objectNormalizer->denormalize(['value' => 'NaN'], Floats::class, 'xml');
+        $this->assertNan($nan->value);
+
+        $inf = $objectNormalizer->denormalize(['value' => 'INF'], Floats::class, 'xml');
+        $this->assertEquals(\INF, $inf->value);
+
+        $negInf = $objectNormalizer->denormalize(['value' => '-INF'], Floats::class, 'xml');
+        $this->assertEquals(-\INF, $negInf->value);
+    }
+
+    public function testDenormalizeXmlInvalidFloatThrowsException(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('The type of the "value" attribute for class "Zolex\VOM\Test\Fixtures\Floats" must be float');
+        $objectNormalizer->denormalize(['value' => 'not-a-float'], Floats::class, 'xml');
+    }
+
+    public function testDenormalizeXmlIntFromString(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $result = $objectNormalizer->denormalize(['value' => '42'], IntProperty::class, 'xml');
+        $this->assertSame(42, $result->value);
+    }
+
+    public function testDenormalizeXmlInvalidIntThrowsException(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $this->expectException(NotNormalizableValueException::class);
+        $this->expectExceptionMessage('The type of the "value" attribute for class "Zolex\VOM\Test\Fixtures\IntProperty" must be int');
+        $objectNormalizer->denormalize(['value' => 'not-an-int'], IntProperty::class, 'xml');
+    }
+
+    public function testDenormalizeXmlNullableFromEmptyString(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $result = $objectNormalizer->denormalize(['nullableBool' => ''], Booleans::class, 'xml');
+        $this->assertNull($result->nullableBool);
+    }
+
+    public function testDisableTypeEnforcementReturnsDataAsIs(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        // disable_type_enforcement bypasses VOM's type check (line 784) and returns
+        // the raw value, but PHP's PropertyAccessor still enforces the declared type,
+        // causing an InvalidTypeException when assigning a string to int|float|null.
+        $this->expectException(InvalidTypeException::class);
+        $objectNormalizer->denormalize(
+            ['value' => 'not-a-number'],
+            MultiTypeProps::class,
+            null,
+            ['disable_type_enforcement' => true]
+        );
+    }
+
+    public function testExhaustedUnionTypeThrowsException(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        $this->expectException(NotNormalizableValueException::class);
+        $objectNormalizer->denormalize(['value' => 'not-a-number'], MultiTypeProps::class);
+    }
+
+    public function testExtractFromStringReturnsNullWhenNoExtractorConfigured(): void
+    {
+        VersatileObjectMapperFactory::destroy();
+        $objectNormalizer = VersatileObjectMapperFactory::getObjectNormalizer();
+
+        // Passing a string as root data: extractFromString() is called for each property.
+        // Without an extractor or serialized=true, it returns null, leaving the property unset.
+        $result = $objectNormalizer->denormalize('raw-string-data', Booleans::class);
+        $this->assertInstanceOf(Booleans::class, $result);
+        $this->assertNull($result->nullableBool);
     }
 }

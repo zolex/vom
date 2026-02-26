@@ -18,6 +18,18 @@ use Zolex\VOM\Mapping\Property;
 
 class PropertyTest extends TestCase
 {
+    public function testArrayAccessorWithNonStringElement(): void
+    {
+        // Non-string elements (integers) in an array accessor are skipped
+        // during relative accessor processing, exercising the `continue` branch.
+        $prop = new Property(accessor: ['path', 42, 'other']);
+        $accessor = $prop->getAccessor();
+        $this->assertIsArray($accessor);
+        $this->assertSame('path', $accessor[0]);
+        $this->assertSame(42, $accessor[1]);
+        $this->assertSame('other', $accessor[2]);
+    }
+
     public function testGetters(): void
     {
         $prop = new Property(

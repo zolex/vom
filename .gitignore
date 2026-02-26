@@ -9,3 +9,4 @@
 /psalm-report.sarif
 /psalm-report.md
 /test-results
+/tests/Unit/Symfony/Bundle/config/reference.php

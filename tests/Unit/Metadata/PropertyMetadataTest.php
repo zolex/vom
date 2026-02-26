@@ -20,6 +20,18 @@ use Zolex\VOM\Metadata\PropertyMetadata;
 
 class PropertyMetadataTest extends TestCase
 {
+    public function testGetClassReturnsNullForScalarType(): void
+    {
+        $metadata = new PropertyMetadata('prop', Type::string(), new Property('accessor'));
+        $this->assertNull($metadata->getClass());
+    }
+
+    public function testGetClassReturnsClassNameFromUnionType(): void
+    {
+        $metadata = new PropertyMetadata('prop', Type::union(Type::string(), Type::object(\DateTime::class)), new Property('accessor'));
+        $this->assertEquals(\DateTime::class, $metadata->getClass());
+    }
+
     public function testGetters(): void
     {
         $attribute = new Property(

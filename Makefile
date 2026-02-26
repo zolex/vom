@@ -14,6 +14,12 @@ deps-static-analysis: ## Install dependencies for psalm
 	XDEBUG_MODE=off composer update --prefer-dist --no-plugins --no-scripts $(COMPOSER_ARGS) --working-dir=tools/psalm
 
 test: deps deps-test ## Run the test with locked dependencies
+	XDEBUG_MODE=off tools/phpunit/vendor/bin/phpunit --colors=always
+
+coverage: deps deps-test ## Run the test with locked dependencies
+	XDEBUG_MODE=coverage tools/phpunit/vendor/bin/phpunit --colors=always --coverage-xml ./test-results
+
+coverage-text: deps deps-test ## Run the test with locked dependencies
 	XDEBUG_MODE=coverage tools/phpunit/vendor/bin/phpunit --colors=always --coverage-text --testdox
 
 test-lowest: test ## Run the tests with lowest dependencies
