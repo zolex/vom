@@ -379,7 +379,10 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
             }
 
             try {
-                $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
+                // avoid deprecation notice for getDefaultValue from PHP 8.5
+                if (!method_exists($reflectionProperty, 'hasDefaultValue') || $reflectionProperty->hasDefaultValue()) {
+                    $propertyMetadata->setDefaultValue($reflectionProperty->getDefaultValue());
+                }
             } catch (\ReflectionException) {
             }
 

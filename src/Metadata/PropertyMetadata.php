@@ -160,8 +160,14 @@ class PropertyMetadata
     public function getMappedValue(mixed $value): mixed
     {
         $map = $this->attribute->getMap();
+
+        // TODO: PHP 8.5 deprecated null as an array offset.
+        //  If we want to map from null to something (and from empty string to something else)
+        //  it would require a breaking change for the map argument of the Property attribute.
+        //  For now just accept the deprecation warning...
+
         if (!isset($map[$value])) {
-            return $this->getDefaultValue();
+            return $this->hasDefaultValue() ? $this->getDefaultValue() : null;
         }
 
         return $map[$value];
