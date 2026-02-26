@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace Zolex\VOM\Test\Unit\Serializer\Normalizer;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\Exception\InvalidTypeException;
 use Symfony\Component\Serializer\Exception\BadMethodCallException;
+use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\LogicException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
-use Symfony\Component\PropertyAccess\Exception\InvalidTypeException;
-use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Zolex\VOM\Mapping\Normalizer;
 use Zolex\VOM\Metadata\DenormalizerMetadata;
 use Zolex\VOM\Metadata\Exception\MappingException;

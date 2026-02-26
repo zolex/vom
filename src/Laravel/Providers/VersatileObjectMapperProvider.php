@@ -40,7 +40,7 @@ class VersatileObjectMapperProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(VersatileObjectMapper::class, function (Application $app): VersatileObjectMapper {
+        $this->app->singleton(VersatileObjectMapper::class, static function (Application $app): VersatileObjectMapper {
             return VersatileObjectMapperFactory::create();
         });
     }

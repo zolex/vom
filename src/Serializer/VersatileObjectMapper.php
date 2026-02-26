@@ -47,18 +47,17 @@ final class VersatileObjectMapper implements NormalizerInterface, DenormalizerIn
             }
 
             return $array;
-        } else {
-            $object = new \stdClass();
-            foreach ($data as $key => $value) {
-                if (\is_array($value)) {
-                    $object->{$key} = self::toObject($value);
-                } else {
-                    $object->{$key} = $value;
-                }
-            }
-
-            return $object;
         }
+        $object = new \stdClass();
+        foreach ($data as $key => $value) {
+            if (\is_array($value)) {
+                $object->{$key} = self::toObject($value);
+            } else {
+                $object->{$key} = $value;
+            }
+        }
+
+        return $object;
     }
 
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed

@@ -96,7 +96,7 @@ class CircularReferencesTestCase extends TestCase
 
         $normalized = static::$serializer->normalize($ref1, null, [
             'circular_reference_limit' => 2,
-            'circular_reference_handler' => function ($ref) {
+            'circular_reference_handler' => static function ($ref) {
                 return \sprintf('/ref/%d', $ref->id);
             },
         ]);
