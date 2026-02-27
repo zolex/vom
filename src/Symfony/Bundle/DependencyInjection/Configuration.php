@@ -21,6 +21,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * Class Configuration.
  *
  * @codeCoverageIgnore
+ *
  * @deprecated The method_dependencies and denormalizer.dependencies configurations will be removed in VOM 3.0
  */
 class Configuration implements ConfigurationInterface

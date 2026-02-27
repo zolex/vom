@@ -26,10 +26,10 @@ final class Denormalizer
         private readonly bool $allowNonScalarArguments = false,
     ) {
         $message = 'Denormalizer methods are deprecated and will be removed in VOM 3.0. VOM is designed to operate without requiring custom code, and the intended behavior can be achieved using VOM\'s built-in features.\n\nPlease refer to the documentation at https://zolex.github.io/vom for guidance.\n\nIf your use case is not supported, kindly open an issue at https://github.com/zolex/vom/issues to share your requirements.';
-        if (function_exists('vom_trigger_deprecation')) {
+        if (\function_exists('vom_trigger_deprecation')) {
             vom_trigger_deprecation($message);
         } else {
-            trigger_error($message, E_USER_DEPRECATED);
+            @trigger_error($message, \E_USER_DEPRECATED);
         }
     }
 
