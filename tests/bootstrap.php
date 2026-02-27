@@ -18,3 +18,19 @@ require dirname(__DIR__).'/vendor/autoload.php';
 use Symfony\Component\ErrorHandler\ErrorHandler;
 
 ErrorHandler::register(null, false);
+
+// Suppress VOM's own deprecation warnings during tests by wrapping trigger_error calls
+// This preserves other deprecation warnings while filtering out our custom ones
+if (!function_exists('vom_trigger_deprecation')) {
+    function vom_trigger_deprecation(string $message): void
+    {
+        // Set error handler to suppress this specific deprecation
+        $handler = set_error_handler(function (): bool {
+            restore_error_handler();
+            return true;
+        }, E_USER_DEPRECATED);
+
+        trigger_error($message, E_USER_DEPRECATED);
+        restore_error_handler();
+    }
+}

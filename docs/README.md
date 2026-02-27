@@ -30,7 +30,7 @@ VOM also comes with a Laravel Service Provider. After installing with composer, 
 
 # The Object Mapper
 
-## Get the OjectMapper
+## Get an ObjectMapper instance
 
 ### Plain old PHP
 
@@ -1138,6 +1138,15 @@ class RepositoryWithFactory
 
 # Denormalizer Methods
 
+> [!WARNING]
+> **DEPRECATED:** Denormalizer methods are deprecated and will be removed in VOM 3.0. VOM is designed to operate without requiring custom code, and the intended behavior can be achieved using VOM's built-in features.
+> 
+> Please refer to the [full documentation](https://zolex.github.io/vom) for guidance.
+>
+> If your use case is not supported, kindly open an issue at [GitHub Issues](https://github.com/zolex/vom/issues) to share your requirements.
+> 
+> PS: you still can create a [custom symfony normalizer](https://symfony.com/doc/current/serializer/custom_normalizer.html) if you require a specific behavior that is not yet covered by VOM's built-in features.
+
 If your models don't follow the symfony conventions for mutators, VOM can call custom methods with arguments.
 It will query the source data using the argument accessor (the same way as for `#[VOM\Property]`) and call the method.
 The methods must be prefixed with `set` or `denormalize` and the `#[VOM\Denormalizer]` attribute must be added.
@@ -1253,6 +1262,15 @@ class BadHabits
 
 # Normalizer Methods
 
+> [!WARNING]
+> **DEPRECATED:** Normalizer methods are deprecated and will be removed in VOM 3.0. VOM is designed to operate without requiring custom code, and the intended behavior can be achieved using VOM's built-in features.
+> 
+> Please refer to the [full documentation](https://zolex.github.io/vom) for guidance.
+>
+> If your use case is not supported, kindly open an issue at [GitHub Issues](https://github.com/zolex/vom/issues) to share your requirements.
+> 
+> You still can create a [custom symfony normalizer](https://symfony.com/doc/current/serializer/custom_normalizer.html) if you require a specific behavior that is not yet covered by VOM's built-in features.
+
 Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization. These methods must not have any required arguments _(except injected dependencies)_. Normalizer methods must be prefixed with `get`, `has`, `is` or `normalize`. Groups can be added on normalizer methods with the first three prefixes (virtual property) or on the related property when using the `normalize` prefix.
 
 ## Without Accessor
@@ -1319,6 +1337,9 @@ class SerializedObject
 ```
 
 # Method Dependencies
+
+> [!WARNING]
+> **DEPRECATED:** Custom dependency injection is deprecated and will be removed in VOM 3.0 due to architectural limitations and design concerns. Please migrate to the recommended configuration and integration mechanisms provided by VOM. 
 
 If you need any dependencies in addition to the source data to be mapped, it is possible to inject any object (like a symfony service) into methods.
 To do so, just typehint the dependency in the method along with the VOM arguments. All dependencies must be explicitly registered.

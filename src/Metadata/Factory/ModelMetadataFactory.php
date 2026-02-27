@@ -58,7 +58,13 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
 
     public function injectDenormalizerDependency(object $service): void
     {
-        trigger_deprecation('zolex/vom', '0.8.0', 'The method "injectDenormalizerDependency" will be removed. Use "injectMethodDependency" instead.');
+        $message = 'The method "injectDenormalizerDependency" will be removed. Use "injectMethodDependency" instead.';
+        if (function_exists('vom_trigger_deprecation')) {
+            vom_trigger_deprecation($message);
+        } else {
+            trigger_error($message, E_USER_DEPRECATED);
+        }
+
         $this->injectMethodDependency($service);
     }
 
@@ -436,6 +442,14 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
         \ReflectionMethod $reflectionMethod,
         array $dependencyInjectionArguments,
     ): array {
+
+        $message = 'Custom dependency injection (method dependencies) is deprecated and will be removed in VOM 3.0 due to architectural limitations and design concerns. Please migrate to the recommended configuration and integration mechanisms provided by VOM.';
+        if (function_exists('vom_trigger_deprecation')) {
+            vom_trigger_deprecation($message);
+        } else {
+            trigger_error($message, E_USER_DEPRECATED);
+        }
+
         $found = false;
         foreach ($this->methodDependencies as $dependency) {
             if ($dependency instanceof $type) {

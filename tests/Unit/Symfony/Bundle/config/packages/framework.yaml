@@ -4,3 +4,5 @@ framework:
     http_method_override: false
     php_errors:
         log: true
+    property_info:
+        with_constructor_extractor: true

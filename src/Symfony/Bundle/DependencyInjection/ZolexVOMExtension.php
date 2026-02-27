@@ -41,7 +41,21 @@ class ZolexVOMExtension extends Extension implements CompilerPassInterface
         $factory = $container->getDefinition('zolex_vom.metadata.model_metadata_factory');
 
         if (\count($this->config['denormalizer']['dependencies'])) {
-            trigger_deprecation('zolex/vom', '0.8.0', 'the config key "denormalizer.dependencies" is deprecated. Use method_dependencies instead.');
+            $message = 'The config key "denormalizer.dependencies" is deprecated. Use method_dependencies instead.';
+            if (function_exists('vom_trigger_deprecation')) {
+                vom_trigger_deprecation($message);
+            } else {
+                trigger_error($message, E_USER_DEPRECATED);
+            }
+        }
+
+        if (\count($this->config['method_dependencies'])) {
+            $message = 'The method_dependencies configuration is deprecated and will be removed in VOM 3.0.';
+            if (function_exists('vom_trigger_deprecation')) {
+                vom_trigger_deprecation($message);
+            } else {
+                trigger_error($message, E_USER_DEPRECATED);
+            }
         }
 
         foreach (array_merge($this->config['method_dependencies'], $this->config['denormalizer']['dependencies']) as $service) {

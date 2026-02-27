@@ -21,6 +21,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * Class Configuration.
  *
  * @codeCoverageIgnore
+ * @deprecated The method_dependencies and denormalizer.dependencies configurations will be removed in VOM 3.0
  */
 class Configuration implements ConfigurationInterface
 {
@@ -32,11 +33,12 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                // deprecated. to be removed in VOM 3.0
                 ->arrayNode('method_dependencies')
                     ->scalarPrototype()->end()
                 ->end()
 
-                // deprecated. to be removed in future release
+                // deprecated. to be removed in VOM 3.0
                 ->arrayNode('denormalizer')
                     ->addDefaultsIfNotSet()
                     ->children()
