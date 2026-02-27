@@ -22,7 +22,7 @@ It extends symfony/serializer functionality and is heavily inspired by doctrine 
 
 ## Installation
 
-VOM is available on packagist. To install, simply require it via composer. 
+VOM is available on packagist. To install, simply require it via composer.
 
 ```bash
 composer require zolex/vom ^2.0
@@ -136,9 +136,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 	<tbody>
 </table>
 
+## Special thanks
+
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://blackfire.io" target="_blank">
+                    <img src="https://avatars.githubusercontent.com/u/8961067?v=4" width="75" alt="Blackfire" />
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://blackfire.io">Blackfire</a> for supporting this project with a free license, leading to VOM performance gains.               
+            </td>
+		</tr>
+	<tbody>
+</table>
+
 ## Alternatives
 
-There are many Mapping/Transformation/Hydration libraries out there. In case you don't want to rely on `phpdocumentor/reflection-docblock`, `symfony/serializer` and `symfony/proerty-access` which VOM depends on, here are some alternative packages that cover the same topic with quite different approaches and features.
+There are many Mapping/Transformation/Hydration libraries out there. In case you don't want to rely on `symfony/serializer`, `symfony/proerty-access`, `symfony/type-info` and `phpdocumentor/reflection-docblock` which VOM depends on, here are some alternative packages that cover the same topic with quite different approaches and features.
 
 - [jms/serializer](https://github.com/schmittjoh/serializer)
 - [CuyZ/Valinor](https://github.com/CuyZ/Valinor)
