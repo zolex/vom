@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Serializer\Normalizer;
 
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\PropertyAccess\Exception\InvalidArgumentException as PropertyAccessInvalidArgumentException;
 use Symfony\Component\PropertyAccess\Exception\NoSuchIndexException;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
@@ -117,6 +118,7 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         private readonly ClassDiscriminatorResolverInterface $classDiscriminatorResolver,
         array $defaultContext = [],
         ?callable $objectClassResolver = null,
+        private readonly ?ExpressionLanguage $expressionLanguage = null,
     ) {
         parent::__construct($classMetadataFactory, null, $defaultContext);
         $this->objectClassResolver = ($objectClassResolver ?? 'get_class')(...);
@@ -329,7 +331,14 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             $data = &$context[self::ROOT_DATA];
         }
 
-        $value = $this->extractValue($type, $data, $property, $context);
+        if ($property->hasDenormalizeExpression()) {
+            if (null === $this->expressionLanguage) {
+                throw new LogicException('symfony/expression-language is required to use the "denormalize" expression option.');
+            }
+            $value = $this->expressionLanguage->evaluate($property->getDenormalizeExpression(), ['data' => $data]);
+        } else {
+            $value = $this->extractValue($type, $data, $property, $context);
+        }
 
         if ($property->hasMap()) {
             $value = $property->getMappedValue($value);
@@ -870,9 +879,16 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
 
             try {
-                $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
-                    ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
-                    : $this->propertyAccessor->getValue($data, $property->getName());
+                if ($property->hasNormalizeExpression()) {
+                    if (null === $this->expressionLanguage) {
+                        throw new LogicException('symfony/expression-language is required to use the "normalize" expression option.');
+                    }
+                    $attributeValue = $this->expressionLanguage->evaluate($property->getNormalizeExpression(), ['object' => $data]);
+                } else {
+                    $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
+                        ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
+                        : $this->propertyAccessor->getValue($data, $property->getName());
+                }
             } catch (UninitializedPropertyException|\Error $e) {
                 if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
                     continue;

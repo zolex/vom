@@ -182,4 +182,24 @@ class PropertyMetadata
     {
         return $this->attribute->getRelative();
     }
+
+    public function hasDenormalizeExpression(): bool
+    {
+        return $this->attribute->hasDenormalizeExpression();
+    }
+
+    public function getDenormalizeExpression(): ?string
+    {
+        return $this->attribute->getDenormalizeExpression();
+    }
+
+    public function hasNormalizeExpression(): bool
+    {
+        return $this->attribute->hasNormalizeExpression();
+    }
+
+    public function getNormalizeExpression(): ?string
+    {
+        return $this->attribute->getNormalizeExpression();
+    }
 }

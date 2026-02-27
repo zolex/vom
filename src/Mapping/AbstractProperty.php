@@ -37,6 +37,8 @@ abstract class AbstractProperty
         private ?string $extractor = null,
         private string $scenario = ModelMetadata::DEFAULT_SCENARIO,
         private int|array|null $relative = null,
+        private ?string $denormalize = null,
+        private ?string $normalize = null,
     ) {
         $this->applyRelativePropertyAccessSyntax();
     }
@@ -167,5 +169,25 @@ abstract class AbstractProperty
     public function getRelative(): int|array|null
     {
         return $this->relative;
+    }
+
+    public function getDenormalizeExpression(): ?string
+    {
+        return $this->denormalize;
+    }
+
+    public function hasDenormalizeExpression(): bool
+    {
+        return null !== $this->denormalize;
+    }
+
+    public function getNormalizeExpression(): ?string
+    {
+        return $this->normalize;
+    }
+
+    public function hasNormalizeExpression(): bool
+    {
+        return null !== $this->normalize;
     }
 }

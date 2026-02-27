@@ -28,8 +28,12 @@
             "Zolex\\VOM\\Test\\": "tests/"
         }
     },
+    "suggest": {
+        "symfony/expression-language": "Required to use the 'denormalize' and 'normalize' options in Property/Argument attributes."
+    },
     "require-dev": {
         "doctrine/orm": "^3.0",
+        "symfony/expression-language": "^7.4",
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/yaml": "^7.3|^8.0"
     },

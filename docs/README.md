@@ -1140,11 +1140,13 @@ class RepositoryWithFactory
 
 > [!WARNING]
 > **DEPRECATED:** Denormalizer methods are deprecated and will be removed in VOM 3.0. VOM is designed to operate without requiring custom code, and the intended behavior can be achieved using VOM's built-in features.
-> 
+>
+> For simple computed values, consider using the [`denormalize` expression](#denormalize-expression) on `#[VOM\Property]` or `#[VOM\Argument]` instead.
+>
 > Please refer to the [full documentation](https://zolex.github.io/vom) for guidance.
 >
 > If your use case is not supported, kindly open an issue at [GitHub Issues](https://github.com/zolex/vom/issues) to share your requirements.
-> 
+>
 > PS: you still can create a [custom symfony normalizer](https://symfony.com/doc/current/serializer/custom_normalizer.html) if you require a specific behavior that is not yet covered by VOM's built-in features.
 
 If your models don't follow the symfony conventions for mutators, VOM can call custom methods with arguments.
@@ -1264,11 +1266,13 @@ class BadHabits
 
 > [!WARNING]
 > **DEPRECATED:** Normalizer methods are deprecated and will be removed in VOM 3.0. VOM is designed to operate without requiring custom code, and the intended behavior can be achieved using VOM's built-in features.
-> 
+>
+> For simple computed values, consider using the [`normalize` expression](#normalize-expression) on `#[VOM\Property]` instead.
+>
 > Please refer to the [full documentation](https://zolex.github.io/vom) for guidance.
 >
 > If your use case is not supported, kindly open an issue at [GitHub Issues](https://github.com/zolex/vom/issues) to share your requirements.
-> 
+>
 > You still can create a [custom symfony normalizer](https://symfony.com/doc/current/serializer/custom_normalizer.html) if you require a specific behavior that is not yet covered by VOM's built-in features.
 
 Similar to the denormalizer methods, also normalizer methods can be configured to be called during normalization. These methods must not have any required arguments _(except injected dependencies)_. Normalizer methods must be prefixed with `get`, `has`, `is` or `normalize`. Groups can be added on normalizer methods with the first three prefixes (virtual property) or on the related property when using the `normalize` prefix.
@@ -1520,6 +1524,99 @@ class RegexpExtractorProperty
 
 ```php
 $model = $objectMapper->denormalize('image1.jpg,tag:foobar,visibility:hidden', RegexpExtractorProperty::class);
+```
+
+# Expression Language
+
+VOM supports [Symfony Expression Language](https://symfony.com/doc/current/components/expression_language.html) expressions as an alternative to accessor paths for computing values during mapping. This is useful for derived or computed values that can't be expressed as simple accessor paths.
+
+> [!NOTE]
+> `symfony/expression-language` is an optional dependency. Install it when you need this feature:
+> ```bash
+> composer require symfony/expression-language
+> ```
+> If an expression is configured but the package is not installed, VOM throws a `LogicException` at mapping time.
+
+The `denormalize` and `normalize` arguments on `#[VOM\Property]` and `#[VOM\Argument]` each accept an expression string. They are independent: you can use either or both on the same property.
+
+## Denormalize Expression
+
+The `denormalize` expression is evaluated during denormalization (array → model). The variable `data` holds the current-level input array (respecting `root: true` if set).
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Person
+{
+    #[VOM\Property(denormalize: 'data["first_name"] ~ " " ~ data["last_name"]')]
+    public string $fullName;
+}
+```
+
+```php
+$person = $objectMapper->denormalize([
+    'first_name' => 'John',
+    'last_name'  => 'Doe',
+], Person::class);
+
+// $person->fullName === 'John Doe'
+```
+
+The accessor still controls _where_ the value is written on the model (unchanged behaviour).
+
+## Normalize Expression
+
+The `normalize` expression is evaluated during normalization (model → array). The variable `object` holds the model instance being normalized.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Product
+{
+    public float $price = 100.0;
+    public float $vatRate = 0.19;
+
+    #[VOM\Property(normalize: 'object.price * (1 + object.vatRate)')]
+    public float $grossPrice;
+}
+```
+
+```php
+$normalized = $objectMapper->normalize($product);
+
+// $normalized['grossPrice'] === 119.0
+```
+
+The accessor still controls _where_ the computed value is placed in the output array (unchanged behaviour).
+
+## Using Both on the Same Property
+
+You can combine `denormalize` and `normalize` on a single property when the mapping logic in each direction requires its own expression.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Temperature
+{
+    // Denormalize: convert Fahrenheit input to Celsius
+    // Normalize: convert stored Celsius back to Fahrenheit
+    #[VOM\Property(
+        denormalize: '(data["fahrenheit"] - 32) * 5 / 9',
+        normalize: 'object.celsius * 9 / 5 + 32',
+    )]
+    public float $celsius;
+}
+```
+
+```php
+$model = $objectMapper->denormalize(['fahrenheit' => 212.0], Temperature::class);
+// $model->celsius === 100.0
+
+$normalized = $objectMapper->normalize($model);
+// $normalized['celsius'] === 212.0
 ```
 
 # Serialized Argument

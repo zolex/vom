@@ -56,6 +56,9 @@ return static function (ContainerConfigurator $container): void {
             service('property_accessor'),
             service('serializer.mapping.class_metadata_factory'),
             service('serializer.mapping.class_discriminator_resolver'),
+            [],
+            null,
+            service('expression_language')->nullOnInvalid(),
         ])
         ->tag('serializer.normalizer', ['priority' => 100]);
 };
