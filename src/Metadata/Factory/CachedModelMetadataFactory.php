@@ -29,22 +29,22 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
 
     public function getMetadataFor(string $class): ?ModelMetadata
     {
-        $cacheKey = self::CACHE_KEY_PREFIX.md5($class);
-        if (\array_key_exists($cacheKey, $this->localCache)) {
-            return $this->localCache[$cacheKey];
+        if (isset($this->localCache[$class])) {
+            return $this->localCache[$class];
         }
 
+        $cacheKey = self::CACHE_KEY_PREFIX.md5($class);
         $cacheItem = $this->cacheItemPool->getItem($cacheKey);
         if ($cacheItem->isHit()) {
-            return $this->localCache[$cacheKey] = $cacheItem->get();
+            return $this->localCache[$class] = $cacheItem->get();
         }
 
-        $this->localCache[$cacheKey] = $this->decorated->getMetadataFor($class);
+        $this->localCache[$class] = $this->decorated->getMetadataFor($class);
         if (isset($cacheItem)) {
-            $cacheItem->set($this->localCache[$cacheKey]);
+            $cacheItem->set($this->localCache[$class]);
             $this->cacheItemPool->save($cacheItem);
         }
 
-        return $this->localCache[$cacheKey];
+        return $this->localCache[$class];
     }
 }
