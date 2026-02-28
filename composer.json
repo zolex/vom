@@ -33,7 +33,7 @@
     },
     "require-dev": {
         "doctrine/orm": "^3.0",
-        "symfony/expression-language": "^7.4",
+        "symfony/expression-language": "^7.3|^8.0",
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/yaml": "^7.3|^8.0"
     },
