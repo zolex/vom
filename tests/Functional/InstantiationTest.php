@@ -30,13 +30,12 @@ use Zolex\VOM\Test\Fixtures\ModelWithNonPublicFactory;
 use Zolex\VOM\Test\Fixtures\ModelWithNonStaticFactory;
 use Zolex\VOM\Test\Fixtures\NonInstantiable;
 use Zolex\VOM\Test\Fixtures\PropertyPromotion;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class InstanciationTestCase extends TestCase
+class InstantiationTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testInstantiableNestedObject(): void
     {
         $factory = new ModelMetadataFactory(TypeResolver::create());

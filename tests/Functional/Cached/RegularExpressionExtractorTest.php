@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\RegularExpressionExtractorTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class RegularExpressionExtractorTest extends RegularExpressionExtractorTestCase
+class RegularExpressionExtractorTest extends \Zolex\VOM\Test\Functional\RegularExpressionExtractorTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

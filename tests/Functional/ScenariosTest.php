@@ -21,13 +21,12 @@ use Zolex\VOM\Test\Fixtures\ScenarioFactory;
 use Zolex\VOM\Test\Fixtures\ScenarioNormalizer;
 use Zolex\VOM\Test\Fixtures\ScenarioNormalizerWithGroups;
 use Zolex\VOM\Test\Fixtures\ScenarioProperties;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class ScenariosTestCase extends TestCase
+class ScenariosTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testScenarioProperties(): void
     {
         $defaultScenario = [

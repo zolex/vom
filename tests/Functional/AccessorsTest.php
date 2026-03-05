@@ -21,13 +21,15 @@ use Zolex\VOM\Test\Fixtures\AccessorListGenericType;
 use Zolex\VOM\Test\Fixtures\AccessorListWithWrongAccessors;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
 use Zolex\VOM\Test\Fixtures\FirstAndLastnameObject;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
 /**
  * @mixin VersatileObjectMapperTestCase
  */
-abstract class AccessorsTestCase extends TestCase
+class AccessorsTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testAccessor(): void
     {
         $data = [

@@ -25,11 +25,11 @@ use Zolex\VOM\Test\Fixtures\DenormalizerWithoutArguments;
 use Zolex\VOM\Test\Fixtures\DummyNormalizer;
 use Zolex\VOM\Test\Fixtures\DummySerializer;
 use Zolex\VOM\Test\Fixtures\Person;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
 class VersatileObjectMapperTest extends TestCase
 {
-    protected static VersatileObjectMapper $serializer;
-    protected static ParameterBag $parameterBag;
+    use VersatileObjectMapperTestCase;
 
     public static function setUpBeforeClass(): void
     {

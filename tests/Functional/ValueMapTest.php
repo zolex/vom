@@ -15,13 +15,12 @@ namespace Zolex\VOM\Test\Functional;
 
 use PHPUnit\Framework\TestCase;
 use Zolex\VOM\Test\Fixtures\ValueMap;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class ValueMapTestCase extends TestCase
+class ValueMapTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testValueMapping(): void
     {
         $model = static::$serializer->denormalize([

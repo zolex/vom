@@ -30,13 +30,12 @@ use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
 use Zolex\VOM\Test\Fixtures\ExpressionLanguageModel;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-abstract class ExpressionLanguageTestCase extends TestCase
+class ExpressionLanguageTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testDenormalizeWithExpression(): void
     {
         $data = [

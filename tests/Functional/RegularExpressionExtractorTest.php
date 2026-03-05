@@ -17,13 +17,15 @@ use PHPUnit\Framework\TestCase;
 use Zolex\VOM\Metadata\Exception\MappingException;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorModel;
 use Zolex\VOM\Test\Fixtures\RegexpExtractorProperty;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
 /**
  * @mixin VersatileObjectMapperTestCase
  */
-class RegularExpressionExtractorTestCase extends TestCase
+class RegularExpressionExtractorTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testRegexpExtractorModel(): void
     {
         $data = 'image1.jpg,tag:foobar,visibility:hidden';

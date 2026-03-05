@@ -25,13 +25,12 @@ use Zolex\VOM\Test\Fixtures\MixedProperty;
 use Zolex\VOM\Test\Fixtures\MultiTypeProps;
 use Zolex\VOM\Test\Fixtures\PureEnum;
 use Zolex\VOM\Test\Fixtures\PureEnumExample;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class DataTypesTestCase extends TestCase
+class DataTypesTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testDenormalizeUnionType(): void
     {
         $model = static::$serializer->denormalize(['value' => 42], MultiTypeProps::class, null, ['disable_type_enforcement' => true]);

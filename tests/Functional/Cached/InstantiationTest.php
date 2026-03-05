@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Test\Functional\Standard;
+namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\CircularReferencesTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class CircularRefencesTest extends CircularReferencesTestCase
+class InstantiationTest extends \Zolex\VOM\Test\Functional\InstantiationTest
 {
-    use VersatileObjectMapperTestCase;
+    use CachedVersatileObjectMapperTestCase;
 }

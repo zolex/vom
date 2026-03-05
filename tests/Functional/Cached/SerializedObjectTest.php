@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\SerializedObjectTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class SerializedObjectTest extends SerializedObjectTestCase
+class SerializedObjectTest extends \Zolex\VOM\Test\Functional\SerializedObjectTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

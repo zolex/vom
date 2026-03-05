@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\CircularReferencesTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class CircularRefencesTest extends CircularReferencesTestCase
+class CircularRefencesTest extends \Zolex\VOM\Test\Functional\CircularReferencesTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

@@ -22,12 +22,9 @@ use Zolex\VOM\Test\Fixtures\CollectionWithMutator;
 use Zolex\VOM\Test\Fixtures\DateAndTime;
 use Zolex\VOM\Test\Fixtures\Doctrine\DoctrinePerson;
 use Zolex\VOM\Test\Fixtures\FirstAndLastname;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class CollectionsTestCase extends TestCase
+class CollectionsTest extends TestCase
 {
     use VersatileObjectMapperTestCase;
 

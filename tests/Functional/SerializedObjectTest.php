@@ -19,13 +19,12 @@ use Zolex\VOM\Test\Fixtures\SerializedObject;
 use Zolex\VOM\Test\Fixtures\SerializedObjectArray;
 use Zolex\VOM\Test\Fixtures\SerializedObjectWithAdditionalNormalizer;
 use Zolex\VOM\Test\Fixtures\SerializedObjectWithFactory;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class SerializedObjectTestCase extends TestCase
+class SerializedObjectTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testArrayOfSerializedObjects(): void
     {
         $data = [

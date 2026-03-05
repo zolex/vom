@@ -37,13 +37,12 @@ use Zolex\VOM\Test\Fixtures\PrivateDenormalizer;
 use Zolex\VOM\Test\Fixtures\PrivateNormalizer;
 use Zolex\VOM\Test\Fixtures\StaticDenormalizer;
 use Zolex\VOM\Test\Fixtures\StaticNormalizer;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class MethodCallsTestCase extends TestCase
+class MethodCallsTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testMethodCalls(): void
     {
         $data = [

@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\ClassDiscriminatorTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class ClassDiscriminatorTest extends ClassDiscriminatorTestCase
+class ClassDiscriminatorTest extends \Zolex\VOM\Test\Functional\ClassDiscriminatorTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

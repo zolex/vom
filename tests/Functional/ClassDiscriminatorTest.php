@@ -17,13 +17,12 @@ use PHPUnit\Framework\TestCase;
 use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Person;
 use Zolex\VOM\Test\Fixtures\Thing;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class ClassDiscriminatorTestCase extends TestCase
+class ClassDiscriminatorTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testDenormalizePersonWithClassDiscriminator(): void
     {
         $data = [

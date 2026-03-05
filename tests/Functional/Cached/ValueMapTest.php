@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\ValueMapTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class ValueMapTest extends ValueMapTestCase
+class ValueMapTest extends \Zolex\VOM\Test\Functional\ValueMapTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

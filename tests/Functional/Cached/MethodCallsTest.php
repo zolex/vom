@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\MethodCallsTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class MethodCallsTest extends MethodCallsTestCase
+class MethodCallsTest extends \Zolex\VOM\Test\Functional\MethodCallsTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

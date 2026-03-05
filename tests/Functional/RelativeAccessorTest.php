@@ -29,13 +29,12 @@ use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel0;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel1;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel2;
 use Zolex\VOM\Test\Fixtures\RelativeNormalizationLevel3;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class RelativeAccessorTestCase extends TestCase
+class RelativeAccessorTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testRelativeNesting(): void
     {
         $data = [

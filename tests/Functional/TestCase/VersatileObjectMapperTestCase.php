@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Zolex\VOM\Test\Functional\Standard;
+namespace Zolex\VOM\Test\Functional\TestCase;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Zolex\VOM\Serializer\Factory\VersatileObjectMapperFactory;

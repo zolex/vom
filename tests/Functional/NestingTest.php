@@ -18,13 +18,12 @@ use Zolex\VOM\Test\Fixtures\Address;
 use Zolex\VOM\Test\Fixtures\Arrays;
 use Zolex\VOM\Test\Fixtures\NestingRoot;
 use Zolex\VOM\Test\Fixtures\Person;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class NestingTestCase extends TestCase
+class NestingTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testRecursiveStructures(): void
     {
         $data = [

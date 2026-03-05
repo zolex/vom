@@ -16,13 +16,12 @@ namespace Zolex\VOM\Test\Functional;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
 use Zolex\VOM\Test\Fixtures\CircularReference;
-use Zolex\VOM\Test\Functional\Standard\VersatileObjectMapperTestCase;
+use Zolex\VOM\Test\Functional\TestCase\VersatileObjectMapperTestCase;
 
-/**
- * @mixin VersatileObjectMapperTestCase
- */
-class CircularReferencesTestCase extends TestCase
+class CircularReferencesTest extends TestCase
 {
+    use VersatileObjectMapperTestCase;
+
     public function testCircularReferenceRethrowsException(): void
     {
         $ref1 = new CircularReference();

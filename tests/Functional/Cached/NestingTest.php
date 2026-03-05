@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\NestingTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class NestingTest extends NestingTestCase
+class NestingTest extends \Zolex\VOM\Test\Functional\NestingTest
 {
     use CachedVersatileObjectMapperTestCase;
 }

@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Zolex\VOM\Test\Functional\Cached;
 
-use Zolex\VOM\Test\Functional\ExpressionLanguageTestCase;
+use Zolex\VOM\Test\Functional\TestCase\CachedVersatileObjectMapperTestCase;
 
-class ExpressionLanguageTest extends ExpressionLanguageTestCase
+class ExpressionLanguageTest extends \Zolex\VOM\Test\Functional\ExpressionLanguageTest
 {
     use CachedVersatileObjectMapperTestCase;
 }
