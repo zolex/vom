@@ -56,6 +56,11 @@ class ModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
+    public function resetLocalCache(): void
+    {
+        $this->localCache = [];
+    }
+
     public function injectDenormalizerDependency(object $service): void
     {
         $message = 'The method "injectDenormalizerDependency" will be removed. Use "injectMethodDependency" instead.';

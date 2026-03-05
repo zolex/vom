@@ -138,20 +138,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Special thanks
 
-<table>
-	<tbody>
-		<tr>
-            <td align="center">
-                <a href="https://blackfire.io" target="_blank">
-                    <img src="https://avatars.githubusercontent.com/u/8961067?v=4" width="75" alt="Blackfire" />
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://blackfire.io">Blackfire</a> for supporting this project with a free license, leading to VOM performance gains.               
-            </td>
-		</tr>
-	<tbody>
-</table>
+To <a href="https://blackfire.io">Blackfire.io</a> for supporting this project with a free license. Their tools help to identify optimization opportunities and provide valuable insights into the current performance characteristics of VOM. 
+
+<a href="https://blackfire.io" target="_blank">
+    <img src="./docs/blackfire.png" alt="Blackfire" />
+</a>
+
+_Performance comparison between cached and uncached VOM metadata across 1000 iterations of denormalizing the same model. See [tests/Profiling](tests/Profiling)._
 
 ## Alternatives
 

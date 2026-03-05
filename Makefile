@@ -1,4 +1,4 @@
-.PHONY: deps deps-test deps-codestyle deps-static-analysis test test-lowest test-stable static-analysis codestyle-fix codestyle help
+.PHONY: deps deps-test deps-codestyle deps-static-analysis test test-lowest test-stable static-analysis codestyle-fix codestyle profile profile-view help
 .DEFAULT_GOAL:=help
 
 deps: ## Install project dependencies
@@ -36,6 +36,9 @@ codestyle-fix: deps-codestyle ## Fix Codestyle issues
 
 codestyle: codestyle-fix ## Show Codestyle issues
 codestyle: CS_FIXER_ARGS=--dry-run
+
+profile: deps deps-test ## Profile tests with Blackfire CLI
+	export XDEBUG_MODE=off export APP_ENV=prod blackfire run php tools/phpunit/vendor/bin/phpunit
 
 help: ## Display this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

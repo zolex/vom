@@ -27,6 +27,11 @@ class CachedModelMetadataFactory implements ModelMetadataFactoryInterface
     ) {
     }
 
+    public function resetLocalCache(): void
+    {
+        $this->localCache = [];
+    }
+
     public function getMetadataFor(string $class): ?ModelMetadata
     {
         if (isset($this->localCache[$class])) {
