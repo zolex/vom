@@ -202,4 +202,14 @@ class PropertyMetadata
     {
         return $this->attribute->getNormalizeExpression();
     }
+
+    public function getCondition(): string|array|null
+    {
+        return $this->attribute->getCondition();
+    }
+
+    public function hasCondition(): bool
+    {
+        return $this->attribute->hasCondition();
+    }
 }

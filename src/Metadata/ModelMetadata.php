@@ -89,7 +89,10 @@ final class ModelMetadata
         return $this->properties[$scenario] ?? [];
     }
 
-    public function getProperty(string $name, string $scenario = self::DEFAULT_SCENARIO): ?PropertyMetadata
+    /**
+     * @return PropertyMetadata[]|null
+     */
+    public function getProperty(string $name, string $scenario = self::DEFAULT_SCENARIO): ?array
     {
         return $this->properties[$scenario] ? $this->properties[$scenario][$name] ?? null : null;
     }
@@ -101,7 +104,11 @@ final class ModelMetadata
             $this->properties[$scenario] = [];
         }
 
-        $this->properties[$scenario][$property->getName()] = $property;
+        if (!isset($this->properties[$scenario][$property->getName()])) {
+            $this->properties[$scenario][$property->getName()] = [];
+        }
+
+        $this->properties[$scenario][$property->getName()][] = $property;
     }
 
     /**
@@ -212,23 +219,28 @@ final class ModelMetadata
      * Recursively finds nested property metadata. If metadata does not exist it will be created.
      *
      * A use-case could be to map API-Platform style HTTP query params to the VOM normalized field names.
+     *
+     * @return ?PropertyMetadata[]
      */
-    public function find(string $query, ModelMetadataFactoryInterface $factory): ?PropertyMetadata
+    public function find(string $query, ModelMetadataFactoryInterface $factory): ?array
     {
-        $property = null;
+        $properties = null;
         $path = explode('.', $query);
         $metadata = &$this;
 
         foreach ($path as $item) {
-            if (!$property = $metadata->getProperty($item)) {
+            $properties = $metadata->getProperty($item);
+            if (null === $properties || !\count($properties)) {
                 throw new RuntimeException(\sprintf('Could not find metadata path "%s" in "%s"', $query, $this->class));
             }
 
-            if (($class = $property->getClass()) && ($modelMetadata = $factory->getMetadataFor($class))) {
-                $metadata = &$modelMetadata;
+            foreach ($properties as $property) {
+                if (($class = $property->getClass()) && ($modelMetadata = $factory->getMetadataFor($class))) {
+                    $metadata = &$modelMetadata;
+                }
             }
         }
 
-        return $property;
+        return $properties;
     }
 }

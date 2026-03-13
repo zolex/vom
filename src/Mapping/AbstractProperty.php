@@ -11,6 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+/*
+ * This file is part of the VOM package.
+ *
+ * (c) Andreas Linden <zlx@gmx.de>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zolex\VOM\Mapping;
 
 use Zolex\VOM\Metadata\ModelMetadata;
@@ -39,6 +48,7 @@ abstract class AbstractProperty
         private int|array|null $relative = null,
         private ?string $denormalize = null,
         private ?string $normalize = null,
+        private string|array|null $if = null,
     ) {
         $this->applyRelativePropertyAccessSyntax();
     }
@@ -189,5 +199,15 @@ abstract class AbstractProperty
     public function hasNormalizeExpression(): bool
     {
         return null !== $this->normalize;
+    }
+
+    public function getCondition(): string|array|null
+    {
+        return $this->if;
+    }
+
+    public function hasCondition(): bool
+    {
+        return null !== $this->if;
     }
 }

@@ -206,31 +206,33 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
             }
         }
 
-        foreach ($metadata->getProperties($scenario) as $property) {
-            if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
-                continue;
-            }
-
-            $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
-            $value = $this->denormalizeProperty($type, $data, $property, $format, $context);
-
-            if (null === $value && !$property->isNullable()) {
-                continue;
-            }
-
-            try {
-                $this->propertyAccessor->setValue($model, $property->getName(), $value);
-            } catch (NoSuchPropertyException) {
-                // this may happen for private properties without mutator
-                // for example doctrine entity ID, so just ignore this case.
-            } catch (PropertyAccessInvalidArgumentException $e) {
-                if (preg_match('/^Expected argument of type "([^"]+)", "array" given at property path "([^"]+)".$/', $e->getMessage(), $matches)) {
-                    if (\ArrayAccess::class === $matches[1] || (($implements = class_implements($matches[1])) && \in_array(\ArrayAccess::class, $implements))) {
-                        throw new MappingException(\sprintf('The property "%s::$%s" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
-                    }
+        foreach ($metadata->getProperties($scenario) as $properties) {
+            foreach ($properties as $property) {
+                if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
+                    continue 2;
                 }
 
-                throw $e;
+                $context = $this->getAttributeDenormalizationContext($type, $property->getName(), $context);
+                $value = $this->denormalizeProperty($type, $data, $property, $format, $context);
+
+                if (null === $value && !$property->isNullable()) {
+                    continue;
+                }
+
+                try {
+                    $this->propertyAccessor->setValue($model, $property->getName(), $value);
+                } catch (NoSuchPropertyException) {
+                    // this may happen for private properties without mutator
+                    // for example doctrine entity ID, so just ignore this case.
+                } catch (PropertyAccessInvalidArgumentException $e) {
+                    if (preg_match('/^Expected argument of type "([^"]+)", "array" given at property path "([^"]+)".$/', $e->getMessage(), $matches)) {
+                        if (\ArrayAccess::class === $matches[1] || (($implements = class_implements($matches[1])) && \in_array(\ArrayAccess::class, $implements))) {
+                            throw new MappingException(\sprintf('The property "%s::$%s" seems to implement ArrayAccess. To allow VOM denormalizing it, create adder/remover methods or a mutator method accepting an array.', $metadata->getClass(), $matches[2]));
+                        }
+                    }
+
+                    throw $e;
+                }
             }
         }
 
@@ -329,6 +331,25 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
     {
         if ($property->isRoot()) {
             $data = &$context[self::ROOT_DATA];
+        }
+
+        if ($property->hasCondition()) {
+            $condition = $property->getCondition();
+            if (\is_callable($condition)) {
+                $result = \call_user_func_array($condition, [$data, $context]);
+            } elseif (\is_string($condition)) {
+                if (null === $this->expressionLanguage) {
+                    throw new LogicException('symfony/expression-language is required to use the "if" attribute option.');
+                }
+
+                $result = $this->expressionLanguage->evaluate($condition, ['data' => $data, 'context' => $context]);
+            } else {
+                throw new LogicException('The "if" attribute option must be either be symfony expression language or a callable (in string or array form).');
+            }
+
+            if (!$result) {
+                return null;
+            }
         }
 
         if ($property->hasDenormalizeExpression()) {
@@ -862,91 +883,93 @@ final class ObjectNormalizer extends AbstractNormalizer implements NormalizerInt
         }
 
         $allowedAttributes = $this->getAllowedAttributes($data::class, $context, true);
-        foreach ($metadata->getProperties($scenario) as $property) {
-            if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
-                continue;
-            }
-
-            $context = $this->getAttributeNormalizationContext($data, $property->getName(), $context);
-
-            if (($accessor = $property->getAccessor()) && ($class = $property->getClass())) {
-                try {
-                    $this->modelMetadataFactory->getMetadataFor($class);
-                    $context[self::NESTING_PATH] ??= [];
-                    $context[self::NESTING_PATH][] = $accessor;
-                } catch (MissingMetadataException) {
-                }
-            }
-
-            try {
-                if ($property->hasNormalizeExpression()) {
-                    if (null === $this->expressionLanguage) {
-                        throw new LogicException('symfony/expression-language is required to use the "normalize" expression option.');
-                    }
-                    $attributeValue = $this->expressionLanguage->evaluate($property->getNormalizeExpression(), ['object' => $data]);
-                } else {
-                    $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
-                        ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
-                        : $this->propertyAccessor->getValue($data, $property->getName());
-                }
-            } catch (UninitializedPropertyException|\Error $e) {
-                if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
+        foreach ($metadata->getProperties($scenario) as $properties) {
+            foreach ($properties as $property) {
+                if ($allowedAttributes && !\in_array($property->getName(), $allowedAttributes)) {
                     continue;
                 }
-                throw $e;
-            }
 
-            if (null !== $attributeValue) {
-                $type = $property->getType();
-                if ($this->typeContainsBool($type)) {
-                    if ($attributeValue === $property->getTrueValue() || \in_array($attributeValue, self::TRUE_VALUES, true)) {
-                        $attributeValue = $property->getTrueValue() ?? true;
-                    } elseif ($attributeValue === $property->getFalseValue() || \in_array($attributeValue, self::FALSE_VALUES, true)) {
-                        $attributeValue = $property->getFalseValue() ?? false;
+                $context = $this->getAttributeNormalizationContext($data, $property->getName(), $context);
+
+                if (($accessor = $property->getAccessor()) && ($class = $property->getClass())) {
+                    try {
+                        $this->modelMetadataFactory->getMetadataFor($class);
+                        $context[self::NESTING_PATH] ??= [];
+                        $context[self::NESTING_PATH][] = $accessor;
+                    } catch (MissingMetadataException) {
                     }
-                }
-            }
-
-            try {
-                $normalizedValue = $this->serializer->normalize($attributeValue, $format, $context);
-            } catch (IgnoreCircularReferenceException) {
-                continue;
-            }
-
-            if (null === $normalizedValue && ($context[self::SKIP_NULL_VALUES] ?? $this->defaultContext[self::SKIP_NULL_VALUES] ?? false)) {
-                continue;
-            }
-
-            if (\is_array($normalizedValue) && 0 === \count($normalizedValue)) {
-                continue;
-            }
-
-            if ($property->isRoot()) {
-                $target = &$context[self::ROOT_DATA];
-            } else {
-                $target = &$normalizedData;
-            }
-
-            if ($property->hasAccessor()) {
-                $accessor = $property->getAccessor();
-                if (($relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
-                    $parts = \array_slice($context[self::NESTING_PATH], 0, -$relative);
-                    $parts[] = $accessor;
-                    $accessor = implode('', $parts);
-                    $target = &$context[self::ROOT_DATA];
                 }
 
                 try {
-                    $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
-                } catch (\Throwable $e) {
-                    if (preg_match('/^Cannot write property "[^"]+" to an array./', $e->getMessage())) {
-                        throw new MappingException(\sprintf('Normalization is only supported with array-access syntax. Accessor "%s" on class "%s" uses object syntax and therefore can not be normalized.', $accessor, $metadata->getClass()));
+                    if ($property->hasNormalizeExpression()) {
+                        if (null === $this->expressionLanguage) {
+                            throw new LogicException('symfony/expression-language is required to use the "normalize" expression option.');
+                        }
+                        $attributeValue = $this->expressionLanguage->evaluate($property->getNormalizeExpression(), ['object' => $data]);
+                    } else {
+                        $attributeValue = $property->getName() === $this->classDiscriminatorResolver?->getMappingForMappedObject($data)?->getTypeProperty()
+                            ? $this->classDiscriminatorResolver?->getTypeForMappedObject($data)
+                            : $this->propertyAccessor->getValue($data, $property->getName());
                     }
-
+                } catch (UninitializedPropertyException|\Error $e) {
+                    if (($context[self::SKIP_UNINITIALIZED_VALUES] ?? $this->defaultContext[self::SKIP_UNINITIALIZED_VALUES] ?? true) && $this->isUninitializedValueError($e)) {
+                        continue;
+                    }
                     throw $e;
                 }
-            } else {
-                $target = array_merge($target, $normalizedValue);
+
+                if (null !== $attributeValue) {
+                    $type = $property->getType();
+                    if ($this->typeContainsBool($type)) {
+                        if ($attributeValue === $property->getTrueValue() || \in_array($attributeValue, self::TRUE_VALUES, true)) {
+                            $attributeValue = $property->getTrueValue() ?? true;
+                        } elseif ($attributeValue === $property->getFalseValue() || \in_array($attributeValue, self::FALSE_VALUES, true)) {
+                            $attributeValue = $property->getFalseValue() ?? false;
+                        }
+                    }
+                }
+
+                try {
+                    $normalizedValue = $this->serializer->normalize($attributeValue, $format, $context);
+                } catch (IgnoreCircularReferenceException) {
+                    continue;
+                }
+
+                if (null === $normalizedValue && ($context[self::SKIP_NULL_VALUES] ?? $this->defaultContext[self::SKIP_NULL_VALUES] ?? false)) {
+                    continue;
+                }
+
+                if (\is_array($normalizedValue) && 0 === \count($normalizedValue)) {
+                    continue;
+                }
+
+                if ($property->isRoot()) {
+                    $target = &$context[self::ROOT_DATA];
+                } else {
+                    $target = &$normalizedData;
+                }
+
+                if ($property->hasAccessor()) {
+                    $accessor = $property->getAccessor();
+                    if (($relative = $property->getRelative()) && isset($context[self::NESTING_PATH])) {
+                        $parts = \array_slice($context[self::NESTING_PATH], 0, -$relative);
+                        $parts[] = $accessor;
+                        $accessor = implode('', $parts);
+                        $target = &$context[self::ROOT_DATA];
+                    }
+
+                    try {
+                        $this->propertyAccessor->setValue($target, $accessor, $normalizedValue);
+                    } catch (\Throwable $e) {
+                        if (preg_match('/^Cannot write property "[^"]+" to an array./', $e->getMessage())) {
+                            throw new MappingException(\sprintf('Normalization is only supported with array-access syntax. Accessor "%s" on class "%s" uses object syntax and therefore can not be normalized.', $accessor, $metadata->getClass()));
+                        }
+
+                        throw $e;
+                    }
+                } else {
+                    $target = array_merge($target, $normalizedValue);
+                }
             }
         }
 

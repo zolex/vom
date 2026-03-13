@@ -42,8 +42,8 @@ class ModelMetadataTest extends TestCase
         $this->assertSame($model, $metadata->getAttribute());
         $this->assertCount(1, $properties);
         $this->assertArrayHasKey('name', $properties);
-        $this->assertSame($prop, $properties['name']);
-        $this->assertSame($prop, $metadata->getProperty('name'));
+        $this->assertSame($prop, $properties['name'][0]);
+        $this->assertSame($prop, $metadata->getProperty('name')[0]);
     }
 
     public function testGetNestedMetadata(): void
@@ -52,10 +52,14 @@ class ModelMetadataTest extends TestCase
         $metadata = $factory->getMetadataFor(NestingRoot::class);
 
         $levelTwo = $metadata->find('levelOne.levelTwo', $factory);
-        $this->assertInstanceOf(PropertyMetadata::class, $levelTwo);
+        foreach ($levelTwo as $property) {
+            $this->assertInstanceOf(PropertyMetadata::class, $property);
+        }
 
         $levelFour = $metadata->find('levelOne.levelTwo.levelThree.levelFour', $factory);
-        $this->assertInstanceOf(PropertyMetadata::class, $levelFour);
+        foreach ($levelFour as $property) {
+            $this->assertInstanceOf(PropertyMetadata::class, $property);
+        }
 
         $this->expectException(RuntimeException::class);
         $metadata->find('levelOne.non.existent', $factory);
