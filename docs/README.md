@@ -254,6 +254,78 @@ $objectMapper->denormalize($data, RootClass::class);
 
 Using the `if` argument on the property attribute, you can map a property only if a certain condition is met. If the condition evaluates to true, the property will be mapped, otherwise it will be skipped.
 
+## Expression Condition
+
+Using [Symfony Expression Language](https://symfony.com/doc/current/components/expression_language.html) is the recommended way to configure conditional mapping.
+
+> [!NOTE]
+> `symfony/expression-language` is an optional dependency. Install it when you need this feature:
+> ```bash
+> composer require symfony/expression-language
+> ```
+> When an expression is configured but the package is not installed, VOM throws a `LogicException` at mapping time.
+
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ConditionalMapping
+{
+    #[VOM\Property('[SOURCE_PARAM]', if: 'data["CONDITION_FIELD"] > 100')]
+    public string $conditionallyMapped;
+}
+```
+
+```php
+$data = 
+    'CONDITION_PARAM' => 1337,
+    'SOURCE_PARAM' => 'Conditional Value',,
+];
+
+$objectMapper->denormalize($data, ConditionalMapping::class);
+// $object->conditionallyMapped is set to 'Conditional Value'
+```
+
+```php
+$data = 
+    'CONDITION_PARAM' => 42,
+    'SOURCE_PARAM' => 'Conditional Value',,
+];
+
+$objectMapper->denormalize($data, ConditionalMapping::class);
+// $object->conditionallyMapped remains unset
+```
+
+Multiple Properties with different conditions can be configured too. The first matching condition in order of occurence wins.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class ConditionalMapping
+{
+    #[VOM\Property('[SOURCE_PARAM_A]', if: 'data["SOURCE_CASE"] == "CASE_A"')]
+    #[VOM\Property('[SOURCE_PARAM_B]', if: 'data["SOURCE_CASE"] == "CASE_B"')]
+    public string $paramOne;
+}
+```
+
+```php
+$data = 
+    'SOURCE_CASE' => 'CASE_A',
+    'SOURCE_PARAM_A' => 'First Case Value',
+    'SOURCE_PARAM_B' => 'Second Case Value',
+];
+
+$objectMapper->denormalize($data, ConditionalMapping::class);
+// $object->conditionallyMapped is set to 'First Case Value'
+```
+
+## Callback Condition
+
+Alternatively, if you do not want to rely on Symfony Expression Language, you can also provide a callback. It receives the data as an argument and should return a boolean.
+
 ```php
 use Zolex\VOM\Mapping as VOM;
 
@@ -273,51 +345,6 @@ class ConditionalMapping
     {
         return 'CASE_B' === $data['SOURCE_CASE'];
     }
-}
-```
-
-```php
-$data = 
-    'SOURCE_CASE' => 'CASE_A',
-    'SOURCE_PARAM_A' => 'First Case Value',
-    'SOURCE_PARAM_B' => 'Second Case Value',
-];
-
-$objectMapper->denormalize($data, ConditionalMapping::class);
-// $object->conditionallyMapped is set to 'First Case Value'
-```
-
-Alternatively, the condition can be Symfony Expression Languge, with the `data` variable populated.
-
-> [!NOTE]
-> `symfony/expression-language` is an optional dependency. Install it when you need this feature:
-> ```bash
-> composer require symfony/expression-language
-> ```
-> When an expression is configured but the package is not installed, VOM throws a `LogicException` at mapping time.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class ConditionalMapping
-{
-    #[VOM\Property('[SOURCE_PARAM]', if: 'data["SOMETHING"] > 100')]
-    public string $conditionallyMapped;
-}
-```
-
-Multiple Properties with different conditions can be configured too. The first matching condition in order of occurence wins.
-
-```php
-use Zolex\VOM\Mapping as VOM;
-
-#[VOM\Model]
-class ConditionalMapping
-{
-    #[VOM\Property('[SOURCE_PARAM_A]', if: 'data["SOURCE_CASE"] == "CASE_A"')]
-    #[VOM\Property('[SOURCE_PARAM_B]', if: 'data["SOURCE_CASE"] == "CASE_B"')]
-    public string $paramOne;
 }
 ```
 
