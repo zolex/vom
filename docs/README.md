@@ -272,15 +272,15 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class ConditionalMapping
 {
-    #[VOM\Property('[SOURCE_PARAM]', if: 'data["CONDITION_FIELD"] > 100')]
+    #[VOM\Property('[SOURCE_PARAM]', if: 'data["CONDITION_PARAM"] > 100')]
     public string $conditionallyMapped;
 }
 ```
 
 ```php
-$data = 
+$data = [
     'CONDITION_PARAM' => 1337,
-    'SOURCE_PARAM' => 'Conditional Value',,
+    'SOURCE_PARAM' => 'Conditional Value',
 ];
 
 $objectMapper->denormalize($data, ConditionalMapping::class);
@@ -288,9 +288,9 @@ $objectMapper->denormalize($data, ConditionalMapping::class);
 ```
 
 ```php
-$data = 
+$data = [
     'CONDITION_PARAM' => 42,
-    'SOURCE_PARAM' => 'Conditional Value',,
+    'SOURCE_PARAM' => 'Conditional Value',
 ];
 
 $objectMapper->denormalize($data, ConditionalMapping::class);
@@ -312,7 +312,7 @@ class ConditionalMapping
 ```
 
 ```php
-$data = 
+$data = [
     'SOURCE_CASE' => 'CASE_A',
     'SOURCE_PARAM_A' => 'First Case Value',
     'SOURCE_PARAM_B' => 'Second Case Value',
