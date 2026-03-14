@@ -18,7 +18,11 @@ use Zolex\VOM\Mapping as VOM;
 #[VOM\Model]
 class ExpressionLanguageModel
 {
-    #[VOM\Property(denormalize: 'data["first_name"] ~ " " ~ data["last_name"]')]
+    #[VOM\Property(
+        accessor: false,
+        denormalize: 'data["first_name"] ~ " " ~ data["last_name"]',
+        normalize: 'array_combine(["first_name", "last_name"], explode(" ", object.fullName))',
+    )]
     public string $fullName = '';
 
     #[VOM\Property(normalize: 'object.age * 2')]

@@ -51,10 +51,13 @@ class ExpressionLanguageTest extends TestCase
     public function testNormalizeWithExpression(): void
     {
         $model = new ExpressionLanguageModel();
+        $model->fullName = 'John Doe';
         $model->age = 30;
 
         $normalized = static::$serializer->normalize($model);
-        $this->assertSame(60, $normalized['doubleAge']);
+        $this->assertEquals(60, $normalized['doubleAge']);
+        $this->assertEquals('John', $normalized['first_name']);
+        $this->assertEquals('Doe', $normalized['last_name']);
     }
 
     public function testDenormalizeExpressionWithMissingPackageThrows(): void

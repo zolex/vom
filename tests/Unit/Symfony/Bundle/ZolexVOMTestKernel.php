@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Serializer\SerializerInterface;
+use Zolex\VOM\ExpressionLanguage\CompiledExpressionLanguage;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
 use Zolex\VOM\Serializer\Normalizer\ObjectNormalizer;
 use Zolex\VOM\Serializer\VersatileObjectMapper;
@@ -33,6 +34,7 @@ class ZolexVOMTestKernel extends Kernel implements CompilerPassInterface
         'zolex_vom.metadata.model_metadata_factory' => ModelMetadataFactoryInterface::class,
         'zolex_vom.serializer.versatile_object_mapper' => VersatileObjectMapper::class,
         'zolex_vom.serializer.normalizer.object_normalizer' => ObjectNormalizer::class,
+        'zolex_vom.expression_language' => CompiledExpressionLanguage::class,
         'serializer' => SerializerInterface::class,
     ];
 

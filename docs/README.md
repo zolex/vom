@@ -1723,6 +1723,69 @@ $normalized = $objectMapper->normalize($model);
 // $normalized['celsius'] === 212.0
 ```
 
+When the `normalize` expression returns an array and the property has no accessor (`accessor: false`), the array is merged into the output — allowing a single model property to expand back into multiple source keys.
+
+```php
+use Zolex\VOM\Mapping as VOM;
+
+#[VOM\Model]
+class Person
+{
+    #[VOM\Property(
+        accessor: false,
+        denormalize: 'data["first_name"] ~ " " ~ data["last_name"]',
+        normalize: 'array_combine(["first_name", "last_name"], explode(" ", object.fullName))',
+    )]
+    public string $fullName = '';
+}
+```
+
+```php
+$person = $objectMapper->denormalize([
+    'first_name' => 'John',
+    'last_name'  => 'Doe',
+], Person::class);
+// $person->fullName === 'John Doe'
+
+$normalized = $objectMapper->normalize($person);
+// $normalized === ['first_name' => 'John', 'last_name' => 'Doe']
+```
+
+## Available PHP Functions
+
+In addition to the standard symfony expression language features, VOM registers the following PHP functions for use in expressions:
+
+**Types**
+
+`is_null`, `is_array`, `is_string`, `is_int`, `is_integer`, `is_float`, `is_bool`, `is_numeric`, `is_object`
+
+**Numbers**
+
+`abs`, `ceil`, `floor`, `round`, `min`, `max`, `pow`, `sqrt`, `intdiv`, `fmod`, `intval`, `floatval`
+
+**Strings**
+
+`strlen`, `substr`, `str_contains`, `str_starts_with`, `str_ends_with`,
+`str_replace`, `str_ireplace`, `str_pad`, `str_repeat`, `str_split`,
+`strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `ucwords`,
+`trim`, `ltrim`, `rtrim`, `strpos`, `stripos`,
+`base64_encode`, `base64_decode`, `urlencode`, `urldecode`, `rawurlencode`, `rawurldecode`,
+`number_format`, `sprintf`, `explode`, `implode`,
+`preg_match`, `preg_replace`, `preg_split`,
+`mb_strlen`, `mb_substr`, `mb_strtolower`, `mb_strtoupper`, `mb_strpos`,
+`mb_str_split`, `mb_convert_encoding`, `mb_convert_case`
+
+**Arrays**
+
+`count`, `in_array`, `array_key_exists`, `array_keys`, `array_values`,
+`array_search`, `array_column`, `array_flip`, `array_reverse`, `array_unique`,
+`array_merge`, `array_replace`, `array_combine`, `array_diff`, `array_intersect`,
+`array_slice`, `array_chunk`, `array_fill`, `array_fill_keys`, `range`,
+`array_map`, `array_filter`, `array_reduce`,
+`array_sum`, `array_product`, `array_count_values`,
+`sort`, `rsort`, `asort`, `arsort`, `ksort`, `krsort`, `usort`, `uasort`, `uksort`
+
+
 # Serialized Argument
 
 In case the source data is a serialized representation of the model, the constructor, factories and denormalizer methods may have a single string argument with the `serialized` option set to `true`.

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Zolex\VOM\Serializer\Factory;
 
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
@@ -27,6 +26,11 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer as SymfonyObjectNor
 use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
+use Zolex\VOM\ExpressionLanguage\ArrayFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\CompiledExpressionLanguage;
+use Zolex\VOM\ExpressionLanguage\NumberFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\StringFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\TypeFunctionsProvider;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
@@ -80,7 +84,12 @@ class VersatileObjectMapperFactory
 
         $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
         $classDiscriminatorResolver = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
-        $expressionLanguage = class_exists(ExpressionLanguage::class) ? new ExpressionLanguage() : null;
+        $expressionLanguage = class_exists(\Symfony\Component\ExpressionLanguage\ExpressionLanguage::class) ? new CompiledExpressionLanguage($cacheItemPool, [
+            new StringFunctionsProvider(),
+            new ArrayFunctionsProvider(),
+            new NumberFunctionsProvider(),
+            new TypeFunctionsProvider(),
+        ]) : null;
 
         return new ObjectNormalizer(self::$metadataFactory, $propertyAccessor, $classMetadataFactory, $classDiscriminatorResolver, [], null, $expressionLanguage);
     }

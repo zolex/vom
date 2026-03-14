@@ -14,6 +14,12 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Zolex\VOM\ExpressionLanguage\ArrayFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\CompiledExpressionLanguage;
+use Zolex\VOM\ExpressionLanguage\NumberFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\StringFunctionsProvider;
+use Zolex\VOM\ExpressionLanguage\TypeFunctionsProvider;
 use Zolex\VOM\Metadata\Factory\CachedModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactory;
 use Zolex\VOM\Metadata\Factory\ModelMetadataFactoryInterface;
@@ -22,6 +28,24 @@ use Zolex\VOM\Serializer\VersatileObjectMapper;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
+
+    if (class_exists(ExpressionLanguage::class)) {
+        $services->set(StringFunctionsProvider::class);
+        $services->set(ArrayFunctionsProvider::class);
+        $services->set(NumberFunctionsProvider::class);
+        $services->set(TypeFunctionsProvider::class);
+
+        $services->set('zolex_vom.expression_language', CompiledExpressionLanguage::class)
+            ->args([
+                service('zolex_vom.cache.metadata.model')->nullOnInvalid(),
+                [
+                    service(StringFunctionsProvider::class),
+                    service(ArrayFunctionsProvider::class),
+                    service(NumberFunctionsProvider::class),
+                    service(TypeFunctionsProvider::class),
+                ],
+            ]);
+    }
 
     $services->set('zolex_vom.metadata.model_metadata_factory', ModelMetadataFactory::class)
         ->args([
@@ -58,7 +82,7 @@ return static function (ContainerConfigurator $container): void {
             service('serializer.mapping.class_discriminator_resolver'),
             [],
             null,
-            service('expression_language')->nullOnInvalid(),
+            service('zolex_vom.expression_language')->nullOnInvalid(),
         ])
         ->tag('serializer.normalizer', ['priority' => 100]);
 };

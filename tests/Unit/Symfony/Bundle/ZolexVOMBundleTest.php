@@ -60,6 +60,26 @@ class ZolexVOMBundleTest extends KernelTestCase
         self::bootKernel(['environment' => 'dev', 'debug' => false]);
     }
 
+    public function testCustomExpressionLanguageFunctionsAreRegistered(): void
+    {
+        $kernel = self::bootKernel();
+        $el = $kernel->getContainer()->get('zolex_vom.expression_language');
+
+        // StringFunctionsProvider
+        $this->assertSame('hello world', $el->evaluate('strtolower(value)', ['value' => 'HELLO WORLD']));
+
+        // ArrayFunctionsProvider
+        $this->assertSame(['a', 'b'], $el->evaluate('array_values(data)', ['data' => ['x' => 'a', 'y' => 'b']]));
+
+        // NumberFunctionsProvider
+        $this->assertSame(4.0, $el->evaluate('ceil(value)', ['value' => 3.2]));
+
+        // TypeFunctionsProvider
+        $this->assertTrue($el->evaluate('is_string(value)', ['value' => 'test']));
+
+        $kernel->shutdown();
+    }
+
     public function testVomIntegratesWithSerializer(): void
     {
         $kernel = self::bootKernel();
